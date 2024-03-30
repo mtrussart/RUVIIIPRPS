@@ -66,6 +66,7 @@
 #' to 'FALSE'. We refer to the 'assessVariableAssociation' for more details.
 #' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
 #' object 'se.obj' or to output the result, by default it is set to TRUE.
+#' @param  prps.set.name Symbol.
 #' @param verbose Logical. Indicates whether to show or reduce the level of output or
 #' messages displayed during the execution of the functions, by default it is set to TRUE.
 
@@ -98,6 +99,7 @@ createPrPsForCategoricalUV <- function(
         cont.cor.coef = c(0.95, 0.95),
         plot.prps.map = TRUE,
         save.se.obj = TRUE,
+        prps.set.name = NULL,
         verbose = TRUE) {
     printColoredMessage(message = '------------The prpsForCategoricalUV function starts:',
                         color = 'white',
@@ -427,35 +429,43 @@ createPrPsForCategoricalUV <- function(
     if(!is.null(other.uv.variables)) {
         out.put.name <- paste0(
             main.uv.variable,
-            '|:',
+            '|',
             paste0(bio.variables, collapse = '&'),
-            '|:',
+            '|',
             paste0(other.uv.variables, collapse = '&'),
             '|',
             assay.name)
     } else{
         out.put.name <- paste0(
             main.uv.variable,
-            '|:',
+            '|',
             paste0(bio.variables, collapse = '&'),
             '|',
             assay.name)
     }
+    if(is.null(prps.set.name)){
+        prps.set.name <- 'PRPS_Set1'
+    }
+
     if (save.se.obj) {
-        ## check if metadata PRPS already exists
-        if (length(se.obj@metadata) == 0) {
-            se.obj@metadata[['PRPS']] <- list()
-        }
-        ## check if metadata PRPS already exists
+        ## check if PRPS already exists in the metadata
         if (!'PRPS' %in% names(se.obj@metadata)) {
             se.obj@metadata[['PRPS']] <- list()
         }
-        ## check if metadata PRPS already exist for supervised
-        if (!'Supervised' %in% names(se.obj@metadata[['PRPS']])) {
+        ## check if supervised already exists in the PRPS slot
+        if (!'supervised' %in% names(se.obj@metadata[['PRPS']])) {
             se.obj@metadata[['PRPS']][['supervised']] <- list()
         }
-        ## Check if metadata PRPS already exist for supervised
-        se.obj@metadata[['PRPS']][['supervised']][[out.put.name]] <- prps.sets
+        ## check if prps.set.name already exists in the PRPS$supervised slot
+        if (!prps.set.name %in% names(se.obj@metadata[['PRPS']][['supervised']])) {
+            se.obj@metadata[['PRPS']][['supervised']][[prps.set.name]] <- list()
+        }
+        ## check if out.put.name already exists in the PRPS$supervised$prps.set.name slot
+        if (!out.put.name %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.set.name]])) {
+            se.obj@metadata[['PRPS']][['supervised']][[prps.set.name]][[out.put.name]] <- list()
+        }
+        se.obj@metadata[['PRPS']][['supervised']][[prps.set.name]][[out.put.name]] <- prps.sets
+
         printColoredMessage(
             message = paste0(
                 'The PRPS are saved to metadata@PRPS$Supervised: ',
