@@ -120,7 +120,7 @@ RUVIII.PRPS <- function(
             if (length(all.prps) != 2) {
                 stop('The "supervised" or "un.supervised" PRPSsets are not found in the SummarizedExperiment object.')
             }
-            prps.data <- c(se.obj@metadata$PRPS$supervised, se.obj@metadata$PRPS$unSupervised)
+            prps.data <- c(se.obj@metadata$PRPS$supervised, se.obj@metadata$PRPS$un.supervised)
         }
     }
     ## use a specific set of prps in the SummarizedExperiment object ####
