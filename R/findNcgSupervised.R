@@ -103,6 +103,8 @@
 #' will be excluded. By default, it is set to both'.
 #' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class object
 #' 'se.obj' or to output the result. By default it is set to TRUE.
+#' @param output.name Symbol. A representation for the output's name. If set to 'NULL', the function will choose a name
+#' automatically.
 #' @param verbose Logical. If TRUE, displaying process messages is enabled.
 
 #' @return a list of negative control genes.
@@ -153,6 +155,7 @@ findNcgSupervised <- function(
         cont.cor.coef = c(0.95, 0.95),
         remove.na = 'both',
         save.se.obj = TRUE,
+        output.name = NULL,
         verbose = TRUE
 ){
     printColoredMessage(message = '------------The supervisedFindNCG function starts:',
@@ -196,6 +199,7 @@ findNcgSupervised <- function(
             assess.variables = assess.variables,
             remove.na = remove.na,
             save.se.obj = save.se.obj,
+            output.name = output.name,
             verbose = verbose)
     } else if(approach == 'AnoCorrAs'){
         ncg.set <- findNcgAcrossSamples(
@@ -229,6 +233,7 @@ findNcgSupervised <- function(
             cat.cor.coef = cat.cor.coef,
             cont.cor.coef = cont.cor.coef,
             save.se.obj = save.se.obj,
+            output.name = output.name,
             remove.na = remove.na,
             verbose = verbose)
     } else if(approach == 'TWAnova'){
@@ -257,6 +262,7 @@ findNcgSupervised <- function(
             assess.variables = assess.variables,
             remove.na = remove.na,
             save.se.obj = save.se.obj,
+            output.name = output.name,
             verbose = verbose)
     } else {
         stop('The approach should be one of PbPb or As')

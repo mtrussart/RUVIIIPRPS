@@ -80,6 +80,8 @@
 #' samples that contains NA or missing values for any 'bio.variables' and 'uv.variables' will be excluded. By default, it is set to both'.
 #' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class object 'se.obj' or
 #' to output the result. By default it is set to TRUE.
+#' @param output.name Symbol. A representation for the output's name. If set to 'NULL', the function will choose a name
+#' automatically.
 #' @param verbose Logical. If TRUE, displaying process messages is enabled.
 
 #' @return Either the SummarizedExperiment object containing the a set of negative control genes
@@ -130,6 +132,7 @@ findNcgPerBiologyPerBatch <- function(
         assess.variables = TRUE,
         remove.na = 'both',
         save.se.obj = TRUE,
+        output.name = NULL,
         verbose = TRUE
         ){
     printColoredMessage(message = '------------The supervisedFindNcgPbPbio function starts:',
@@ -1108,17 +1111,20 @@ findNcgPerBiologyPerBatch <- function(
             print(pca.ncg)
     }
     # add results to the SummarizedExperiment object ####
-    out.put.name <- paste0(
-        sum(ncg.selected),
-        '|',
-        paste0(bio.variables, collapse = '&'),
-        '|',
-        paste0(uv.variables, collapse = '&'),
-        '|PbPbio:',
-        ncg.selection.method,
-        '|',
-        assay.name
-    )
+    if(is.null(output.name)){
+        output.name <- paste0(
+            sum(ncg.selected),
+            '|',
+            paste0(bio.variables, collapse = '&'),
+            '|',
+            paste0(uv.variables, collapse = '&'),
+            '|PbPbio:',
+            ncg.selection.method,
+            '|',
+            assay.name
+        )
+    }
+
     if (save.se.obj == TRUE) {
         printColoredMessage(message = '-- Saving a selected set of NCG to the metadata of the SummarizedExperiment object.',
                             color = 'magenta',
@@ -1127,7 +1133,7 @@ findNcgPerBiologyPerBatch <- function(
         if (length(se.obj@metadata$NCG) == 0) {
             se.obj@metadata[['NCG']] <- list()
         }
-        se.obj@metadata[['NCG']][['supervised']][[out.put.name]] <- ncg.selected
+        se.obj@metadata[['NCG']][['supervised']][[output.name]] <- ncg.selected
         printColoredMessage(message = 'The NCGs are saved to metadata of the SummarizedExperiment object.',
                             color = 'blue',
                             verbose = verbose)
