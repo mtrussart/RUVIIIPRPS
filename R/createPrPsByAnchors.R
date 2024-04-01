@@ -57,6 +57,7 @@
 #' the checkSeObj function for more details.
 #' @param save.se.obj Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment
 #' object or to output the result as list. By default it is set to TRUE.
+#' @param  prps.set.name Symbol.
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
 #' @importFrom SummarizedExperiment assay colData
@@ -97,6 +98,7 @@ createPrPsByAnchors <- function(
         assess.se.obj = TRUE,
         remove.na = 'assays',
         save.se.obj = TRUE,
+        prps.set.name = NULL,
         verbose = TRUE) {
     printColoredMessage(message = '------------The createPrPsByAnchors function starts:',
                         color = 'white',
@@ -167,7 +169,7 @@ createPrPsByAnchors <- function(
                 include.lowest = TRUE))
             se.obj[[uv.variable]] <- factor(x = paste0(uv.variable, '_group', uv.cont.clusters))
         }
-    } else if (is.factor(se.obj[[uv.variable]])) {
+    } else if (!is.factor(se.obj[[uv.variable]])) {
             se.obj[[uv.variable]] <- factor(x = se.obj[[uv.variable]])
     }
 
@@ -183,12 +185,16 @@ createPrPsByAnchors <- function(
         groups,
         function(x) {
             samples.index <- se.obj[[uv.variable]] == x
-            seu.obj <- SeuratObject::CreateSeuratObject(
+            seurat.obj <- SeuratObject::CreateSeuratObject(
                 counts = assay(x = se.obj[, samples.index], i = assay.name),
                 project = x)
-            if (!is.null(hvg))
-                Seurat::VariableFeatures(seu.obj) <- hvg
-            return(seu.obj)
+            seurat.obj <- Seurat::NormalizeData(object = seurat.obj)
+            if (!is.null(hvg)){
+                Seurat::VariableFeatures(seurat.obj) <- hvg
+            } else{
+                seurat.obj <- Seurat::FindVariableFeatures(object = seurat.obj)
+            }
+            return(seurat.obj)
         })
     names(all.seurat.objects) <- groups
     all.samples.index <- c(1:ncol(se.obj))
@@ -676,6 +682,9 @@ createPrPsByAnchors <- function(
     }
     # saving the output ####
     out.put.name <- paste0(uv.variable, '|', assay.name)
+    if(is.null(prps.set.name)){
+        prps.set.name <- 'PRPS_Set1'
+    }
 
     if (save.se.obj) {
         ## check if metadata PRPS already exists
@@ -686,9 +695,18 @@ createPrPsByAnchors <- function(
         if (!'un.supervised' %in% names(se.obj@metadata[['PRPS']])) {
             se.obj@metadata[['PRPS']][['un.supervised']] <- list()
         }
-        ## Check if metadata PRPS already exist for supervised
-        se.obj@metadata[['PRPS']][['un.supervised']][[out.put.name]] <- prps.data
-
+        ## check if metadata PRPS already exist for supervised
+        if (!'anchor' %in% names(se.obj@metadata[['PRPS']][['un.supervised']])) {
+            se.obj@metadata[['PRPS']][['un.supervised']][['anchor']] <- list()
+        }
+        ## check if prps.set.name already exists in the PRPS$supervised slot
+        if (!prps.set.name %in% names(se.obj@metadata[['PRPS']][['un.supervised']][['anchor']])) {
+            se.obj@metadata[['PRPS']][['un.supervised']][['anchor']][[prps.set.name]] <- list()
+        }
+        ## check if out.put.name already exists in the PRPS$supervised$prps.set.name slot
+        if (!out.put.name %in% names(se.obj@metadata[['PRPS']][['un.supervised']][['anchor']][[prps.set.name]])) {
+            se.obj@metadata[['PRPS']][['un.supervised']][['anchor']][[prps.set.name]][[out.put.name]] <- prps.data
+        }
         printColoredMessage(message = '------------The createPrPsByAnchors function finished.',
                             color = 'white',
                             verbose = verbose)

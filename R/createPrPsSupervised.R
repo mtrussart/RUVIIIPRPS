@@ -103,6 +103,7 @@ createPrPsSupervised <- function(
         remove.na = 'both',
         save.se.obj = TRUE,
         plot.output = TRUE,
+        prps.set.name = NULL,
         verbose = TRUE
 ) {
     printColoredMessage(message = '------------The supervisedPRPS function starts:',
@@ -145,6 +146,7 @@ createPrPsSupervised <- function(
                         assess.se.obj = FALSE,
                         save.se.obj = save.se.obj,
                         remove.na = remove.na,
+                        prps.set.name = prps.set.name,
                         verbose = verbose
                     )
                 })
@@ -174,6 +176,7 @@ createPrPsSupervised <- function(
                     assess.se.obj = FALSE,
                     save.se.obj = save.se.obj,
                     remove.na = remove.na,
+                    prps.set.name = prps.set.name,
                     verbose = verbose
                 )
             }
@@ -208,6 +211,7 @@ createPrPsSupervised <- function(
                         save.se.obj = save.se.obj,
                         pseudo.count = pseudo.count,
                         remove.na = remove.na,
+                        prps.set.name = prps.set.name,
                         verbose = verbose
                     )
                 })
@@ -236,6 +240,7 @@ createPrPsSupervised <- function(
                     save.se.obj = save.se.obj,
                     pseudo.count = pseudo.count,
                     remove.na = remove.na,
+                    prps.set.name = prps.set.name,
                     verbose = verbose
                 )
             }
@@ -257,21 +262,18 @@ createPrPsSupervised <- function(
                 list(
                     categorical.uv.prps = categorical.uv.prps,
                     continuous.uv.prps = continuous.uv.prps,
-                    all.prps = cbind(categorical.uv.prps.all, continuous.uv.prps.all)
-                )
+                    all.prps = cbind(categorical.uv.prps.all, continuous.uv.prps.all))
             )
         } else if (length(continuous.uv) > 0 &
                    length(categorical.uv) == 0) {
             return(
                 list(continuous.uv.prps = continuous.uv.prps,
-                     all.prps = continuous.uv.prps.all)
-            )
+                     all.prps = continuous.uv.prps.all))
         } else if (length(continuous.uv) == 0 &
                    length(categorical.uv) > 0) {
             return(
                 list(categorical.uv.prps = categorical.uv.prps,
-                     all.prps = categorical.uv.prps.all)
-            )
+                     all.prps = categorical.uv.prps.all))
         }
     }
 

@@ -9,7 +9,7 @@
 #' @param se.obj A SummarizedExperiment object.
 #' @param assay.name Symbol. A symbol indicating the assay name within the SummarizedExperiment object for the creation
 #' of PRPS data. The assay must be the one that will be used as data input for the RUV-III-PRPS normalization.
-#' @param approach Symbol. Indicates which method to be used.
+#' @param approach Symbol. Indicates which method to be used. The options are 'anchor' and 'mnn'.
 #' @param uv.variables Symbol. A symbol specifying the name of columns in the sample annotation of the SummarizedExperiment
 #' object. This variable can to be categorical or continuous variable. If a continuous variable is provide, this will be
 #' divided into groups using the clusteintf method.
@@ -85,7 +85,7 @@
 #' @importFrom tidyr %>%
 #' @export
 
-createPrPsUnSupervised<- function(
+createPrPsUnSupervised <- function(
         se.obj,
         assay.name,
         approach = 'anchor',
