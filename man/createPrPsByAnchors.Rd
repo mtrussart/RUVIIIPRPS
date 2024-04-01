@@ -34,6 +34,7 @@ createPrPsByAnchors(
   assess.se.obj = TRUE,
   remove.na = "assays",
   save.se.obj = TRUE,
+  prps.set.name = NULL,
   verbose = TRUE
 )
 }
@@ -117,6 +118,8 @@ the checkSeObj function for more details.}
 
 \item{save.se.obj}{Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment
 object or to output the result as list. By default it is set to TRUE.}
+
+\item{prps.set.name}{Symbol.}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }

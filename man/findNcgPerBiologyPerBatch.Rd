@@ -41,6 +41,7 @@ findNcgPerBiologyPerBatch(
   assess.variables = TRUE,
   remove.na = "both",
   save.se.obj = TRUE,
+  output.name = NULL,
   verbose = TRUE
 )
 }
@@ -156,6 +157,9 @@ samples that contains NA or missing values for any 'bio.variables' and 'uv.varia
 
 \item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class object 'se.obj' or
 to output the result. By default it is set to TRUE.}
+
+\item{output.name}{Symbol. A representation for the output's name. If set to 'NULL', the function will choose a name
+automatically.}
 
 \item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
 }

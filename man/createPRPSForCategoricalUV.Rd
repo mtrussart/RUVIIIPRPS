@@ -25,6 +25,7 @@ createPrPsForCategoricalUV(
   cont.cor.coef = c(0.95, 0.95),
   plot.prps.map = TRUE,
   save.se.obj = TRUE,
+  prps.set.name = NULL,
   verbose = TRUE
 )
 }
@@ -98,6 +99,8 @@ By default they are both set to 0.7.}
 
 \item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
 object 'se.obj' or to output the result, by default it is set to TRUE.}
+
+\item{prps.set.name}{Symbol.}
 
 \item{verbose}{Logical. Indicates whether to show or reduce the level of output or
 messages displayed during the execution of the functions, by default it is set to TRUE.}

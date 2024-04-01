@@ -2,7 +2,7 @@
 % Please edit documentation in R/findNcgUnSupervised.R
 \name{findNcgsUnSupervised}
 \alias{findNcgsUnSupervised}
-\title{Find a set of negative control genes (NCG).}
+\title{Find a set of negative control genes (NCG) unsupervised.}
 \usage{
 findNcgsUnSupervised(
   se.obj,
@@ -10,9 +10,11 @@ findNcgsUnSupervised(
   uv.variables,
   nb.ncg = 10,
   ncg.selection.method = "AbsNoneOverlap",
-  grid.nb = 1,
   top.rank.bio.genes = 50,
-  top.rank.uv.genes = 50,
+  top.rank.uv.genes = 80,
+  grid.nb = 1,
+  grid.group = "uv",
+  grid.direction = "decrease",
   min.sample.for.aov = 3,
   min.sample.for.correlation = 10,
   normalization = "CPM",
@@ -30,11 +32,9 @@ findNcgsUnSupervised(
   apply.log = TRUE,
   pseudo.count = 1,
   assess.se.obj = TRUE,
-  assess.variables = TRUE,
-  cat.cor.coef = c(0.95, 0.95),
-  cont.cor.coef = c(0.95, 0.95),
   save.se.obj = TRUE,
   remove.na = "both",
+  output.name = NULL,
   verbose = TRUE
 )
 }
@@ -62,10 +62,6 @@ genes of the 'top.rank.uv.genes' and 'top.rank.bio.genes'. 'noneOverlap' is the 
 of the 'top.rank.uv.genes' and at least 'top.rank.bio.genes'. The F-statistics for biological and UV
 are first ranked.Then options are Prod (product), Sum, Average,}
 
-\item{grid.nb}{Numeric. Indicates the percentage for grid search when the ncg.selection.method is
-'noneOverlap'. In the 'noneOverlap' approach, the grid search starts with the initial
-'top.rank.uv.genes' value an add the grid.nb in each loop to find the 'nb.ncg'.}
-
 \item{top.rank.bio.genes}{Numeric.Indicates the percentage of top ranked genes that are highly affected
 by the biological variation. This is required to be specified when the 'ncg.selection.method' is
 either 'noneOverlap' or 'AbsNoneOverlap'.}
@@ -73,6 +69,14 @@ either 'noneOverlap' or 'AbsNoneOverlap'.}
 \item{top.rank.uv.genes}{Numeric.Indicates the percentage of top ranked genes that are highly affected
 by the unwanted variation variables. This is required to be specified when the 'ncg.selection.method' is
 either 'noneOverlap' or 'AbsNoneOverlap'.}
+
+\item{grid.nb}{Numeric. Indicates the percentage for grid search when the ncg.selection.method is
+'noneOverlap'. In the 'noneOverlap' approach, the grid search starts with the initial
+'top.rank.uv.genes' value an add the grid.nb in each loop to find the 'nb.ncg'.}
+
+\item{grid.group}{TTTT}
+
+\item{grid.direction}{TTTT}
 
 \item{min.sample.for.aov}{Numeric.Indicates the minimum number of samples to perform correlation analyses between continuous sources
 of variation (biological and unwanted variation) with individual gene expression.}
@@ -124,20 +128,6 @@ centering is done by subtracting the column means of the assay from their corres
 
 \item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment class object or not.}
 
-\item{assess.variables}{Logical. Indicates whether to assess the association between the biological and unwanted
-variation variables separately. Refer to the variablesCorrelation function for more details. Th default is FALSE.}
-
-\item{cat.cor.coef}{Vector of two numerical values. Indicates the cut-off of the correlation coefficient between each pair of
-categorical variables. The first one is between each pair of 'uv.variables' and the second one is between each pair of 'bio.variables'.
-The correlation is computed by the function ContCoef from the DescTools package. If the correlation of a pair of variable is higher than
-the cut-off, then only the variable that has the highest number of factor will be kept and the other one will be excluded from the
-remaining analysis. By default they are both set to 0.7.}
-
-\item{cont.cor.coef}{Vector of two numerical values. Indicates the cut-off of the Spearman correlation coefficient between each pair of
-continuous variables. The first one is between each pair of 'uv.variables' and the second one is between each pair of 'bio.variables'.
-If the correlation of a pair of variable is higher than the cut-off, then only the variable that has the highest variance will
-be kept and the other one will be excluded from the remaining analysis. By default they are both set to 0.7.}
-
 \item{save.se.obj}{Logical. Indicates whether to save the result of the function in the metadata of the SummarizedExperiment object or
 to output the result. The default is TRUE.}
 
@@ -152,9 +142,9 @@ Either the SummarizedExperiment object containing the a set of negative control 
 the selected negative control genes
 }
 \description{
-This function uses the correlation and ANOVA analyses across all samples to find a set of genes as negative control
-genes for RUV-III-PRPS normalization. The correlation and ANOVA are used to find genes that are highly affected by
-continuous and categorical sources of variation respectively. The function selects genes as NCG that show possible
+This function uses the gene-level correlation and ANOVA analyses across all samples to find a set of genes as negative
+control genes for the RUV-III-PRPS normalization. The correlation and ANOVA are used to find genes that are highly affected
+by continuous and categorical sources of variation respectively. The function selects genes as NCG that show possible
 high correlation coefficients and F-statistics with the sources of unwanted variation and low correlation coefficients
 and F-statistics with the sources of biological variation. The function uses different approaches to perform the final selection.
 }

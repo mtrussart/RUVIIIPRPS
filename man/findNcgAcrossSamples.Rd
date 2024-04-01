@@ -35,6 +35,7 @@ findNcgAcrossSamples(
   cat.cor.coef = c(0.95, 0.95),
   cont.cor.coef = c(0.95, 0.95),
   save.se.obj = TRUE,
+  output.name = NULL,
   remove.na = "both",
   verbose = TRUE
 )
@@ -141,6 +142,9 @@ be kept and the other one will be excluded from the remaining analysis. By defau
 
 \item{save.se.obj}{Logical. Indicates whether to save the result of the function in the metadata of the SummarizedExperiment object or
 to output the result. The default is TRUE.}
+
+\item{output.name}{Symbol. A representation for the output's name. If set to 'NULL', the function will choose a name
+automatically.}
 
 \item{remove.na}{Symbol. Indicates whether to remove NA or missing values from either the 'assays', the 'sample.annotation',
 'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If 'sample.annotation' is selected, the

@@ -43,6 +43,7 @@ findNcgSupervised(
   cont.cor.coef = c(0.95, 0.95),
   remove.na = "both",
   save.se.obj = TRUE,
+  output.name = NULL,
   verbose = TRUE
 )
 }
@@ -174,6 +175,9 @@ will be excluded. By default, it is set to both'.}
 
 \item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class object
 'se.obj' or to output the result. By default it is set to TRUE.}
+
+\item{output.name}{Symbol. A representation for the output's name. If set to 'NULL', the function will choose a name
+automatically.}
 
 \item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
 }

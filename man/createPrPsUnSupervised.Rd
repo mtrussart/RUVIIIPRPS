@@ -53,7 +53,7 @@ createPrPsUnSupervised(
 \item{assay.name}{Symbol. A symbol indicating the assay name within the SummarizedExperiment object for the creation
 of PRPS data. The assay must be the one that will be used as data input for the RUV-III-PRPS normalization.}
 
-\item{approach}{Symbol. Indicates which method to be used.}
+\item{approach}{Symbol. Indicates which method to be used. The options are 'anchor' and 'mnn'.}
 
 \item{uv.variables}{Symbol. A symbol specifying the name of columns in the sample annotation of the SummarizedExperiment
 object. This variable can to be categorical or continuous variable. If a continuous variable is provide, this will be

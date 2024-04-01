@@ -5,7 +5,7 @@
 \title{Create a SummarizedExperiment object.}
 \usage{
 createSeObj(
-  data.sets,
+  data = NULL,
   raw.count.assay.name = NULL,
   remove.lowly.expressed.genes = FALSE,
   count.cutoff = 10,
@@ -28,7 +28,7 @@ createSeObj(
 )
 }
 \arguments{
-\item{data.sets}{List. A list containing assay(s) or expression data. For individual datasets, genes should be arranged
+\item{data}{List. A list containing assay(s) or expression data. For individual datasets, genes should be arranged
 in rows and samples in columns. If multiple datasets are provided, ensure that the row names of the assays are in the
 same order.}
 

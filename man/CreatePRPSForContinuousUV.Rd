@@ -23,6 +23,7 @@ createPrPsForContinuousUV(
   remove.na = "both",
   save.se.obj = TRUE,
   plot.output = TRUE,
+  prps.set.name = NULL,
   verbose = TRUE
 )
 }
@@ -86,6 +87,8 @@ By default it is set to TRUE.}
 object 'se.obj' or to output the result, by default it is set to TRUE.}
 
 \item{plot.output}{description}
+
+\item{prps.set.name}{Symbol.}
 
 \item{verbose}{Logical. Indicates whether to show or reduce the level of output or
 messages displayed during the execution of the functions, by default it is set to TRUE.}

@@ -25,6 +25,7 @@ createPrPsSupervised(
   remove.na = "both",
   save.se.obj = TRUE,
   plot.output = TRUE,
+  prps.set.name = NULL,
   verbose = TRUE
 )
 }

@@ -25,6 +25,7 @@ createPrPsByMnn(
   assess.se.obj = TRUE,
   remove.na = "both",
   save.se.obj = TRUE,
+  prps.set.name = NULL,
   verbose = TRUE
 )
 }

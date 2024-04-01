@@ -29,6 +29,7 @@ findNcgByTwoWayAnova(
   assess.variables = TRUE,
   remove.na = "both",
   save.se.obj = TRUE,
+  output.name = NULL,
   verbose = TRUE
 )
 }
@@ -112,6 +113,9 @@ variables separately.}
 
 \item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment object or
 to output the result. By default it is set to TRUE.}
+
+\item{output.name}{Symbol. A representation for the output's name. If set to 'NULL', the function will choose a name
+automatically.}
 
 \item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
 }
