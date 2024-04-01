@@ -74,7 +74,7 @@
 #' @return A SummarizedExperiment object containing assay(s) and also samples annotation, gene annotation and metadata
 #' if there are specified.
 
-#' @importFrom SummarizedExperiment SummarizedExperiment assay rowData
+#' @importFrom SummarizedExperiment SummarizedExperiment assay rowData colData
 #' @importFrom tidyestimate filter_common_genes estimate_score
 #' @importFrom biomaRt getBM useMart useDataset
 #' @importFrom singscore rankGenes simpleScore
@@ -85,7 +85,7 @@
 #' @importFrom edgeR cpm
 #' @export
 
-createSeObj <- function(
+prepareSeObj <- function(
         data = NULL,
         raw.count.assay.name = NULL,
         remove.lowly.expressed.genes = FALSE,
