@@ -224,7 +224,7 @@ assessVariation <- function(
             function(x){
                 med <- abs(se.obj@metadata$metric[[x]]$RLE$rle.data$rle.med)
                 med.qun <- quantile(x = med, probs = seq(.25, 1, .25))
-                1 - c(med.qun[[2]]/c(med.qun[[3]] - med.qun[[1]]) )
+                c(med.qun[[2]]/c(med.qun[[3]] - med.qun[[1]]))
             })
         names(rle.med.scores) <- assay.names
         rle.iqr.scores <- sapply(
@@ -233,7 +233,7 @@ assessVariation <- function(
                 iqr <- se.obj@metadata$metric[[x]]$RLE$rle.data$rle.iqr
                 iqr.qun.0.5 <- quantile(x = iqr, probs = .5)
                 iqr.qun.0.1_0.9 <- quantile(x = iqr, probs = c(0.1,0.9))
-                1 - c(c(iqr.qun.0.1_0.9[[2]] - iqr.qun.0.1_0.9[[1]])/iqr.qun.0.5)
+                c(c(iqr.qun.0.1_0.9[[2]] - iqr.qun.0.1_0.9[[1]])/iqr.qun.0.5)
             })
         names(rle.iqr.scores) <- assay.names
     }else {
@@ -496,7 +496,8 @@ assessVariation <- function(
                 save.se.obj = TRUE,
                 verbose = verbose)
             for(j in assay.names){
-                sil.scores[[i]][j] <- se.obj@metadata$metric[[j]]$Silhouette$sil.euclidian[[i]]$sil.coef
+                x <- se.obj@metadata$metric[[j]]$Silhouette$sil.euclidian[[i]]$sil.coef
+                sil.scores[[i]][j] <- c(x+1)/2
             }
         }
     } else sil.scores <- NULL
