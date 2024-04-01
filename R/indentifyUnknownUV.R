@@ -101,7 +101,7 @@
 #' @importFrom NbClust NbClust
 #' @importFrom stats as.formula
 #' @importFrom dplyr arrange
-#' @importFrom GGally ggpairs
+#' @importFrom GGally ggpairs wrap
 #' @importFrom RColorBrewer brewer.pal.info
 #' @import ggplot2
 #' @export
