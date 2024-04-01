@@ -125,7 +125,7 @@ plotARI <- function(
                     geom_col(aes(y = all.ari[[x]], x = 1)) +
                     ylab('Adjusted rand index ') +
                     xlab(x) +
-                    ggtitle(paste0('ARI, data:', x, 'variable:', variables)) +
+                    ggtitle(variables) +
                     theme(
                         panel.background = element_blank(),
                         axis.line = element_line(colour = 'black', linewidth = 1),
@@ -151,11 +151,14 @@ plotARI <- function(
                     everything(),
                     names_to = 'datasets',
                     values_to = 'ari')
+            overall.single.ari.plot$datasets <- factor(
+                x =  overall.single.ari.plot$datasets,
+                levels = assay.names)
             overall.single.ari.plot <- ggplot(overall.single.ari.plot, aes(x = datasets, y = ari)) +
                 geom_col() +
                 ylab('Adjusted rand index ') +
                 xlab('Datasets') +
-                ggtitle(paste0('ARI, variable:, ', variables)) +
+                ggtitle(variables) +
                 theme(
                     panel.background = element_blank(),
                     axis.line = element_line(colour = 'black', linewidth = 1),
@@ -226,7 +229,6 @@ plotARI <- function(
                                              vjust = 0) +
                     xlab(paste0('Adjusted rand index (', variables[1], ')')) +
                     ylab(paste0('Adjusted rand index (', variables[2], ')')) +
-                    ggtitle(paste0('Adjusted rand index')) +
                     theme(
                         panel.background = element_blank(),
                         axis.line = element_line(colour = 'black', linewidth = 1),
@@ -258,7 +260,6 @@ plotARI <- function(
                                          vjust = 0) +
                 xlab(paste0('Adjusted rand index (', variables[1], ')')) +
                 ylab(paste0('Adjusted rand index (', variables[2], ')')) +
-                ggtitle(paste0('Adjusted rand index')) +
                 theme(
                     panel.background = element_blank(),
                     axis.line = element_line(colour = 'black', linewidth = 1),

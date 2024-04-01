@@ -119,7 +119,7 @@ plotSilhouette <- function(
                     geom_col(aes(y = all.silhouette[[x]], x = 1)) +
                     ylab('Silhouette ') +
                     xlab(x) +
-                    ggtitle(paste0('Silhouette, ', variables)) +
+                    ggtitle(variables) +
                     theme(
                         panel.background = element_blank(),
                         axis.line = element_line(colour = 'black', linewidth = 1),
@@ -129,7 +129,7 @@ plotSilhouette <- function(
                         axis.text.x = element_text(size = 0),
                         axis.text.y = element_text(size = 12)
                     )
-                if(plot.output)
+                if(plot.output & length(assay.names) == 1)
                     print(p.silhouette)
             })
         names(all.single.silhouette.plots) <- levels(assay.names)
@@ -147,12 +147,15 @@ plotSilhouette <- function(
                     everything(),
                     names_to = 'datasets',
                     values_to = 'silhou.coff')
+            overall.single.silhouette.plot$datasets <- factor(
+                x = overall.single.silhouette.plot$datasets,
+                levels = assay.names)
             overall.single.silhouette.plot <- ggplot(overall.single.silhouette.plot,
                        aes(x = datasets, y = silhou.coff)) +
                 geom_col() +
-                ylab('Silhouette coefficient ') +
+                ggtitle(variables) +
                 xlab('Datasets') +
-                ggtitle(paste0('Silhouette, variable:', variables)) +
+                ylab('Silhouette coefficient ') +
                 theme(
                     panel.background = element_blank(),
                     axis.line = element_line(colour = 'black', linewidth = 1),
@@ -219,7 +222,6 @@ plotSilhouette <- function(
                                     vjust = 0) +
                     xlab(paste0('Silhouette (', variables[1], ')')) +
                     ylab(paste0('Silhouette (', variables[2], ')')) +
-                    ggtitle(paste0('Silhouette')) +
                     theme(
                         panel.background = element_blank(),
                         axis.line = element_line(colour = 'black', linewidth = 1),
@@ -249,7 +251,6 @@ plotSilhouette <- function(
                                 vjust = 0) +
                 xlab(paste0('Silhouette (', variables[1], ')')) +
                 ylab(paste0('Silhouette (', variables[2], ')')) +
-                ggtitle(paste0('Silhouette')) +
                 theme(
                     panel.background = element_blank(),
                     axis.line = element_line(colour = 'black', linewidth = 1),

@@ -151,7 +151,7 @@ plotPCVariableCorrelation <- function(
                 geom_point(color = 'gray40', size = 3) +
                 xlab('Cumulative PCs') +
                 ylab('Vector correlations') +
-                ggtitle(paste0('VCA, data:', x, ', variable:', variable )) +
+                ggtitle(variable) +
                 scale_x_continuous(breaks = seq_len(nb.pcs), labels = c('PC1', paste0('PC1:', 2:nb.pcs)) ) +
                 scale_y_continuous(breaks = scales::pretty_breaks(n = 5), limits = c(0,1)) +
                 theme(
@@ -188,7 +188,7 @@ plotPCVariableCorrelation <- function(
             geom_point(aes(color = datasets), size = 3) +
             xlab('Cumulative PCs') +
             ylab('Vector correlations') +
-            ggtitle(paste0('VCA, variable:', variable)) +
+            ggtitle(variable) +
             scale_color_manual(values = c(data.sets.colors), name = 'Datasets') +
             scale_x_continuous(breaks = seq_len(nb.pcs), labels = c('PC1', paste0('PC1:', 2:nb.pcs)) ) +
             scale_y_continuous(breaks = scales::pretty_breaks(n = 5), limits = c(0,1)) +

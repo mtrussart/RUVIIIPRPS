@@ -87,7 +87,7 @@ plotGenesVariableAnova <- function(
             aov.fvals <- all.aov.fvals[[x]]
             p.corr.coeff <- ggplot() +
                 geom_boxplot(aes(y = aov.fvals, x = 1)) +
-                ggtitle(paste0('ANOVA, data:',x, 'variable:', variable)) +
+                ggtitle(variable) +
                 xlab(x) +
                 ylab(expression(Log[2]~'F-statistic')) +
                 geom_hline(yintercept = 0) +
@@ -112,7 +112,7 @@ plotGenesVariableAnova <- function(
                 values_to = 'aov.fvals')
         overall.aov.fvals.plot <- ggplot(all.aov.fvals, aes(x = datasets, y = aov.fvals)) +
             geom_boxplot(outlier.colour = 'gray') +
-            ggtitle(paste0('ANOVA, variable:', variable)) +
+            ggtitle(variable) +
             xlab('Datasets') +
             ylab(expression(Log[2]~'F-statistics')) +
             geom_hline(yintercept = 0) +

@@ -113,7 +113,7 @@ plotGenesVariableCorrelation <- function(
                 ylab('Spearman correlation coefficient') +
                 xlab(x) +
                 geom_hline(yintercept = 0) +
-                ggtitle(paste0('Correlation, data:', x, 'variable:', variable)) +
+                ggtitle(variable) +
                 theme(
                     panel.background = element_blank(),
                     axis.line = element_line(colour = 'black', linewidth = 1),
@@ -141,12 +141,13 @@ plotGenesVariableCorrelation <- function(
                 dplyr::everything(),
                 names_to = 'datasets',
                 values_to = 'corr.coff')
+        all.corr.coeff$datasets <- factor(x = all.corr.coeff$datasets, levels = assay.names)
         overall.corr.coeff.plot <- ggplot(all.corr.coeff, aes(x = datasets, y = corr.coff)) +
             geom_boxplot(outlier.color = 'gray') +
             ylab('Spearman correlation coefficients') +
             xlab('Datasets') +
             geom_hline(yintercept = 0) +
-            ggtitle(paste0('Correlation, variable:', variable)) +
+            ggtitle(variable) +
             theme(
                 panel.background = element_blank(),
                 axis.line = element_line(colour = 'black', linewidth = 1),

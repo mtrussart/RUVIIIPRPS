@@ -170,7 +170,7 @@ plotRleVariable <- function(
                     verbose = verbose)
                 p.rle <- ggplot(rle.med.data, aes(x = var, y = rle.medians)) +
                     geom_point(size = points.size, color = 'gray40', stroke = .2, pch = 21, alpha = .6, size = 1.5) +
-                    ggtitle(paste0('Data: ', x)) +
+                    ggtitle(x) +
                     xlab(variable) +
                     ylab('RLE medians') +
                     geom_smooth(formula = y ~ x, method = 'lm', colour = "darkgreen") +
@@ -197,7 +197,7 @@ plotRleVariable <- function(
                 p.rle <- ggplot(rle.med.data, aes(x = var, y = rle.medians)) +
                     geom_boxplot(outlier.color = 'gray') +
                     stat_compare_means(method = 'anova', label.x  = 1, label.y = ylim.rle.med.plot[2]-.1, color = 'navy') +
-                    ggtitle(paste0('Data: ', x)) +
+                    ggtitle(x) +
                     xlab(variable) +
                     ylab('RLE medians') +
                     coord_cartesian(ylim = ylim.rle.med.plot) +
@@ -254,7 +254,7 @@ plotRleVariable <- function(
                     verbose = verbose)
                 p.rle <- ggplot(rle.iqr.data, aes(x = var, y = rle.iqr)) +
                     geom_point(size = points.size, color = 'gray40', stroke = .2, pch = 21, alpha = .6, size = 1.5) +
-                    ggtitle(paste0('Data: ', x)) +
+                    ggtitle(x) +
                     xlab(variable) +
                     ylab('RLE IQRs') +
                     geom_smooth(formula = y ~ x, method = 'lm', colour = "darkgreen") +
@@ -278,7 +278,7 @@ plotRleVariable <- function(
                 p.rle <- ggplot(rle.iqr.data, aes(x = var, y = rle.iqr)) +
                     geom_boxplot(outlier.color = 'gray') +
                     stat_compare_means(method = 'anova', label.x  = 1, label.y = ylim.rle.iqr.plot[2]-.1, color = 'navy') +
-                    ggtitle(paste0('Data: ', x)) +
+                    ggtitle(x) +
                     xlab(variable) +
                     ylab('RLE IQRs') +
                     coord_cartesian(ylim = ylim.rle.iqr.plot) +

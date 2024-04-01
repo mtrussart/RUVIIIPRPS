@@ -115,7 +115,6 @@ plotPCA <- function(
         pca.plot.colors <- variable.colors
     }
 
-
     # obtain PCs from the SummarizedExperiment object ####
     printColoredMessage(
         message = paste0('Obtain the first ', nb.pcs, ' from the SummarizedExperiment object.'),
@@ -319,7 +318,8 @@ plotPCA <- function(
                             axis.text.y = element_text(size = 10),
                             strip.text.x = element_text(size = 12),
                             legend.position = 'none')
-                    plot.p
+                    if(isTRUE(plot.output) & length(assay.names) == 1)
+                        print(plot.p)
                 })
             names(all.boxplot.pca.plots) <- levels(assay.names)
             if(length(assay.names) > 1){
@@ -327,6 +327,8 @@ plotPCA <- function(
                     plotlist = all.boxplot.pca.plots,
                     nrow = length(levels(assay.names)),
                     ncol = 1 )
+                if(isTRUE(plot.output))
+                    suppressMessages(print(overall.boxplot.pca.plot))
             }
         }
         ### continuous variable ####
@@ -378,7 +380,8 @@ plotPCA <- function(
                         axis.text.y = element_text(size = 8),
                         strip.text.x = element_text(size = 10),
                         legend.position = 'none')
-                plot.p
+                if(isTRUE(plot.output) & length(assay.names) == 1)
+                    print(plot.p)
             })
         names(all.scat.var.pca.plots) <- levels(assay.names)
         if(length(assay.names) > 1){
