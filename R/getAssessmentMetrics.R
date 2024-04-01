@@ -25,6 +25,11 @@ getAssessmentMetrics <- function(
         plot.output = TRUE,
         save.se.obj = TRUE) {
     categorical.var <- continuous.var <- NULL
+
+    if(sum(variables %in% colnames(colData(se.obj))) != length(variables)){
+        stop('All or some "variables" cannot be found in the SummarizedExperiment object.')
+    }
+
     if (!is.null(variables)) {
         var.class <- sapply(
             variables,
