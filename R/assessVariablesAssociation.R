@@ -239,7 +239,9 @@ assessVariablesAssociation <- function(
                 color = 'blue',
                 verbose = verbose)
         } else {
-            printColoredMessage(message = 'There is only one source of categorical variable.')
+            printColoredMessage(message = 'There is only one source of categorical variable.',
+                                color = 'blue',
+                                verbose = verbose)
         }
         # assess the correlation between continuous UV ####
         if (length(continuous.uv) > 1) {
