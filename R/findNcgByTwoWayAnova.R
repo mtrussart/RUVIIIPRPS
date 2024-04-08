@@ -12,7 +12,7 @@
 
 #' @details
 #' The function uses 5 ways to summarize two gene-level F-statistics obtained for the biological and unwanted variation
-#' separately. The options are 'Prod', 'Sum', 'Average', 'AbsNoneOverlap' or 'noneOverlap'. The 'Prod', 'Sum', 'Average'
+#' separately. The options are 'Prod', 'Sum', 'Average', 'auto' or 'non.overlap'. The 'Prod', 'Sum', 'Average'
 #' are based on the rank of the gene-level F-statistics. The 'prod' stands for the product of of the ranks, 'Sum' stands
 #' for the sum of the ranks and the 'Average' stands for the average of the rank.
 
@@ -32,17 +32,17 @@
 #' set should have high F-statistics for the unwanted variation variables and low F-statistics for the biological variables.
 #' The function ranks the F-statistics obtained for the biological variable and negative of the F-statistics obtained for
 #' the unwanted variables. Then this functions offers 5 ways to summarize the ranks of the two F-statistics. Prod' is the
-#' product of the ranks. 'Sum', is the sum of the ranks. 'Average' is the average of the ranks. 'AbsNoneOverlap' is the
-#' none overlapped genes of the 'top.rank.uv.genes' and 'top.rank.bio.genes'. 'noneOverlap' is the none overlapped genes
+#' product of the ranks. 'Sum', is the sum of the ranks. 'Average' is the average of the ranks. 'auto' is the
+#' none overlapped genes of the 'top.rank.uv.genes' and 'top.rank.bio.genes'. 'non.overlap' is the none overlapped genes
 #' of the 'top.rank.uv.genes' and at least 'top.rank.bio.genes'.
-#' @param grid.nb Numeric. Indicates the percentage for grid search when the ncg.selection.method is noneOverlap'. In the
-#' 'noneOverlap' approach, the grid search starts with the initial top.rank.uv.genes' value an add the grid.nb in each
+#' @param grid.nb Numeric. Indicates the percentage for grid search when the ncg.selection.method is non.overlap'. In the
+#' 'non.overlap' approach, the grid search starts with the initial top.rank.uv.genes' value an add the grid.nb in each
 #' loop to find the 'nb.ncg'.
 #' @param top.rank.bio.genes Numeric. Indicates the percentage of top ranked genes that are highly affected by the biological
-#' variation. This is required to be specified when the 'ncg.selection.method' is either 'noneOverlap' or 'AbsNoneOverlap'.
+#' variation. This is required to be specified when the 'ncg.selection.method' is either 'non.overlap' or 'auto'.
 #' @param top.rank.uv.genes Numeric. Indicates the percentage of top ranked genes that are highly affected by the unwanted
-#' variation variables. This is required to be specified when the 'ncg.selection.method' is either 'noneOverlap' or
-#' 'AbsNoneOverlap'.
+#' variation variables. This is required to be specified when the 'ncg.selection.method' is either 'non.overlap' or
+#' 'auto'.
 #' @param bio.clustering.method Symbols. Indicates which clustering methods should be used to group continuous sources
 #' of biological variation.
 #' @param nb.bio.clusters Numeric.Indicates the number of clusters for each continuous  sources of biological variation,
@@ -93,11 +93,11 @@ findNcgByTwoWayAnova <- function(
         assay.name,
         bio.variables,
         uv.variables,
-        nb.ncg = 10,
-        ncg.selection.method = 'noneOverlap',
+        nb.ncg = .1,
+        ncg.selection.method = 'non.overlap',
         grid.nb = 1,
-        top.rank.bio.genes = 70,
-        top.rank.uv.genes = 70,
+        top.rank.bio.genes = .7,
+        top.rank.uv.genes = .7,
         bio.clustering.method = 'kmeans',
         nb.bio.clusters = 3,
         uv.clustering.method = 'kmeans',
@@ -117,7 +117,7 @@ findNcgByTwoWayAnova <- function(
         verbose = TRUE
         ){
     printColoredMessage(
-        message = '------------The supervisedFindNcgTWAnova function starts:',
+        message = '------------The findNcgByTwoWayAnova function starts:',
         color = 'white',
         verbose = verbose)
 
@@ -136,8 +136,8 @@ findNcgByTwoWayAnova <- function(
         stop('Any variables must be either in "bio.variables" or "uv.variables".')
     } else if (nb.ncg >= 100 | nb.ncg <= 0){
         stop('The "nb.ncg" must be a positve value 0 < nb.ncg =< 100.')
-    } else if (!ncg.selection.method %in% c('Prod', 'Sum', 'Average', 'AbsNoneOverlap', 'noneOverlap')){
-        stop('The ncg.selection.method should be one of "Prod", "Sum", "Average", "AbsNoneOverlap" or "noneOverlap".')
+    } else if (!ncg.selection.method %in% c('Prod', 'Sum', 'Average', 'auto', 'non.overlap')){
+        stop('The ncg.selection.method should be one of "Prod", "Sum", "Average", "auto" or "non.overlap".')
     } else if (top.rank.bio.genes > 100 | top.rank.bio.genes <= 0){
         stop('The "top.rank.bio.genes" should be a positve value  0 < top.rank.bio.genes < 100.')
     } else if (top.rank.uv.genes > 100 | top.rank.uv.genes <= 0){
@@ -154,29 +154,21 @@ findNcgByTwoWayAnova <- function(
             verbose = verbose)
     }
 
-    # data transformation and normalization ####
+    # data transformation ####
     printColoredMessage(
-        message = '-- Data transformation and normalization:',
+        message = '-- Data transformation:',
         color = 'magenta',
         verbose = verbose)
     ## apply log ####
     if (isTRUE(apply.log) & !is.null(pseudo.count)){
         printColoredMessage(
-            message = paste0(
-                'Applying log2 + ',
-                pseudo.count,
-                ' (pseudo.count) on the ',
-                assay.name,
-                ' data.'),
+            message = paste0('Applying log2 + ', pseudo.count, ' (pseudo.count) on the ', assay.name, ' data.'),
             color = 'blue',
             verbose = verbose)
         expr.data <- log2(assay(x = se.obj, i = assay.name) + pseudo.count)
     } else if (isTRUE(apply.log) & is.null(pseudo.count)){
         printColoredMessage(
-            message = paste0(
-                'Applying log2 on the ',
-                assay.name,
-                ' data.'),
+            message = paste0('Applying log2 on the ', assay.name, ' data.'),
             color = 'blue',
             verbose = verbose)
         expr.data <- log2(assay(x = se.obj, i = assay.name))
@@ -235,15 +227,19 @@ findNcgByTwoWayAnova <- function(
         t(sapply(c(1:nrow(se.obj)),
                  function(x) all.aov[[x]]$`F value`[1:2]))
         )
+    all.aov <- round(x = all.aov, digits = 1)
     colnames(all.aov) <- c('Biology', 'UV')
     row.names(all.aov) <- row.names(se.obj)
-    all.aov$bio.rank <- rank(all.aov$Biology)
-    all.aov$uv.rank <- rank(-all.aov$UV)
+    set.seed(2190)
+    all.aov$bio.rank <- rank(x = all.aov$Biology, ties.method = 'random')
+    set.seed(2190)
+    all.aov$uv.rank <- rank(x = -all.aov$UV, ties.method = 'random')
     # selection of NCG ####
     printColoredMessage(
         message = '-- Selection of a set of genes as NCG:',
         color = 'magenta',
         verbose = verbose)
+    ## product, average and sum of ranks ####
     if (ncg.selection.method %in% c('Prod', 'Average', 'Sum')){
         if(ncg.selection.method == 'Prod'){
             printColoredMessage(
@@ -254,7 +250,7 @@ findNcgByTwoWayAnova <- function(
             if(sum(is.infinite(all.aov$all.rank)) > 0){
                 stop('The product of ranks results in infinity values.')
             }
-        } else if (ncg.selection.method == 'Average'){
+        } else if (ncg.selection.method == 'non.overlap'){
             printColoredMessage(
                 message = 'A set of NCG will be selected based on the average of ranks.',
                 color = 'blue',
@@ -268,37 +264,42 @@ findNcgByTwoWayAnova <- function(
             all.aov$all.rank <- rowSums(all.aov[ , c('bio.rank', 'uv.rank')])
         }
         all.aov <- all.aov[order(all.aov$all.rank, decreasing = FALSE), ]
-        ncg.selected <- row.names(all.aov)[1:round(c(nb.ncg/100) * nrow(se.obj), digits = 0)]
+        ncg.selected <- row.names(all.aov)[1:round(nb.ncg * nrow(se.obj), digits = 0)]
         ncg.selected <- row.names(se.obj) %in% ncg.selected
-    } else if (ncg.selection.method == 'AbsNoneOverlap'){
+    }
+    ## non.overlap approach ####
+    if (ncg.selection.method == 'non.overlap'){
         printColoredMessage(
-            message = 'A set of NCG is selected based on the AbsNoneOverlap approach.',
+            message = 'A set of NCG is selected based on the auto approach.',
             color = 'blue',
             verbose = verbose)
         printColoredMessage(
             message = paste0(
                 'The non-overlap set of genes between top ',
-                top.rank.bio.genes,
+                top.rank.bio.genes *100,
                 '% of highly affected genes by the bioloigcal variation and top ',
-                top.rank.uv.genes,
+                top.rank.uv.genes * 100,
                 '% of highly affected genes by the unwanted variation.'),
             color = 'blue',
             verbose = verbose)
-        top.rank.bio.genes <- round(c(top.rank.bio.genes/100) * nrow(se.obj), digits = 0)
+        ### select genes affected by biological variation ####
+        top.rank.bio.genes <- round(top.rank.bio.genes * nrow(se.obj), digits = 0)
         top.bio.genes <- all.aov$bio.rank > c(nrow(se.obj) - top.rank.bio.genes)
         top.bio.genes <- row.names(all.aov)[top.bio.genes]
-        top.rank.uv.genes <- round(c(top.rank.uv.genes/100) * nrow(se.obj), digits = 0)
+        ## select genes affected by unwanted variation ####
+        top.rank.uv.genes <- round(top.rank.uv.genes * nrow(se.obj), digits = 0)
         top.uv.genes <- all.aov$uv.rank <  top.rank.uv.genes
         top.uv.genes <- row.names(all.aov)[top.uv.genes]
         ncg.selected <- top.uv.genes[!top.uv.genes %in% top.bio.genes]
         ncg.selected <- row.names(se.obj) %in% ncg.selected
-        if(sum(ncg.selected) == 0){
+        if(isTRUE(sum(ncg.selected) == 0))
             stop(paste0('The non-oevrlab genes between genes that are highly affected by batch and not biology is 0.',
                         'Please increase either "top.rank.bio.genes" or "top.rank.uv.genes" values'))
-        }
-    } else if (ncg.selection.method == 'noneOverlap'){
+    }
+    ## auto approach ####
+    if (ncg.selection.method == 'auto'){
         printColoredMessage(
-            message = 'A set of NCG is selected based on the noneOverlap approach.',
+            message = 'A set of NCG is selected based on the non.overlap approach.',
             color = 'blue',
             verbose = verbose)
         printColoredMessage(
@@ -310,15 +311,18 @@ findNcgByTwoWayAnova <- function(
                 '% of highly affected genes by the unwanted variation.'),
             color = 'blue',
             verbose = verbose)
-        nb.ncg <- round(c(nb.ncg/100) * nrow(se.obj), digits = 0)
-        top.rank.bio.genes.no <- round(c(top.rank.bio.genes/100) * nrow(se.obj), digits = 0)
+        ### select genes affected by biological variation ####
+        nb.ncg <- round(nb.ncg * nrow(se.obj), digits = 0)
+        top.rank.bio.genes.no <- round(top.rank.bio.genes * nrow(se.obj), digits = 0)
         top.bio.genes <- all.aov$bio.rank > c(nrow(se.obj) - top.rank.bio.genes.no)
         top.bio.genes <- row.names(all.aov)[top.bio.genes]
-
-        top.rank.uv.genes <- round(c(top.rank.uv.genes/100) * nrow(se.obj), digits = 0)
+        ## select genes affected by unwanted variation ####
+        top.rank.uv.genes <- round(top.rank.uv.genes * nrow(se.obj), digits = 0)
         top.uv.genes <- all.aov$uv.rank <  top.rank.uv.genes
         top.uv.genes <- row.names(all.aov)[top.uv.genes]
         ncg.selected <- top.uv.genes[!top.uv.genes %in% top.bio.genes]
+
+        ## auto search ####
         if(length(ncg.selected) >= nb.ncg){
             grid.nb <- round(c(grid.nb/100) * nrow(se.obj), digits = 0)
             pro.bar <- progress_estimated(round(top.rank.uv.genes/grid.nb, digits = 0) + 1)
@@ -460,13 +464,19 @@ findNcgByTwoWayAnova <- function(
         if(length(se.obj@metadata$NCG) == 0 ) {
             se.obj@metadata[['NCG']] <- list()
         }
+        if(!'supervised' %in% names(se.obj@metadata[['NCG']])){
+            se.obj@metadata[['NCG']][['supervised']] <- list()
+        }
+        if(!output.name %in% names(se.obj@metadata[['NCG']][['supervised']])){
+            se.obj@metadata[['NCG']][['supervised']][[output.name]] <- list()
+        }
         se.obj@metadata[['NCG']][['supervised']][[output.name]] <- ncg.selected
         printColoredMessage(
             message = 'The NCGs are saved to metadata of the SummarizedExperiment object.',
             color = 'blue',
             verbose = verbose)
         printColoredMessage(
-            message = '------------The supervisedFindNcgTWAnova function finished.',
+            message = '------------The findNcgByTwoWayAnova function finished.',
             color = 'white',
             verbose = verbose)
         return(se.obj)
@@ -476,7 +486,7 @@ findNcgByTwoWayAnova <- function(
             color = 'magenta',
             verbose = verbose)
         printColoredMessage(
-            message = '------------The supervisedFindNcgTWAnova function finished.',
+            message = '------------The findNcgByTwoWayAnova function finished.',
             color = 'white',
             verbose = verbose)
         return(ncg.selected)
