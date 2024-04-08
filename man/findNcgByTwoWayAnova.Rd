@@ -9,11 +9,11 @@ findNcgByTwoWayAnova(
   assay.name,
   bio.variables,
   uv.variables,
-  nb.ncg = 10,
-  ncg.selection.method = "noneOverlap",
+  nb.ncg = 0.1,
+  ncg.selection.method = "non.overlap",
   grid.nb = 1,
-  top.rank.bio.genes = 70,
-  top.rank.uv.genes = 70,
+  top.rank.bio.genes = 0.7,
+  top.rank.uv.genes = 0.7,
   bio.clustering.method = "kmeans",
   nb.bio.clusters = 3,
   uv.clustering.method = "kmeans",
@@ -55,20 +55,20 @@ genes, the two-way ANOVA calculates F-statistics for biological and unwanted var
 set should have high F-statistics for the unwanted variation variables and low F-statistics for the biological variables.
 The function ranks the F-statistics obtained for the biological variable and negative of the F-statistics obtained for
 the unwanted variables. Then this functions offers 5 ways to summarize the ranks of the two F-statistics. Prod' is the
-product of the ranks. 'Sum', is the sum of the ranks. 'Average' is the average of the ranks. 'AbsNoneOverlap' is the
-none overlapped genes of the 'top.rank.uv.genes' and 'top.rank.bio.genes'. 'noneOverlap' is the none overlapped genes
+product of the ranks. 'Sum', is the sum of the ranks. 'Average' is the average of the ranks. 'auto' is the
+none overlapped genes of the 'top.rank.uv.genes' and 'top.rank.bio.genes'. 'non.overlap' is the none overlapped genes
 of the 'top.rank.uv.genes' and at least 'top.rank.bio.genes'.}
 
-\item{grid.nb}{Numeric. Indicates the percentage for grid search when the ncg.selection.method is noneOverlap'. In the
-'noneOverlap' approach, the grid search starts with the initial top.rank.uv.genes' value an add the grid.nb in each
+\item{grid.nb}{Numeric. Indicates the percentage for grid search when the ncg.selection.method is non.overlap'. In the
+'non.overlap' approach, the grid search starts with the initial top.rank.uv.genes' value an add the grid.nb in each
 loop to find the 'nb.ncg'.}
 
 \item{top.rank.bio.genes}{Numeric. Indicates the percentage of top ranked genes that are highly affected by the biological
-variation. This is required to be specified when the 'ncg.selection.method' is either 'noneOverlap' or 'AbsNoneOverlap'.}
+variation. This is required to be specified when the 'ncg.selection.method' is either 'non.overlap' or 'auto'.}
 
 \item{top.rank.uv.genes}{Numeric. Indicates the percentage of top ranked genes that are highly affected by the unwanted
-variation variables. This is required to be specified when the 'ncg.selection.method' is either 'noneOverlap' or
-'AbsNoneOverlap'.}
+variation variables. This is required to be specified when the 'ncg.selection.method' is either 'non.overlap' or
+'auto'.}
 
 \item{bio.clustering.method}{Symbols. Indicates which clustering methods should be used to group continuous sources
 of biological variation.}
@@ -133,7 +133,7 @@ for the biological variation. The function uses different approaches to perform 
 }
 \details{
 The function uses 5 ways to summarize two gene-level F-statistics obtained for the biological and unwanted variation
-separately. The options are 'Prod', 'Sum', 'Average', 'AbsNoneOverlap' or 'noneOverlap'. The 'Prod', 'Sum', 'Average'
+separately. The options are 'Prod', 'Sum', 'Average', 'auto' or 'non.overlap'. The 'Prod', 'Sum', 'Average'
 are based on the rank of the gene-level F-statistics. The 'prod' stands for the product of of the ranks, 'Sum' stands
 for the sum of the ranks and the 'Average' stands for the average of the rank.
 }
