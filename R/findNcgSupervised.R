@@ -109,20 +109,16 @@
 
 #' @return a list of negative control genes.
 
-#' @importFrom Matrix colSums
-#' @importFrom dplyr left_join
 #' @importFrom SummarizedExperiment assay SummarizedExperiment
-#' @importFrom biomaRt getBM useMart useDataset
-#' @importFrom S4Vectors DataFrame
 #' @export
 
 findNcgSupervised <- function(
         se.obj,
         assay.name,
-        approach = 'TWAnova',
-        ncg.selection.method = 'noneOverlap',
         bio.variables,
         uv.variables,
+        approach = 'TWAnova',
+        ncg.selection.method = 'noneOverlap',
         nb.ncg = 10,
         grid.nb = 1,
         top.rank.bio.genes = 50,
@@ -138,12 +134,12 @@ findNcgSupervised <- function(
         regress.out.bio.variables = NULL,
         apply.log = TRUE,
         pseudo.count = 1,
+        anova.method = 'aov',
         min.sample.for.aov = 3,
-        min.sample.for.correlation = 10,
         corr.method = "spearman",
         a = 0.05,
         rho = 0,
-        anova.method = 'aov',
+        min.sample.for.correlation = 10,
         assess.ncg = TRUE,
         variables.to.assess.ncg = NULL,
         nb.pcs = 5,
@@ -157,14 +153,17 @@ findNcgSupervised <- function(
         save.se.obj = TRUE,
         output.name = NULL,
         verbose = TRUE
-){
-    printColoredMessage(message = '------------The supervisedFindNCG function starts:',
+        ){
+    printColoredMessage(message = '------------The findNcgSupervised function starts:',
                         color = 'white',
                         verbose = verbose)
+    # check inputs ####
     if(!approach %in% c('PbPbio', 'AnoCorrAs', 'TWAnova')){
         stop('The approach must be one of the "PbPbio", "AnoCorrAs" or "TWAnova".')
     }
 
+    # find NCGs ####
+    ## find NCGs using PbPbio approach ####
     if(approach == 'PbPbio'){
         ncg.set <- findNcgPerBiologyPerBatch(
             se.obj = se.obj,
@@ -201,7 +200,9 @@ findNcgSupervised <- function(
             save.se.obj = save.se.obj,
             output.name = output.name,
             verbose = verbose)
-    } else if(approach == 'AnoCorrAs'){
+    }
+    ## find NCGs using AnoCorrAs approach ####
+    if(approach == 'AnoCorrAs'){
         ncg.set <- findNcgAcrossSamples(
             se.obj = se.obj,
             assay.name = assay.name,
@@ -236,7 +237,9 @@ findNcgSupervised <- function(
             output.name = output.name,
             remove.na = remove.na,
             verbose = verbose)
-    } else if(approach == 'TWAnova'){
+    }
+    ## find NCGs using TWAnova approach ####
+    if(approach == 'TWAnova'){
         ncg.set <- findNcgByTwoWayAnova(
             se.obj = se.obj,
             assay.name = assay.name,
@@ -264,10 +267,8 @@ findNcgSupervised <- function(
             save.se.obj = save.se.obj,
             output.name = output.name,
             verbose = verbose)
-    } else {
-        stop('The approach should be one of PbPb or As')
     }
-    printColoredMessage(message = '------------The supervisedFindNCG function finished.',
+    printColoredMessage(message = '------------The findNcgSupervised function finished.',
                         color = 'white',
                         verbose = verbose)
     return(ncg.set)
