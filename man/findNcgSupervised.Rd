@@ -7,10 +7,10 @@
 findNcgSupervised(
   se.obj,
   assay.name,
-  approach = "TWAnova",
-  ncg.selection.method = "noneOverlap",
   bio.variables,
   uv.variables,
+  approach = "TWAnova",
+  ncg.selection.method = "noneOverlap",
   nb.ncg = 10,
   grid.nb = 1,
   top.rank.bio.genes = 50,
@@ -26,12 +26,12 @@ findNcgSupervised(
   regress.out.bio.variables = NULL,
   apply.log = TRUE,
   pseudo.count = 1,
+  anova.method = "aov",
   min.sample.for.aov = 3,
-  min.sample.for.correlation = 10,
   corr.method = "spearman",
   a = 0.05,
   rho = 0,
-  anova.method = "aov",
+  min.sample.for.correlation = 10,
   assess.ncg = TRUE,
   variables.to.assess.ncg = NULL,
   nb.pcs = 5,
@@ -53,6 +53,11 @@ findNcgSupervised(
 \item{assay.name}{Symbol. Indicates a name of assay in the SummarizedExperiment object to be used to find a set of
 negative control genes.}
 
+\item{bio.variables}{Symbols. Indicates the columns names that contain biological variables in the
+SummarizedExperiment object.}
+
+\item{uv.variables}{Symbols. Indicates the columns names that contains UV variables in the SummarizedExperiment object.}
+
 \item{approach}{Symbol. A symbol indicates which method should be used for selection of negative control genes.}
 
 \item{ncg.selection.method}{Symbol.Indicates how to select a set genes as NCG. For individual genes, the two-way ANOVA
@@ -64,11 +69,6 @@ Then this functions offers 5 ways to summarize the ranks of the two F-statistics
 of the 'top.rank.uv.genes' and 'top.rank.bio.genes'. 'noneOverlap' is the none overlapped genes of the 'top.rank.uv.genes'
 and at least 'top.rank.bio.genes'. The F-statistics for biological and UV are first ranked.Then options are Prod
 (product), Sum, Average.}
-
-\item{bio.variables}{Symbols. Indicates the columns names that contain biological variables in the
-SummarizedExperiment object.}
-
-\item{uv.variables}{Symbols. Indicates the columns names that contains UV variables in the SummarizedExperiment object.}
 
 \item{nb.ncg}{Numeric. Indicates the percentage of the total genes to be selected as a NCG set. The default is 10 percent.}
 
@@ -120,11 +120,11 @@ ANOVA. The default is TRUE.}
 
 \item{pseudo.count}{Numeric. A value as a pseudo count to be added to all measurements before log transformation.}
 
+\item{anova.method}{Indicates which anova method should be used to compute association between gene-level
+expression and a categorical variable. The default is 'aov'.}
+
 \item{min.sample.for.aov}{Numeric. Indicates the minimum number of samples to be present in each group before applying
 the ANOVA. The default is 3.}
-
-\item{min.sample.for.correlation}{Numeric. Indicates the minimum number of samples to be considered in each group before
-applying the correlation analysis. The default is 10.}
 
 \item{corr.method}{Symbol. Indicates which correlation method should be used to compute association between gene-level
 expression and a continuous variable. The default is 'spearman'.}
@@ -133,8 +133,8 @@ expression and a continuous variable. The default is 'spearman'.}
 
 \item{rho}{The value of the hypothesised correlation to be used in the hypothesis testing, by default it is set to 0.}
 
-\item{anova.method}{Indicates which anova method should be used to compute association between gene-level
-expression and a categorical variable. The default is 'aov'.}
+\item{min.sample.for.correlation}{Numeric. Indicates the minimum number of samples to be considered in each group before
+applying the correlation analysis. The default is 10.}
 
 \item{assess.ncg}{Logical. Indicates whether to assess the performance of selected NCGs or not. This analysis involves
 principal component analysis on the selected NCG and then explore the R^2 or vector correlation between the 'nb.pcs'
