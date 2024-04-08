@@ -328,17 +328,13 @@ createPrPsByMnn <- function(
         if (!'un.supervised' %in% names(se.obj@metadata[['PRPS']])) {
             se.obj@metadata[['PRPS']][['un.supervised']] <- list()
         }
-        ## check if metadata PRPS already exist for supervised
-        if (!'mnn' %in% names(se.obj@metadata[['PRPS']][['un.supervised']])) {
-            se.obj@metadata[['PRPS']][['un.supervised']][['mnn']] <- list()
-        }
         ## check if prps.set.name already exists in the PRPS$supervised slot
-        if (!prps.set.name %in% names(se.obj@metadata[['PRPS']][['un.supervised']][['mnn']])) {
-            se.obj@metadata[['PRPS']][['un.supervised']][['mnn']][[prps.set.name]] <- list()
+        if (!prps.set.name %in% names(se.obj@metadata[['PRPS']][['un.supervised']])) {
+            se.obj@metadata[['PRPS']][['un.supervised']][[prps.set.name]] <- list()
         }
         ## check if out.put.name already exists in the PRPS$supervised$prps.set.name slot
-        if (!out.put.name %in% names(se.obj@metadata[['PRPS']][['un.supervised']][['mnn']][[prps.set.name]])) {
-            se.obj@metadata[['PRPS']][['un.supervised']][['mnn']][[prps.set.name]][[out.put.name]] <- prps.data
+        if (!out.put.name %in% names(se.obj@metadata[['PRPS']][['un.supervised']][[prps.set.name]])) {
+            se.obj@metadata[['PRPS']][['un.supervised']][[prps.set.name]][[out.put.name]] <- prps.data
         }
         printColoredMessage(message = '------------The unsupervisedPRPSmnn function finished.',
                             color = 'white',
