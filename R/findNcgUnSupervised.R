@@ -23,18 +23,18 @@
 #' The function ranks the F-statistics obtained for the biological variable and negative of
 #' the F-statistics obtained for the unwanted variables. Then this functions offers 5 ways to
 #' summarize the ranks of the two F-statistics. Prod' is the product of the ranks. 'Sum', is
-#' the sum of the ranks. 'Average' is the average of the ranks. 'AbsNoneOverlap' is the none overlapped
-#' genes of the 'top.rank.uv.genes' and 'top.rank.bio.genes'. 'noneOverlap' is the none overlapped genes
+#' the sum of the ranks. 'Average' is the average of the ranks. 'non.overlap' is the none overlapped
+#' genes of the 'top.rank.uv.genes' and 'top.rank.bio.genes'. 'auto' is the none overlapped genes
 #' of the 'top.rank.uv.genes' and at least 'top.rank.bio.genes'. The F-statistics for biological and UV
 #' are first ranked.Then options are Prod (product), Sum, Average,
 #' @param top.rank.bio.genes Numeric.Indicates the percentage of top ranked genes that are highly affected
 #' by the biological variation. This is required to be specified when the 'ncg.selection.method' is
-#' either 'noneOverlap' or 'AbsNoneOverlap'.
+#' either 'auto' or 'non.overlap'.
 #' @param top.rank.uv.genes Numeric.Indicates the percentage of top ranked genes that are highly affected
 #' by the unwanted variation variables. This is required to be specified when the 'ncg.selection.method' is
-#' either 'noneOverlap' or 'AbsNoneOverlap'.
+#' either 'auto' or 'non.overlap'.
 #' @param grid.nb Numeric. Indicates the percentage for grid search when the ncg.selection.method is
-#' 'noneOverlap'. In the 'noneOverlap' approach, the grid search starts with the initial
+#' 'auto'. In the 'auto' approach, the grid search starts with the initial
 #' 'top.rank.uv.genes' value an add the grid.nb in each loop to find the 'nb.ncg'.
 #' @param grid.group TTTT
 #' @param grid.direction TTTT
@@ -63,9 +63,9 @@
 #' contain variables whose association with the selected genes as NCG.
 #' needs to be evaluated. The default is NULL. This means all the variables in the 'uv.variables' will be assessed.
 #' @param nb.pcs Numeric. Indicates the number of the first principal components on selected NCG to be used to assess the performance of NCGs.
-#' @param center.pca Logical. Indicates whether to scale the data or not before applying SVD. If 'center.pca' is TRUE, then
+#' @param center Logical. Indicates whether to scale the data or not before applying SVD. If 'center' is TRUE, then
 #' centering is done by subtracting the column means of the assay from their corresponding columns. The default is TRUE.
-#' @param scale.pca Logical. Indicates whether to scale the data or not before applying SVD.  If scale is TRUE, then scaling
+#' @param scale Logical. Indicates whether to scale the data or not before applying SVD.  If scale is TRUE, then scaling
 #' is done by dividing the (centered) columns of the assays by their standard deviations if center is TRUE, and the root
 #' mean square otherwise. The default is FALSE.
 #' @param apply.log Logical. Indicates whether to apply a log-transformation to the data, by default it is set to TRUE.
@@ -85,17 +85,51 @@
 #' @importFrom matrixStats rowProds
 #' @export
 
+
+nb.ncg = .1
+ncg.selection.method = 'non.overlap'
+top.rank.bio.genes = .5
+top.rank.uv.genes = .8
+grid.nb = 1
+grid.group = 'uv'
+grid.direction = 'decrease'
+min.sample.for.aov = 3
+min.sample.for.correlation = 10
+normalization = 'CPM'
+corr.method = "spearman"
+a = 0.05
+rho = 0
+anova.method = 'aov'
+clustering.method = 'kmeans'
+nb.clusters = 3
+assess.ncg = TRUE
+variables.to.assess.ncg = NULL
+nb.pcs = 5
+scale = FALSE
+center = TRUE
+apply.log = TRUE
+pseudo.count = 1
+assess.se.obj = TRUE
+save.se.obj = TRUE
+remove.na = 'both'
+output.name = NULL
+verbose = TRUE
+
+
+
+
 findNcgsUnSupervised <- function(
         se.obj,
         assay.name,
         uv.variables,
-        nb.ncg = 10,
-        ncg.selection.method = 'AbsNoneOverlap',
-        top.rank.bio.genes = 50,
-        top.rank.uv.genes = 80,
+        nb.ncg = .1,
+        ncg.selection.method = 'non.overlap',
+        top.rank.bio.genes = .5,
+        top.rank.uv.genes = .8,
         grid.nb = 1,
         grid.group = 'uv',
         grid.direction = 'decrease',
+        min.sample.for.mad = 3,
         min.sample.for.aov = 3,
         min.sample.for.correlation = 10,
         normalization = 'CPM',
@@ -108,8 +142,8 @@ findNcgsUnSupervised <- function(
         assess.ncg = TRUE,
         variables.to.assess.ncg = NULL,
         nb.pcs = 5,
-        scale.pca = FALSE,
-        center.pca = TRUE,
+        scale = FALSE,
+        center = TRUE,
         apply.log = TRUE,
         pseudo.count = 1,
         assess.se.obj = TRUE,
@@ -121,18 +155,26 @@ findNcgsUnSupervised <- function(
     printColoredMessage(message = '------------The supervisedFindNcgAnoCorrAs function starts:',
                         color = 'white',
                         verbose = verbose)
-    # check several functions inputs ####
-    if(length(assay.name) > 1){
-        stop('Please provide a single assay name.')
-    } else if(nb.ncg > 100 | nb.ncg <= 0){
-        stop('The "nb.ncg" should be a positve value  0 < nb.ncg < 100.')
-    } else if (!ncg.selection.method %in% c('noneOverlap', 'AbsNoneOverlap')){
-        stop('The "ncg.selection.method" must be one of "noneOverlap" or "AbsNoneOverlap".')
-    } else if (top.rank.bio.genes > 100 | top.rank.bio.genes <= 0){
-        stop('The "top.rank.bio.genes" msut be a positve value  0 < top.rank.bio.genes < 100.')
-    } else if (top.rank.uv.genes > 100 | top.rank.uv.genes <= 0){
-        stop('The "top.rank.uv.genes" should be a positve value  0 < top.rank.uv.genes < 100.')
-    }  else if (is.null(min.sample.for.aov)){
+    # Check functions inputs ####
+    if(length(assay.name) > 1 | is.logical(assay.name)){
+        stop('The "assay.name" must be a single assay name in the SummarizedExperiment object.')
+    } else if(sum(uv.variables %in% colnames(colData(se.obj))) != length(uv.variables)){
+        stop('Some or all the "uv.variables" cannot be found in the SummarizedExperiment object.')
+    } else if(nb.ncg >= 1 | nb.ncg <= 0){
+        stop('The "nb.ncg" should be a positve value  0 < nb.ncg < 1.')
+    } else if (!ncg.selection.method %in% c('auto', 'non.overlap')){
+        stop('The "ncg.selection.method" must be one of "auto" or "non.overlap".')
+    } else if (top.rank.bio.genes > 1 | top.rank.bio.genes <= 0){
+        stop('The "top.rank.bio.genes" msut be a positve value  0 < top.rank.bio.genes < 1.')
+    } else if (top.rank.uv.genes > 1 | top.rank.uv.genes <= 0){
+        stop('The "top.rank.uv.genes" must be a positve value  0 < top.rank.uv.genes < 1.')
+    } else if( grid.nb < 1 | grid.nb > nrow(se.obj)){
+        stop(paste0('The "grid.nb" must be a positve value  0 < grid.nb < ', nrow(se.obj), '.'))
+    } else if(!grid.group %in% c('bio', 'uv', 'both')){
+        stop('The "grid.group" must be one of "bio", "uv" or "non.overlap".')
+    } else if(!grid.direction %in% c('increase', 'decrease', 'auto')){
+        stop('The "grid.direction" must be one of "increase", "decrease" or "auto".')
+    } else if (is.null(min.sample.for.aov)){
         stop('The "min.sample.for.aov" cannot be empty.')
     } else if (min.sample.for.aov <= 2){
         stop('The "min.sample.for.aov" should be at least 3.')
@@ -142,6 +184,24 @@ findNcgsUnSupervised <- function(
         stop('The "min.sample.for.correlation" msut be more than 2 and less than the total number of samples in the data.')
     } else if (!anova.method %in% c('aov', 'welch')){
         stop('The anova.method must be one of the "aov" or "welch".')
+    } else if (isFALSE(is.logical(assess.ncg))){
+        stop('The "assess.ncg" must be "TRUE" or "FALSE.')
+    } else if (length(nb.pcs) > 1){
+        stop('The "nb.pcs" must be a postive integer value.')
+    } else if (nb.pcs < 0){
+        stop('The "nb.pcs" must be a postive integer value.')
+    } else if (isFALSE(is.logical(scale))) {
+        stop('The "scale" must be "TRUE" or "FALSE.')
+    } else if (isFALSE(is.logical(center))) {
+        stop('The "center" must be "TRUE" or "FALSE.')
+    } else if (isFALSE(is.logical(apply.log))) {
+        stop('The "apply.log" must be "TRUE" or "FALSE.')
+    } else if(length(pseudo.count) > 1){
+        stop('The "pseudo.count" must be 0 or a postive integer value.')
+    } else if(pseudo.count < 0){
+        stop('The "pseudo.count" must be 0 or a postive integer value.')
+    } else if (isFALSE(is.logical(assess.se.obj))) {
+        stop('The "assess.se.obj" must be "TRUE" or "FALSE.')
     }
     if (is.null(assess.se.obj)) {
         if (isTRUE(sum(uv.variables %in% colnames(colData(se.obj))) != length(uv.variables))) {
@@ -153,7 +213,7 @@ findNcgsUnSupervised <- function(
         }
     }
 
-    # check the SummarizedExperiment object ####
+    # Check the SummarizedExperiment object ####
     if (assess.se.obj) {
         se.obj <- checkSeObj(
             se.obj = se.obj,
@@ -162,7 +222,7 @@ findNcgsUnSupervised <- function(
             remove.na = remove.na,
             verbose = verbose)
     }
-    # data transformation and normalization ####
+    # Data transformation and normalization ####
     printColoredMessage(
         message = '-- Data transformation and normalization:',
         color = 'magenta',
@@ -170,12 +230,7 @@ findNcgsUnSupervised <- function(
     ## apply log ####
     if (isTRUE(apply.log) & !is.null(pseudo.count)){
         printColoredMessage(
-            message = paste0(
-                'Applying log2 + ',
-                pseudo.count,
-                ' (pseudo.count) on the ',
-                assay.name,
-                ' data.'),
+            message = paste0('Applying log2 + ', pseudo.count,' (pseudo.count) on the ', assay.name, ' data.'),
             color = 'blue',
             verbose = verbose)
         expr.data <- log2(assay(x = se.obj, i = assay.name) + pseudo.count)
@@ -206,11 +261,15 @@ findNcgsUnSupervised <- function(
             remove.na = 'none',
             verbose = verbose)
     }
-    # finding negative control genes ####
-    ## step 1: find genes that are highly affected by unwanted variation ####
+    # Finding negative control genes ####
+    printColoredMessage(
+        message = '-- Find negative control genes',
+        color = 'magenta',
+        verbose = verbose)
+    ## find genes that are highly affected by unwanted variation ####
     printColoredMessage(
         message = '-- Find genes that are highly affected by each sources of unwnated variation:',
-        color = 'magenta',
+        color = 'blue',
         verbose = verbose)
     uv.var.class <- unlist(lapply(
         uv.variables,
@@ -252,8 +311,7 @@ findNcgsUnSupervised <- function(
                 } else if(isTRUE(length(keep.samples) != length(unique(colData(se.obj)[[x]])))){
                     not.coverd <- unique(colData(se.obj)[[x]])[!unique(colData(se.obj)[[x]]) %in% keep.samples]
                     printColoredMessage(
-                        message = paste0(
-                            'Note, the ',
+                        message = paste0('Note, the ',
                             paste0(not.coverd, collapse = '&'),
                             ' batches do not have enough samples for the ANOVA analysis.'),
                         color = 'red',
@@ -275,7 +333,7 @@ findNcgsUnSupervised <- function(
             })
         names(anova.genes.uv) <- categorical.uv
     } else anova.genes.uv <- NULL
-    ### correlation between genes and categorical sources of unwanted variation ####
+    ### correlation between genes and continuous sources of unwanted variation ####
     if(isTRUE(length(continuous.uv) > 0)){
         printColoredMessage(
             message = paste0(
@@ -312,13 +370,8 @@ findNcgsUnSupervised <- function(
         names(corr.genes.uv) <- continuous.uv
     } else corr.genes.uv <- NULL
 
-    ## step2: find genes that are not highly affected by biology ####
-    printColoredMessage(
-        message = '-- Find highly variable genes:',
-        color = 'magenta',
-        verbose = verbose)
-
-    ### anova between genes and categorical sources of biological variation ####
+    ## find genes that are not highly affected by biology ####
+    ### Apply mad within each homogeneous sample groups with respect to the unwanted variable ####
     if (!is.null(normalization)) {
         data.to.use <- expr.data.nor
     } else data.to.use <- expr.data
@@ -328,6 +381,7 @@ findNcgsUnSupervised <- function(
             ' within each homogeneous sample groups with respect to the unwanted variables.'),
         color = 'blue',
         verbose = verbose)
+    #### find all possible sample groups with respect to the unwanted variables ####
     homo.uv.groups <- createHomogeneousUVGroups(
         se.obj = se.obj,
         uv.variables = uv.variables,
@@ -337,43 +391,45 @@ findNcgsUnSupervised <- function(
         assess.se.obj = FALSE,
         save.se.obj = FALSE,
         verbose = verbose)
+    #### apply mad  ####
+    homo.uv.groups <- findRepeatingPatterns(vec = homo.uv.groups, n.repeat = min.sample.for.mad)
     groups <- unique(homo.uv.groups)
     bio.genes <- sapply(
         groups,
         function(x){
             index.samples <- homo.uv.groups == x
-            matrixStats::rowMads(x = data.to.use[ , index.samples])
+            matrixStats::rowMads(x = data.to.use[ , index.samples, drop = FALSE])
         })
     bio.genes <- matrixStats::rowMaxs(bio.genes)
     names(bio.genes) <- row.names(se.obj)
     bio.genes <- sort(x = bio.genes, decreasing = TRUE)
 
-    # final selection of NCGs ####
+    ## selection a set of genes as NCGs ####
     printColoredMessage(
         message = '-- Select a set of genes as NCG:',
         color = 'magenta',
         verbose = verbose)
-    ## approach: noneOverlap ####
-    if (isTRUE(ncg.selection.method == 'noneOverlap')){
+    ### auto approach ####
+    if (isTRUE(ncg.selection.method == 'auto')){
+        nb.ncg <- round(nb.ncg * nrow(se.obj), digits = 0)
         printColoredMessage(
-            message = '- A set of NCG will be found based on the "noneOverlab" approach.',
+            message = paste0('-- find ~' , nb.ncg, ' genes as NCGs based on the auto approach.'),
             color = 'blue',
             verbose = verbose)
-        nb.ncg <- round(c(nb.ncg/100) * nrow(se.obj), digits = 0)
 
-        ## find top.rank.bio.genes of highly affected genes by biology
-        top.rank.bio.genes.nb <- round(c(top.rank.bio.genes/100) * nrow(se.obj), digits = 0)
+        #### find highly affected genes by biology ####
+        top.rank.bio.genes.nb <- round(top.rank.bio.genes * nrow(se.obj), digits = 0)
         top.bio.genes <- names(bio.genes[1:top.rank.bio.genes.nb])
         printColoredMessage(
-            message = paste0('- Find ', top.rank.bio.genes, '% (',
-                             top.rank.bio.genes.nb, ' genes) highly affected genes by biological variation.'),
+            message = paste0('- Select ', top.rank.bio.genes, '% (',
+                             top.rank.bio.genes.nb, ') highly affected genes by biological variation.'),
             color = 'blue',
             verbose = verbose)
 
-        ## find top.rank.uv.genes of highly affected genes by unwanted variation
-        top.rank.uv.genes.nb <- round(c(top.rank.uv.genes/100) * nrow(se.obj), digits = 0)
+        ### find highly affected genes by unwanted variation ####
+        top.rank.uv.genes.nb <- round(top.rank.uv.genes * nrow(se.obj), digits = 0)
         printColoredMessage(
-            message = paste0('- Find ', top.rank.uv.genes,'% highly affected genes by each sources of unwanted variation.'),
+            message = paste0('- Select ', top.rank.uv.genes,'% highly affected genes by each sources of unwanted variation.'),
             color = 'blue',
             verbose = verbose)
         all.uv.tests <- c('anova.genes.uv', 'corr.genes.uv')
@@ -395,19 +451,31 @@ findNcgsUnSupervised <- function(
             verbose = verbose)
         ncg.selected <- top.uv.genes[!top.uv.genes %in% top.bio.genes]
         printColoredMessage(
-            message = paste0(length(ncg.selected),' none-overlaped genes are found.'),
+            message = paste0(length(ncg.selected),' non-overlaped genes are found.'),
             color = 'blue',
             verbose = verbose)
+        ### parameters assessment ####
+        if(isTRUE(nb.ncg > length(ncg.selected))){
+            if(grid.direction == 'decrease'){
+                stop(paste0('The specified number of NCGs is larger than the initail non-overlaped genes.',
+                            'Then, the grid.direction should be in the increasing order.'))
+            }
+        } else if (isTRUE(nb.ncg < length(ncg.selected))){
+            if(grid.direction == 'increase'){
+                stop(paste0('The specified number of NCGs is samller than the initail non-overlaped genes.',
+                            'Then, the grid.direction should be in the decreasing order.'))
+            }
+        }
+
         if(isTRUE(nb.ncg > length(ncg.selected))){
             con <- parse(text = paste0("nb.ncg", ">", "length(ncg.selected)"))
         } else con <- parse(text = paste0("length(ncg.selected)", ">", "nb.ncg"))
-        ### grid search ####
+        #### grid search ####
+        ##### grid group: both bio and uv variable ####
         if(grid.group == 'both'){
-            ### grid group: both bio and uv variable ####
             if(grid.direction == 'increase'){
                 lo <- min(nrow(se.obj) - top.rank.uv.genes.nb,
                           nrow(se.obj) - top.rank.bio.genes.nb)
-                grid.nb <- round(c(grid.nb/100) * nrow(se.obj), digits = 0)
                 pro.bar <- progress_estimated(round(lo/grid.nb, digits = 0) + 2)
                 while(eval(con) & top.rank.uv.genes.nb < nrow(se.obj) & top.rank.bio.genes.nb < nrow(se.obj)){
                     pro.bar$pause(0.1)$tick()$print()
@@ -457,7 +525,6 @@ findNcgsUnSupervised <- function(
             } else if (grid.direction == 'decrease'){
                 lo <- min(nrow(se.obj) - top.rank.uv.genes.nb,
                           nrow(se.obj) - top.rank.bio.genes.nb)
-                grid.nb <- round(c(grid.nb/100) * nrow(se.obj), digits = 0)
                 pro.bar <- progress_estimated(round(lo/grid.nb, digits = 0) + 2)
                 while(eval(con) & top.rank.uv.genes.nb > 1 & top.rank.bio.genes.nb > 1){
                     pro.bar$pause(0.1)$tick()$print()
@@ -506,11 +573,11 @@ findNcgsUnSupervised <- function(
                     verbose = verbose)
 
             }
-        } else if (grid.group == 'bio'){
-            ### bio ####
+        }
+        ##### grid group: bio ####
+        if (grid.group == 'bio'){
             if(grid.direction == 'increase'){
                 lo <- nrow(se.obj) - top.rank.bio.genes.nb
-                grid.nb <- round(c(grid.nb/100) * nrow(se.obj), digits = 0)
                 pro.bar <- progress_estimated(round(lo/grid.nb, digits = 0) + 2)
                 while(eval(con) & top.rank.bio.genes.nb < nrow(se.obj)){
                     pro.bar$pause(0.1)$tick()$print()
@@ -543,7 +610,6 @@ findNcgsUnSupervised <- function(
                     verbose = verbose)
             } else if (grid.direction == 'decrease'){
                 lo <- top.rank.bio.genes.nb
-                grid.nb <- round(c(grid.nb/100) * nrow(se.obj), digits = 0)
                 pro.bar <- progress_estimated(round(lo/grid.nb, digits = 0) + 2)
                 while(eval(con) & top.rank.bio.genes.nb > 1){
                     pro.bar$pause(0.1)$tick()$print()
@@ -576,11 +642,12 @@ findNcgsUnSupervised <- function(
                     verbose = verbose)
 
             }
-        } else if (grid.group == 'uv'){
-            ### uv ####
+
+        }
+        ##### grid group: uv ####
+        if (grid.group == 'uv'){
             if(grid.direction == 'increase'){
                 lo <- nrow(se.obj) - top.rank.uv.genes.nb
-                grid.nb <- round(c(grid.nb/100) * nrow(se.obj), digits = 0)
                 pro.bar <- progress_estimated(round(lo/grid.nb, digits = 0) + 2)
                 while(eval(con) & top.rank.uv.genes.nb < nrow(se.obj)){
                     pro.bar$pause(0.1)$tick()$print()
@@ -625,7 +692,6 @@ findNcgsUnSupervised <- function(
                     verbose = verbose)
             } else if (grid.direction == 'decrease'){
                 lo <- top.rank.uv.genes.nb
-                grid.nb <- round(c(grid.nb/100) * nrow(se.obj), digits = 0)
                 pro.bar <- progress_estimated(round(lo/grid.nb, digits = 0) + 2)
                 while(eval(con) & top.rank.uv.genes.nb > 1){
                     pro.bar$pause(0.1)$tick()$print()
@@ -672,25 +738,25 @@ findNcgsUnSupervised <- function(
         }
 
     }
-    ## approach: AbsNoneOverlap ####
-    if (ncg.selection.method == 'AbsNoneOverlap'){
+    #### non overlap approach ####
+    if (ncg.selection.method == 'non.overlap'){
         printColoredMessage(
-            message = '- A set of NCG is selected based on the AbsNoneOverlap approach.',
+            message = '- A set of NCG is selected based on the non.overlap approach.',
             color = 'blue',
             verbose = verbose)
-        #### find highly affected genes by biology ####
-        top.rank.bio.genes.nb <- round(c(top.rank.bio.genes/100) * nrow(se.obj), digits = 0)
+        ##### find highly affected genes by biology ####
+        top.rank.bio.genes.nb <- round(top.rank.bio.genes * nrow(se.obj), digits = 0)
         printColoredMessage(
-            message = paste0('- Find ', top.rank.bio.genes, '% (',
+            message = paste0('- Select ', top.rank.bio.genes, '% (',
                              top.rank.bio.genes.nb, ' genes) highly affected genes by biological variation.'),
             color = 'blue',
             verbose = verbose)
         top.bio.genes <- names(bio.genes[1:top.rank.bio.genes.nb])
 
-        ## find highly affected genes by unwanted variables ####
-        top.rank.uv.genes.nb <- round(c(top.rank.uv.genes/100) * nrow(se.obj), digits = 0)
+        #### find highly affected genes by unwanted variables ####
+        top.rank.uv.genes.nb <- round(top.rank.uv.genes * nrow(se.obj), digits = 0)
         printColoredMessage(
-            message = paste0('- Find ', top.rank.uv.genes,'% highly affected genes by each sources of unwanted variation.'),
+            message = paste0('- Select ', top.rank.uv.genes,'% highly affected genes by each sources of unwanted variation.'),
             color = 'blue',
             verbose = verbose)
         all.uv.tests <- c('anova.genes.uv', 'corr.genes.uv')
@@ -723,7 +789,7 @@ findNcgsUnSupervised <- function(
         color = 'blue',
         verbose = verbose)
 
-    # assessment of the selected set of NCG ####
+    # Assessment of the selected set of NCG ####
     ## pca on the NCG ####
     if(assess.ncg){
         printColoredMessage(
@@ -747,8 +813,8 @@ findNcgsUnSupervised <- function(
             x = t(expr.data[ncg.selected, ]),
             k = nb.pcs,
             BSPARAM = bsparam(),
-            center.pca = center.pca,
-            scale.pca = scale.pca)$u
+            center = center,
+            scale = scale)$u
         if(is.null(variables.to.assess.ncg)){
             variables.to.assess.ncg <- uv.variables
         }
@@ -800,20 +866,23 @@ findNcgsUnSupervised <- function(
             )
         if(verbose) print(pca.ncg)
     }
-    # save the NCGs ####
+    # Save the NCGs ####
     ## add results to the SummarizedExperiment object ####
     printColoredMessage(
         message = '-- Save the selected NCGs:',
         color = 'magenta',
         verbose = verbose)
-    out.put.name <- paste0(
-        sum(ncg.selected),
-        '|',
-        paste0(uv.variables, collapse = '&'),
-        '|AnoCorrAs:',
-        ncg.selection.method,
-        '|',
-        assay.name)
+    if(is.null(output.name)){
+        output.name <- paste0(
+            sum(ncg.selected),
+            '|',
+            paste0(uv.variables, collapse = '&'),
+            '|AnoCorrAs:',
+            ncg.selection.method,
+            '|',
+            assay.name)
+    }
+
     if(save.se.obj == TRUE){
         printColoredMessage(
             message = '- Save the selected set of NCG to the metadata of the SummarizedExperiment object.',
@@ -828,10 +897,10 @@ findNcgsUnSupervised <- function(
             se.obj@metadata[['NCG']][['un.supervised']] <- list()
         }
         ## check if prps.set.name already exists in the PRPS$supervised slot
-        if (!out.put.name %in% names(se.obj@metadata[['NCG']][['un.supervised']])) {
-            se.obj@metadata[['NCG']][['un.supervised']][[out.put.name]] <- list()
+        if (!output.name %in% names(se.obj@metadata[['NCG']][['un.supervised']])) {
+            se.obj@metadata[['NCG']][['un.supervised']][[output.name]] <- list()
         }
-        se.obj@metadata[['NCG']][['un.supervised']][[out.put.name]] <- ncg.selected
+        se.obj@metadata[['NCG']][['un.supervised']][[output.name]] <- ncg.selected
         printColoredMessage(
             message = '- The NCGs are saved to metadata of the SummarizedExperiment object.',
             color = 'blue',
@@ -855,3 +924,7 @@ findNcgsUnSupervised <- function(
         return(ncg.selected)
     }
 }
+
+
+
+

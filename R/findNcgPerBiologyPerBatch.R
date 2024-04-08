@@ -1130,8 +1130,14 @@ findNcgPerBiologyPerBatch <- function(
                             color = 'magenta',
                             verbose = verbose)
         ## Check if metadata NCG already exists
-        if (length(se.obj@metadata$NCG) == 0) {
+        if(length(se.obj@metadata$NCG) == 0 ) {
             se.obj@metadata[['NCG']] <- list()
+        }
+        if(!'supervised' %in% names(se.obj@metadata[['NCG']])){
+            se.obj@metadata[['NCG']][['supervised']] <- list()
+        }
+        if(!output.name %in% names(se.obj@metadata[['NCG']][['supervised']])){
+            se.obj@metadata[['NCG']][['supervised']][[output.name]] <- list()
         }
         se.obj@metadata[['NCG']][['supervised']][[output.name]] <- ncg.selected
         printColoredMessage(message = 'The NCGs are saved to metadata of the SummarizedExperiment object.',
