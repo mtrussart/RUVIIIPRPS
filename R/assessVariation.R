@@ -137,11 +137,11 @@ assessVariation <- function(
         output.file = NULL,
         plot.output = TRUE,
         verbose = TRUE
-){
+        ){
     printColoredMessage(message = '------------The assessVariation function starts:',
                         color = 'white',
                         verbose = verbose)
-    # check the inputs of PCA ####
+    # check the inputs of function ####
     if (length(assay.names) == 1 && assay.names != 'all') {
         if (!assay.names %in% names(assays(se.obj)))
             stop('The "assay.name" cannot be found in the SummarizedExperiment object.')
@@ -241,7 +241,7 @@ assessVariation <- function(
         rle.iqr.scores <- NULL
     }
 
-    ### plot general rle #####
+    ## plot general rle #####
     if('RLEplot' %in% metrics.table$PlotTypes){
         se.obj <- plotRLE(
             se.obj = se.obj,
@@ -297,6 +297,10 @@ assessVariation <- function(
                 plot.output = FALSE,
                 save.se.obj = TRUE,
                 verbose = verbose)
+
+
+
+
             for(j in assay.names){
                 if(class(colData(se.obj)[[i]]) %in% c('factor', 'character')){
                     rle.var.aov.scores[[i]][j] <- summary(aov(
