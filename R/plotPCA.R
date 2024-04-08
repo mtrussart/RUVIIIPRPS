@@ -157,7 +157,7 @@ plotPCA <- function(
 
     # plot PCs ####
     ## categorical variable ####
-    if(class(colData(se.obj)[[variable]]) %in% c('character', 'factor')){
+    if(class(colData(se.obj)[[variable]]) %in% c('character','factor')){
         ### scatter plots for individual assays  ####
         if(plot.type == 'scatter'){
             printColoredMessage(
@@ -172,7 +172,7 @@ plotPCA <- function(
                         color = 'blue',
                         verbose = verbose)
                     pca.data <- all.pca.data[[x]]$pca.data[ , seq_len(nb.pcs)]
-                    pair.pcs <- combn(ncol(pca.data), 2)
+                    pair.pcs <- combn(x = ncol(pca.data), m = 2)
                     var <- colData(se.obj)[, variable]
                     printColoredMessage(
                         message = paste0('-Create all possible pairwise scatter plots of the first ', nb.pcs, ' PCs.'),
@@ -189,12 +189,12 @@ plotPCA <- function(
                                     stroke = stroke.size,
                                     size = points.size,
                                     alpha = points.alpha) +
-                                scale_fill_manual(values = pca.plot.colors) +
+                                scale_fill_manual(values = pca.plot.colors, name = variable) +
                                 scale_x_continuous(
-                                    name = paste0('PC', pair.pcs[1, i], ' (', all.pca.data[[x]]$pc.var[pair.pcs[2, i]], '%)'),
+                                    name = paste0('PC', pair.pcs[1, i], ' (', all.pca.data[[x]]$pc.var[pair.pcs[1, i]], '%)'),
                                     breaks = scales::pretty_breaks(n = 5)) +
                                 scale_y_continuous(
-                                    name = paste0('PC', pair.pcs[2, i], ' (', all.pca.data[[x]]$pc.var[pair.pcs[1, i]], '%)'),
+                                    name = paste0('PC', pair.pcs[2, i], ' (', all.pca.data[[x]]$pc.var[pair.pcs[2, i]], '%)'),
                                     breaks = scales::pretty_breaks(n = 5)) +
                                 ggtitle(x) +
                                 theme_pubr() +
@@ -208,8 +208,7 @@ plotPCA <- function(
                                     axis.title.x = element_text(size = 8),
                                     axis.title.y = element_text(size = 8),
                                     plot.margin = unit(c(0,0,0,0), 'lines'),
-                                    legend.position = "none") +
-                                scale_fill_discrete(name = variable)
+                                    legend.position = "none")
                             dense.x <-
                                 ggplot(mapping = aes(x = pca.data[, pair.pcs[1, i]], fill = se.obj@colData[, variable])) +
                                 geom_density(alpha = densities.alpha) +
@@ -219,7 +218,7 @@ plotPCA <- function(
                                     legend.text = element_text(size = 10),
                                     legend.title = element_text(size = 12, face = "bold")) +
                                 guides(fill = guide_legend(override.aes = list(size = 6, shape = 21))) +
-                                scale_fill_discrete(name = variable)
+                                scale_fill_manual(values = pca.plot.colors, name = variable)
 
                             dense.y <- ggplot(mapping = aes(x = pca.data[, pair.pcs[2, i]], fill = se.obj@colData[, variable])) +
                                 geom_density(alpha = densities.alpha) +
@@ -230,7 +229,7 @@ plotPCA <- function(
                                     legend.title = element_text(size = 12, face = "bold")) +
                                 coord_flip() +
                                 guides(fill = guide_legend(override.aes = list(size = 6, shape = 21))) +
-                                scale_fill_discrete(name = variable)
+                                scale_fill_manual(values = pca.plot.colors, name = variable)
 
                             dense.x +
                                 plot_spacer() +
