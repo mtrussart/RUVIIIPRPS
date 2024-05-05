@@ -72,7 +72,7 @@ computeRLE <- function(
                         verbose = verbose)
 
     # Check inputs ####
-    if(is.list(assay.names) | !is.vector(assay.names) | is.logical(assay.names)){
+    if(is.list(assay.names) | is.logical(assay.names)){
         stop('The "assay.names" must be a vector of assay names(s) or assay.names = "all".')
     }
     if (isFALSE(is.logical(apply.log))) {
