@@ -87,8 +87,8 @@ plotPCA <- function(
 
     # assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
-        assay.names <- as.factor(names(assays(se.obj)))
-    } else assay.names <- factor(x = assay.names, levels = assay.names)
+        assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
+    } else  assay.names <- factor(x = assay.names , levels = assay.names)
     if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
@@ -117,7 +117,7 @@ plotPCA <- function(
 
     # obtain PCs from the SummarizedExperiment object ####
     printColoredMessage(
-        message = paste0('Obtain the first ', nb.pcs, ' from the SummarizedExperiment object.'),
+        message = paste0('-- Obtain the first ', nb.pcs, ' PCs from the SummarizedExperiment object.'),
         color = 'magenta',
         verbose = verbose)
     pc.var <- NULL
@@ -125,7 +125,7 @@ plotPCA <- function(
         levels(assay.names),
         function(x) {
             printColoredMessage(
-                message = paste0('Obtain the first ', nb.pcs, ' PCs of ', x, ' data.'),
+                message = paste0('- Obtain the first ', nb.pcs, ' PCs for the ', x, ' data.'),
                 color = 'blue',
                 verbose = verbose)
             if (isTRUE(fast.pca)) {
@@ -161,7 +161,7 @@ plotPCA <- function(
         ### scatter plots for individual assays  ####
         if(plot.type == 'scatter'){
             printColoredMessage(
-                message = '-- Creat scatter PCA plots for the individual assay(s):',
+                message = '-- Create scatter PCA plots for the individual assay(s):',
                 color = 'magenta',
                 verbose = verbose)
             all.scat.pca.plots <- lapply(
@@ -337,12 +337,12 @@ plotPCA <- function(
             levels(assay.names),
             function(x) {
                 printColoredMessage(
-                    message = paste0('PCA plots of for ', x, ' data.'),
+                    message = paste0('- PCA plots of for ', x, ' data.'),
                     color = 'blue',
                     verbose = verbose)
                 var <- PC <- r.label <- NULL
                 pca.data <- as.data.frame(all.pca.data[[x]]$pca.data[ , seq_len(nb.pcs)])
-                colnames(pca.data) <- paste0('PC', seq_len(nb.pcs), ' (',all.pca.data[[x]]$pc.var[seq_len(nb.pcs)], '%)')
+                colnames(pca.data) <- paste0('PC', seq_len(nb.pcs), ' (', all.pca.data[[x]]$pc.var[seq_len(nb.pcs)], '%)')
                 pca.data$var <- colData(se.obj)[, variable]
                 printColoredMessage(
                     message = paste0('-Create all possible scatter plots of the first ', nb.pcs, ' PCs.'),
@@ -379,8 +379,8 @@ plotPCA <- function(
                         axis.text.y = element_text(size = 8),
                         strip.text.x = element_text(size = 10),
                         legend.position = 'none')
-                if(isTRUE(plot.output) & length(assay.names) == 1)
-                    print(plot.p)
+                if(isTRUE(plot.output) & length(assay.names) == 1) print(plot.p)
+                return(plot.p)
             })
         names(all.scat.var.pca.plots) <- levels(assay.names)
         if(length(assay.names) > 1){
