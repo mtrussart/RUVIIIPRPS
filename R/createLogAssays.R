@@ -75,3 +75,5 @@ createLogAssays <- function(
                         verbose = verbose)
     return(se.obj)
 }
+
+
