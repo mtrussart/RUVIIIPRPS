@@ -97,6 +97,7 @@
 #' @importFrom qvalue qvalue
 #' @export
 
+
 assessNormalization <- function(
         se.obj,
         assay.names = 'all',
@@ -106,13 +107,9 @@ assessNormalization <- function(
         assessments.to.exclude = NULL,
         fast.pca = TRUE,
         sil.dist.measure = 'euclidian',
-        sil.nb.pcs = 3,
         ari.clustering.method = "hclust",
         ari.hclust.method = "complete",
         ari.hclust.dist.measure = "euclidian",
-        ari.nb.pcs = 3,
-        vca.nb.pcs = 3,
-        lra.nb.pcs = 3,
         fstat.cutoff = 1,
         corr.coef.cutoff = 0.2,
         corr.method = 'spearman',
@@ -145,6 +142,7 @@ assessNormalization <- function(
     if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
+
     # All possible metrics for each variable #####
     printColoredMessage(
         message = 'Find all possible assessment metrics:',
@@ -166,13 +164,38 @@ assessNormalization <- function(
     printColoredMessage(
         message = paste0(
             nrow(se.obj@metadata$AssessmentMetrics$metrics.table),
-            ' assessment plots will be generated.'),
+            ' assessment will be generated.'),
         color = 'blue',
         verbose = verbose)
 
-    ## RLE #####
-    #### rle scores #####
+    ## rle scores #####
     if('rleMed||rleIqr' %in% assessments.table$Assessments){
+        rle.meds <- unlist(lapply(
+            assay.names,
+            function(x){
+                if(is.null(se.obj@metadata$metric[[x]]$RLE$rle.data$rle.med))
+                   return(x)
+            }))
+        if(!is.null(rle.meds)){
+            stop(paste0('The RLE medians for the ',
+                        paste0(rle.meds, collapse = ' & '),
+                        ' data cannot be found in the SummarizedExperiment object.',
+                        'Please run the assessVariation() function.'))
+        }
+
+        rle.iqrs <- unlist(lapply(
+            assay.names,
+            function(x){
+                if(is.null(se.obj@metadata$metric[[x]]$RLE$rle.data$rle.iqr))
+                    return(x)
+            }))
+        if(!is.null(rle.iqrs)){
+            stop(paste0('The RLE IQRs for the ',
+                        paste0(rle.meds, collapse = ' & '),
+                        ' data cannot be found in the SummarizedExperiment object.',
+                        'Please run the assessVariation() function.'))
+        }
+
         # rle medians
         all.rle.meds <- sapply(
             levels(assay.names),
@@ -202,9 +225,24 @@ assessNormalization <- function(
     }
 
 
-    #### rle medians and variable scores #####
+    ## rle medians and variable scores #####
     rle.med.variables <- assessments.table$Variables[metrics.table$Factors == 'rleMedians']
     if(!is.null(rle.med.variables)){
+        # check
+        rle.meds <- unlist(lapply(
+            assay.names,
+            function(x){
+                if(is.null(se.obj@metadata$metric[[x]]$RLE$rle.data$rle.med))
+                    return(x)
+            }))
+        if(!is.null(rle.meds)){
+            stop(paste0('The RLE medians for the ',
+                        paste0(rle.meds, collapse = ' & '),
+                        ' data cannot be found in the SummarizedExperiment object.',
+                        'Please run the assessVariation() function.'))
+        }
+
+        # scores
         rle.var.aov.scores <- NULL
         rle.var.corr.scores <- NULL
         for(i in rle.med.variables ){
@@ -214,28 +252,44 @@ assessNormalization <- function(
                         unique(colData(se.obj)[[i]]),
                         function(x) {
                             index <- colData(se.obj)[[i]] == x
-                            IQR(x = se.obj@metadata$metric[[j]]$RLE$rle.data$rle.med[index])
+                            stats::IQR(x = se.obj@metadata$metric[[j]]$RLE$rle.data$rle.med[index])
                         }))
-                    iqr.qun.0.5 <- quantile(x = iqr, probs = .5)
-                    iqr.qun.0.1_0.9 <- quantile(x = iqr, probs = c(0.1,0.9))
+                    iqr.qun.0.5 <- stats::quantile(x = iqr, probs = .5)
+                    iqr.qun.0.1_0.9 <- stats::quantile(x = iqr, probs = c(0.1,0.9))
                     rle.var.aov.scores[[i]][j] <- 1 - c(c(iqr.qun.0.1_0.9[[2]] - iqr.qun.0.1_0.9[[1]])/iqr.qun.0.5)
                 }
                 if (class(colData(se.obj)[[i]]) %in% c('numeric', 'integer')){
-                    rle.var.corr.scores[[i]][j] <- abs(suppressWarnings(cor.test(
+                    rle.var.corr.scores[[i]][j] <- abs(suppressWarnings(stats::cor.test(
                         x = se.obj@metadata$metric[[j]]$RLE$rle.data$rle.med,
                         y = colData(se.obj)[[i]], method = 'spearman')[[4]]))
                 }
             }
         }
-    } else{
+    } else if (is.null(rle.med.variables)){
         rle.var.aov.scores <- NULL
         rle.var.corr.scores <- NULL
     }
 
 
-    ### vector correlation scores ####
+    ## vector correlation scores ####
     pc.vec.corr.vars <- assessments.table$Variables[assessments.table$Metrics == 'VCA']
     if(!is.null(pc.vec.corr.vars)){
+        # check
+        for(i in pc.vec.corr.vars){
+            vca <- unlist(lapply(
+                assay.names,
+                function(x){
+                    if(is.null(se.obj@metadata$metric[[x]]$VCA[[i]]$vec.cor))
+                        return(x)
+                }))
+            if(!is.null(vca)){
+                stop(paste0('The vector correlation for the variable ', i, ' for the ',
+                            paste0(vca, collapse = ' & '),
+                            ' data cannot be found in the SummarizedExperiment object.',
+                            'Please run the assessVariation() function.'))
+            }
+        }
+        # scores
         pc.vec.corr.scores <- NULL
         for(i in pc.vec.corr.vars){
             for(j in levels(assay.names))
@@ -244,9 +298,25 @@ assessNormalization <- function(
     } else pc.vec.corr.scores <- NULL
 
 
-    ### linear regression scores ####
+    ## linear regression scores ####
     pc.reg.vars <- assessments.table$Variables[assessments.table$Metrics == 'LRA']
     if(!is.null(pc.reg.vars)){
+        # check
+        for(i in pc.reg.vars){
+            lra <- unlist(lapply(
+                assay.names,
+                function(x){
+                    if(is.null(se.obj@metadata$metric[[j]]$LRA[[i]]$rseq))
+                        return(x)
+                }))
+            if(!is.null(lra)){
+                stop(paste0('The linear regression for the variable ', i, ' for the ',
+                            paste0(vca, collapse = ' & '),
+                            ' data cannot be found in the SummarizedExperiment object.',
+                            'Please run the assessVariation() function.'))
+            }
+        }
+        # scores
         pc.reg.scores <- NULL
         for(i in pc.reg.vars){
             for(j in levels(assay.names))
@@ -254,11 +324,26 @@ assessNormalization <- function(
         }
     } else pc.reg.scores <- NULL
 
-    ### silhouette scores ####
-    all.sil.vars <- assessments.table$Variables[
-        assessments.table$Metrics == 'Silhouette' &
-            assessments.table$PlotTypes != 'combinedPlot']
+    ## silhouette scores ####
+    all.sil.vars <- assessments.table$Metrics == 'Silhouette' & assessments.table$PlotTypes != 'combinedPlot'
+    all.sil.vars <- assessments.table$Variables[all.sil.vars]
     if(!is.null(all.sil.vars)){
+        # check
+        for(i in all.sil.vars){
+            sil.coeff <- unlist(lapply(
+                assay.names,
+                function(x){
+                    if(is.null(se.obj@metadata$metric[[j]]$Silhouette$sil.euclidian[[i]]$sil.coef))
+                        return(x)
+                }))
+            if(!is.null(sil.coeff)){
+                stop(paste0('The silhouette coefficient for the variable ', i, ' for the ',
+                            paste0(vca, collapse = ' & '),
+                            ' data cannot be found in the SummarizedExperiment object.',
+                            'Please run the assessVariation() function.'))
+            }
+        }
+        # scores
         sil.scores <- NULL
         for(i in all.sil.vars){
             for(j in assay.names){
@@ -269,30 +354,60 @@ assessNormalization <- function(
     } else sil.scores <- NULL
 
 
-    ### ari scores ####
-    all.ari.vars <- assessments.table$Variables[
-        assessments.table$Metrics == 'ARI' &
-            assessments.table$PlotTypes != 'combinedPlot' &
-            assessments.table$Assessments != 'Exc']
+    ## ari scores ####
+    all.ari.vars <- assessments.table$Metrics == 'ARI' & assessments.table$PlotTypes != 'combinedPlot'
+    all.ari.vars <- assessments.table$Variables[ all.ari.vars]
     if(!is.null(all.ari.vars)){
         ari.scores <- NULL
         for(i in all.sil.vars){
+            # check
+            for(i in all.sil.vars){
+                ari.coeff <- unlist(lapply(
+                    assay.names,
+                    function(x){
+                        if(is.null(se.obj@metadata$metric[[j]]$ARI$hclust.complete.euclidian[[i]]$ari))
+                            return(x)
+                    }))
+                if(!is.null(ari.coeff)){
+                    stop(paste0('The ARI for the variable ', i, ' for the ',
+                                paste0(vca, collapse = ' & '),
+                                ' data cannot be found in the SummarizedExperiment object.',
+                                'Please run the assessVariation() function.'))
+                }
+            }
+            # scores
             for(j in assay.names)
                 ari.scores[[i]][j] <- se.obj@metadata$metric[[j]]$ARI$hclust.complete.euclidian[[i]]$ari
         }
     } else ari.scores <- NULL
 
 
-    ### gene variable correlations scores ####
+    ## gene variable correlations scores ####
     gene.var.corr.vars <- assessments.table$Variables[assessments.table$Factors == 'geneCorr']
     if(!is.null(gene.var.corr.vars)){
         gene.var.corr.coef.scores <- NULL
         gene.var.corr.pvalue.scores <- NULL
         gene.var.corr.qvalue.scores <- NULL
         for(i in gene.var.corr.vars ){
+            # check
+            for(v in gene.var.corr.vars){
+                corr.coeff <- unlist(lapply(
+                    assay.names,
+                    function(x){
+                        if(is.null(se.obj@metadata$metric[[x]]$Correlation$spearman[[v]]$cor.coef))
+                            return(x)
+                    }))
+                if(!is.null(corr.coeff)){
+                    stop(paste0('The gene-level correlations for the variable ', i, ' for the ',
+                                paste0(vca, collapse = ' & '),
+                                ' data cannot be found in the SummarizedExperiment object.',
+                                'Please run the assessVariation() function.'))
+                }
+            }
+            # scores
             for(j in assay.names){
                 cor.coef <- abs(se.obj@metadata$metric[[j]]$Correlation$spearman[[i]]$cor.coef[,2])
-                gene.var.corr.coef.scores[[i]][j] <- sum(cor.coef < 0.2)/nrow(se.obj)
+                gene.var.corr.coef.scores[[i]][j] <- sum(cor.coef < corr.coef.cutoff)/nrow(se.obj)
             }
             for(j in assay.names){
                 p.values <- se.obj@metadata$metric[[j]]$Correlation$spearman[[i]]$cor.coef[,1]
@@ -309,7 +424,7 @@ assessNormalization <- function(
         gene.var.corr.qvalue.scores <- NULL
     }
 
-    ### gene variable anova scores ####
+    ## gene variable anova scores ####
     index <- assessments.table$Factors == 'geneAnova'
     gene.var.anova.vars <- assessments.table$Variables[index]
     if(!is.null(gene.var.anova.vars)){
@@ -317,9 +432,25 @@ assessNormalization <- function(
         gene.var.anova.pvalue.scores <- NULL
         gene.var.anova.qvalue.scores <- NULL
         for(i in gene.var.anova.vars ){
+            # check
+            for(v in gene.var.anova.vars){
+                corr.coeff <- unlist(lapply(
+                    assay.names,
+                    function(x){
+                        if(is.null(se.obj@metadata$metric[[j]]$ANOVA$aov[[i]]$F.values))
+                            return(x)
+                    }))
+                if(!is.null(corr.coeff)){
+                    stop(paste0('The gene-level ANOVA for the variable ', i, ' for the ',
+                                paste0(vca, collapse = ' & '),
+                                ' data cannot be found in the SummarizedExperiment object.',
+                                'Please run the assessVariation() function.'))
+                }
+            }
+            # scores
             for(j in assay.names){
                 aov.fvalues <- se.obj@metadata$metric[[j]]$ANOVA$aov[[i]]$F.values$statistic
-                gene.var.anova.fvalue.scores[[i]][j] <- sum(aov.fvalues < 1)/nrow(se.obj)
+                gene.var.anova.fvalue.scores[[i]][j] <- sum(aov.fvalues < fstat.cutoff)/nrow(se.obj)
             }
             for(j in assay.names){
                 aov.pvalues <- se.obj@metadata$metric[[j]]$ANOVA$aov[[i]]$F.values$pvalue
@@ -337,12 +468,28 @@ assessNormalization <- function(
     }
 
 
-    ### dge scores  ####
+    ## dge scores  ####
     dge.qvalue.scores <- NULL
     dge.pvalue.scores <- NULL
     dge.vars <- assessments.table$Variables[metrics.table$Metrics == 'DGE' & assessments.table$Assessments != 'Exc']
     if(!is.null(dge.vars)){
         for(i in dge.vars){
+            # check
+            for(v in dge.vars){
+                corr.coeff <- unlist(lapply(
+                    assay.names,
+                    function(x){
+                        if(is.null(se.obj@metadata$metric[[x]]$DGE[[i]]$p.values))
+                            return(x)
+                    }))
+                if(!is.null(corr.coeff)){
+                    stop(paste0('The DEG for the variable ', i, ' for the ',
+                                paste0(vca, collapse = ' & '),
+                                ' data cannot be found in the SummarizedExperiment object.',
+                                'Please run the assessVariation() function.'))
+                }
+            }
+            # scores
             for(j in assay.names){
                 p.values <- se.obj@metadata$metric[[j]]$DGE[[i]]$p.values
                 dge.qvalue.scores[[i]][j] <- mean(sapply(
