@@ -58,7 +58,6 @@
 #' @param sil.dist.measure A character string indicating which method
 #' is to be used for the differential analysis: 'euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'.
 #' By default 'euclidean' will be selected.
-#' @param sil.nb.pcs Numeric. Indicates the number of PCs that should be used to compute the silhouette coefficients.
 #' @param ari.clustering.method Symbol. Indicates which clustering methods should be applied on the PCs calculate the ARI.
 #' The function provides the 'mclust' or 'hclust' methods. The default is 'hclust'.
 #' @param ari.hclust.method Symbol. Indicate the agglomeration method to be used for the 'hclust' method. This should be
@@ -66,14 +65,11 @@
 #' 'centroid' (= UPGMC). See the hclust function for more details.
 #' @param ari.hclust.dist.measure Symbol. Indicates the distance measure to be used in the dist function. This must be
 #' one of euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'. See the dist function for more details.
-#' @param ari.nb.pcs Numeric. Indicates the number of PCs that should be used to compute the ARI.
-#' @param vca.nb.pcs Numeric. Indicates the number of PCs that should be used to compute the ARI.
-#' @param lra.nb.pcs Numeric. Indicates the number of PCs that should be used to compute the ARI.
 #' @param fstat.cutoff Numeric. Indicates the number of PCs that should be used to compute the ARI.
 #' @param corr.coef.cutoff Numeric. Indicates the number of PCs that should be used to compute the ARI.
 #' @param corr.coef.cutoff Numeric. Indicates the number of PCs that should be used to compute the ARI.
 #' @param corr.method Symbol. Indicates which correlation methods should be used. Options are The default is 'spearman'.
-#' @param anove.method Symbol. Indicates which ANOVA methods should be used. Options are ... . The default is 'aov'.
+#' @param anova.method Symbol. Indicates which ANOVA methods should be used. Options are ... . The default is 'aov'.
 #' @param plot.output BB
 #' @param output.file Path and name of the output file to save the assessments plots in a pdf format.
 #' @param verbose Logical. If TRUE, displaying process messages is enabled.
@@ -113,7 +109,7 @@ assessNormalization <- function(
         fstat.cutoff = 1,
         corr.coef.cutoff = 0.2,
         corr.method = 'spearman',
-        anove.method = 'aov',
+        anova.method = 'aov',
         output.file = NULL,
         plot.output = TRUE,
         verbose = TRUE
@@ -333,7 +329,7 @@ assessNormalization <- function(
             sil.coeff <- unlist(lapply(
                 assay.names,
                 function(x){
-                    if(is.null(se.obj@metadata$metric[[j]]$Silhouette$sil.euclidian[[i]]$sil.coef))
+                    if(is.null(se.obj@metadata$metric[[j]]$Silhouette[[paste0('sil.', sil.dist.measure)]][[i]]$sil.coef))
                         return(x)
                 }))
             if(!is.null(sil.coeff)){
@@ -347,7 +343,7 @@ assessNormalization <- function(
         sil.scores <- NULL
         for(i in all.sil.vars){
             for(j in assay.names){
-                x <- se.obj@metadata$metric[[j]]$Silhouette$sil.euclidian[[i]]$sil.coef
+                x <- se.obj@metadata$metric[[j]]$Silhouette[[paste0('sil.', sil.dist.measure)]][[i]]$sil.coef
                 sil.scores[[i]][j] <- c(x+1)/2
             }
         }
@@ -359,13 +355,17 @@ assessNormalization <- function(
     all.ari.vars <- assessments.table$Variables[ all.ari.vars]
     if(!is.null(all.ari.vars)){
         ari.scores <- NULL
+        if(ari.clustering.method == 'mclust'){
+            out.put.name <- 'mclust'
+        } else out.put.name <- paste0('hclust.', ari.hclust.method, '.', ari.hclust.dist.measure)
+
         for(i in all.sil.vars){
             # check
             for(i in all.sil.vars){
                 ari.coeff <- unlist(lapply(
                     assay.names,
                     function(x){
-                        if(is.null(se.obj@metadata$metric[[j]]$ARI$hclust.complete.euclidian[[i]]$ari))
+                        if(is.null(se.obj@metadata$metric[[j]]$ARI[[out.put.name]][[i]]$ari))
                             return(x)
                     }))
                 if(!is.null(ari.coeff)){
@@ -377,7 +377,7 @@ assessNormalization <- function(
             }
             # scores
             for(j in assay.names)
-                ari.scores[[i]][j] <- se.obj@metadata$metric[[j]]$ARI$hclust.complete.euclidian[[i]]$ari
+                ari.scores[[i]][j] <- se.obj@metadata$metric[[j]]$ARI[[out.put.name]][[i]]$ari
         }
     } else ari.scores <- NULL
 
@@ -394,7 +394,7 @@ assessNormalization <- function(
                 corr.coeff <- unlist(lapply(
                     assay.names,
                     function(x){
-                        if(is.null(se.obj@metadata$metric[[x]]$Correlation$spearman[[v]]$cor.coef))
+                        if(is.null(se.obj@metadata$metric[[x]]$Correlation[[corr.method]][[v]]$cor.coef))
                             return(x)
                     }))
                 if(!is.null(corr.coeff)){
@@ -406,15 +406,15 @@ assessNormalization <- function(
             }
             # scores
             for(j in assay.names){
-                cor.coef <- abs(se.obj@metadata$metric[[j]]$Correlation$spearman[[i]]$cor.coef[,2])
+                cor.coef <- abs(se.obj@metadata$metric[[j]]$Correlation[[corr.method]][[i]]$cor.coef[,2])
                 gene.var.corr.coef.scores[[i]][j] <- sum(cor.coef < corr.coef.cutoff)/nrow(se.obj)
             }
             for(j in assay.names){
-                p.values <- se.obj@metadata$metric[[j]]$Correlation$spearman[[i]]$cor.coef[,1]
+                p.values <- se.obj@metadata$metric[[j]]$Correlation[[corr.method]][[i]]$cor.coef[,1]
                 gene.var.corr.pvalue.scores[[i]][j] <- ks.test(x = p.values[p.values > 0.05], "punif")$statistic
             }
             for(j in assay.names){
-                p.values <- se.obj@metadata$metric[[j]]$Correlation$spearman[[i]]$cor.coef[,1]
+                p.values <- se.obj@metadata$metric[[j]]$Correlation[[corr.method]][[i]]$cor.coef[,1]
                 gene.var.corr.qvalue.scores[[i]][j] <- qvalue::qvalue(p = p.values)$pi0
             }
         }
@@ -437,7 +437,7 @@ assessNormalization <- function(
                 corr.coeff <- unlist(lapply(
                     assay.names,
                     function(x){
-                        if(is.null(se.obj@metadata$metric[[j]]$ANOVA$aov[[i]]$F.values))
+                        if(is.null(se.obj@metadata$metric[[j]]$ANOVA[[anova.method]][[i]]$F.values))
                             return(x)
                     }))
                 if(!is.null(corr.coeff)){
@@ -449,15 +449,15 @@ assessNormalization <- function(
             }
             # scores
             for(j in assay.names){
-                aov.fvalues <- se.obj@metadata$metric[[j]]$ANOVA$aov[[i]]$F.values$statistic
+                aov.fvalues <- se.obj@metadata$metric[[j]]$ANOVA[[anova.method]][[i]]$F.values$statistic
                 gene.var.anova.fvalue.scores[[i]][j] <- sum(aov.fvalues < fstat.cutoff)/nrow(se.obj)
             }
             for(j in assay.names){
-                aov.pvalues <- se.obj@metadata$metric[[j]]$ANOVA$aov[[i]]$F.values$pvalue
+                aov.pvalues <- se.obj@metadata$metric[[j]]$ANOVA[[anova.method]][[i]]$F.values$pvalue
                 gene.var.anova.pvalue.scores[[i]][j] <- ks.test(x = aov.pvalues[aov.pvalues > 0.05], "punif")$statistic
             }
             for(j in assay.names){
-                aov.pvalues <- se.obj@metadata$metric[[j]]$ANOVA$aov[[i]]$F.values$pvalue
+                aov.pvalues <- se.obj@metadata$metric[[j]]$ANOVA[[anova.method]][[i]]$F.values$pvalue
                 gene.var.anova.qvalue.scores[[i]][j] <- qvalue::qvalue(p = aov.pvalues)$pi0
             }
         }
