@@ -73,6 +73,7 @@
 #' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
 #' object 'se.obj' or to output the result, by default it is set to TRUE.
 #' @param verbose Logical. Indicates whether to show or reduce the level of output or
+#' @param prps.set.name TTT
 #' messages displayed during the execution of the functions, by default it is set to TRUE.
 
 #' @return A SummarizedExperiment object or a list that contains all the PRPS sets.
