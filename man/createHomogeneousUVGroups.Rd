@@ -36,18 +36,19 @@ The default is 3. This implies that each continuous source will be split into 3 
 the function 'assessVariablesCorrelation' will be applied. For more details refer to the 'assessVariablesCorrelation'
 function.The default is 'TRUE'.}
 
-\item{cat.cor.coef}{Vector. A vector of two numerical values. Indicates the cut-off of the correlation coefficient
-between each pair of categorical variables. The first one is between each pair of 'uv.variables' and the second one
-is between each pair of 'bio.variables'. The correlation is computed by the function ContCoef from the DescTools
-package. If the correlation of a pair of variable is higher than the cut-off, then only the variable that has the
-highest number of factor will be kept and the other one will be excluded from the remaining analysis. By default they
-are both set to 0.9.}
+\item{cat.cor.coef}{Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
+between each pair of categorical variables. The first value applies to correlations between each pair of 'uv.variables',
+and the second value applies to correlations between each pair of 'bio.variables'. Correlation is computed using the
+ContCoef function from the DescTools R package. If the correlation between a pair of variables exceeds the cut-off,
+only the variable with the highest number of factors will be retained, and the other will be excluded from further
+analysis. By default, both values are set to 0.9.}
 
-\item{cont.cor.coef}{Vector of two numerical values. Indicates the cut-off of the Spearman correlation coefficient
-between each pair of continuous variables. The first one is between each pair of 'uv.variables' and the second one is
-between each pair of 'bio.variables'. If the correlation of a pair of variable is higher than the cut-off, then only
-the variable that has the highest variance will be kept and the other one will be excluded from the remaining analysis.
-By default they are both set to 0.9.}
+\item{cont.cor.coef}{Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
+between each pair of continuous variables. The first value applies to correlations between each pair of continuous
+'uv.variables', and the second value applies to correlations between each pair of continuous 'bio.variables'.
+Correlation is computed using the ContCoef function from the DescTools R package. If the correlation between a pair of
+variables exceeds the cut-off, only the variable with the highest variance will be retained, and the other will be
+excluded from further analysis. By default, both values are set to 0.9.}
 
 \item{assess.se.obj}{Logical. Whether to assess the SummarizedExperiment object or not. If 'TRUE', the function
 'checkSeobj' will be applied. The default is 'TRUE'.}
@@ -67,10 +68,17 @@ A SummarizedExperiment object containing the all possible homogeneous groups in 
 or a vector of the possible homogeneous groups.
 }
 \description{
-This function creates all possible homogeneous sample groups by considering specified unwanted variables. If continuous
-variables are given, then function splits them into a number of groups determined by 'nb.clusters', using the clustering
-method specified in 'clustering.method'. In the end, the product of all groups is generated and treated as homogeneous
-sample groups with respect to unwanted variables.
+This function generates all possible homogeneous sample groups based on the specified unwanted variables.
+}
+\details{
+The function generates all possible homogeneous sample groups based on the specified unwanted variables. If continuous
+variables are provided, the function splits each into a number of clusters determined by ’nb.clusters’, using the
+clustering method specified in ’clustering.method’. Ultimately, all combinations of all clusters are created and
+each such combination is regarded as a homogeneous sample group concerning biological variables.
+For example, if library size and time e.g. years from 2010-2014, are provided as sources of unwanted variation,
+the createHomogeneousUVGroups() will divide the library size into n groups and then the homogeneous sample
+groups respect to these variables will be combinations of one of 5 years * n groups based on library size. These
+combinations are the sample groups which will be regarded as homogeneous for the known unwanted variation.
 }
 \author{
 Ramyar Molania

@@ -19,7 +19,7 @@ createPrPsForCategoricalUV(
   apply.log = TRUE,
   pseudo.count = 1,
   assess.se.obj = TRUE,
-  remove.na = "both",
+  remove.na = "none",
   assess.variables = FALSE,
   cat.cor.coef = c(0.95, 0.95),
   cont.cor.coef = c(0.95, 0.95),

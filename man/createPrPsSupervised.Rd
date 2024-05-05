@@ -98,8 +98,10 @@ object 'se.obj' or to output the result, by default it is set to TRUE.}
 
 \item{plot.output}{Logical. Indicates the PRPS map for individual sources of unwanted variation. The default is 'TRUE'.}
 
-\item{verbose}{Logical. Indicates whether to show or reduce the level of output or
+\item{prps.set.name}{TTT
 messages displayed during the execution of the functions, by default it is set to TRUE.}
+
+\item{verbose}{Logical. Indicates whether to show or reduce the level of output or}
 }
 \value{
 A SummarizedExperiment object or a list that contains all the PRPS sets.
