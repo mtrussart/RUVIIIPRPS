@@ -26,7 +26,7 @@
 #' @param plot.output Logical. If TRUE, the individual barplots or scatter plots will be printed while functions is running.
 #' @param save.se.obj Logical. Indicates whether to save the plots in the metadata of the SummarizedExperiment  object
 #' or to output the result as list. By default it is set to TRUE.
-#' @param verbose Logical. If TRUE, displaying process messages is enabled.
+#' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
 #' @return A SummarizedExperiment object or a list that containing all the plots of the computed ARI on the categorical
 #' variable.
@@ -67,8 +67,8 @@ plotARI <- function(
 
     # assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
-        assay.names <- as.factor(names(assays(se.obj)))
-    } else assay.names <- as.factor(unlist(assay.names))
+        assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
+    } else  assay.names <- factor(x = assay.names , levels = assay.names)
     if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
