@@ -73,6 +73,7 @@
 #' @return A SummarizedExperiment object or a list that containing the PRPS data.
 
 #' @importFrom SummarizedExperiment assay
+#' @importFrom Matrix rowMeans
 #' @importFrom dplyr count
 #' @importFrom tidyr %>%
 #' @import ggplot2
@@ -93,7 +94,7 @@ createPrPsForCategoricalUV <- function(
         apply.log = TRUE,
         pseudo.count = 1,
         assess.se.obj = TRUE,
-        remove.na = 'both',
+        remove.na = 'none',
         assess.variables = FALSE,
         cat.cor.coef = c(0.95, 0.95),
         cont.cor.coef = c(0.95, 0.95),
@@ -104,7 +105,7 @@ createPrPsForCategoricalUV <- function(
     printColoredMessage(message = '------------The prpsForCategoricalUV function starts:',
                         color = 'white',
                         verbose = verbose)
-    # check inputs of the function ####
+    # Check inputs ####
     if (length(assay.name) > 1) {
         stop('A single assay name should be provided.')
     } else if (is.null(assay.name)) {
@@ -128,7 +129,8 @@ createPrPsForCategoricalUV <- function(
     } else if (max(cat.cor.coef) > 1 | max(cont.cor.coef) > 1){
         stop('The maximum value for cat.cor.coef or cont.cor.coef cannot be more than 1.')
     }
-    # assess the SummarizedExperiment object ####
+
+    # Assess the SummarizedExperiment object ####
     if (assess.se.obj) {
         se.obj <- checkSeObj(
             se.obj = se.obj,
@@ -137,8 +139,8 @@ createPrPsForCategoricalUV <- function(
             remove.na = remove.na)
     }
 
-    # log transformation ####
-    printColoredMessage(message = '-- Data transformation and normalization:',
+    # Data transformation ####
+    printColoredMessage(message = '-- Data transformation:',
                         color = 'magenta',
                         verbose = verbose)
     if (isTRUE(apply.log) & !is.null(pseudo.count)){
@@ -161,10 +163,20 @@ createPrPsForCategoricalUV <- function(
         expr.data <- assay(x = se.obj, i = assay.name)
     }
 
-    # assign homogeneous biological groups of samples to each sample ####
-    if(length(bio.variables) > 1){
+    # PRPS ####
+    printColoredMessage(
+        message = '-- Create PRPS sets:',
+        color = 'magenta',
+        verbose = verbose )
+    ## create PRPS with considering other uv variables ####
+    if(!is.null(other.uv.variables)){
         printColoredMessage(
-            message = '-- Create homogeneous biological group of samples:',
+            message = '- Create PRPS with considering "other.uv.variables" :',
+            color = 'blue',
+            verbose = verbose )
+        ### create homogeneous sample groups with respect to biology ####
+        printColoredMessage(
+            message = '-- Create homogeneous sample groups with respect to the "bio.variables":',
             color = 'magenta',
             verbose = verbose )
         homo.bio.groups <- createHomogeneousBioGroups(
@@ -179,23 +191,13 @@ createPrPsForCategoricalUV <- function(
             save.se.obj = FALSE,
             remove.na = 'none',
             verbose = verbose)
-        if(sum(table(homo.bio.groups) == 1) == length(unique(homo.bio.groups))){
+        if(sum(table(homo.bio.groups) == 1) == length(unique(homo.bio.groups)))
             stop('All the homogeneous biological group of samples have only 1 sample. PRPS cannot be created.')
-        }
-    } else{
-        homo.bio.groups <- colData(se.obj)[[bio.variables]]
-        if(length(unique(homo.bio.groups)) == 1 )
-            printColoredMessage(
-                message = 'The level of the "bio.variables" is only 1.',
-                color = 'red',
-                verbose = verbose)
-    }
 
-    # PRPS within homogeneous biological * uv populations ####
-    if(!is.null(other.uv.variables)){
+        ## create homogeneous sample groups with respect to unwanted variables ####
         printColoredMessage(
-            message = '-- Create homogeneous sample groups with respect to the other.uv.variables:',
-            color = 'magenta',
+            message = '-- Create homogeneous sample groups with respect to the "other.uv.variables":',
+            color = 'blue',
             verbose = verbose )
         ## create all possible sample groups with respect to other.uv.variables ####
         homo.uv.groups <- createHomogeneousUVGroups(
@@ -210,13 +212,10 @@ createPrPsForCategoricalUV <- function(
             save.se.obj = FALSE,
             remove.na = 'none',
             verbose = verbose)
+        ## put all together ####
         all.groups <- data.frame(
             homo.uv.groups = homo.uv.groups,
             homo.bio.groups = homo.bio.groups)
-        printColoredMessage(
-            message = '-- Combine all homogeneous samples groups with respect to both biological and unwanted variables:',
-            color = 'magenta',
-            verbose = verbose)
         bio.batch <- uv.group <- NULL
         all.groups$bio.batch <- paste(
             all.groups$homo.uv.groups,
@@ -224,11 +223,11 @@ createPrPsForCategoricalUV <- function(
             sep = '||')
         all.groups$uv.group <- se.obj[[main.uv.variable]]
         printColoredMessage(
-            message = paste0(
+            message = paste0('- ',
                 length(unique(all.groups$bio.batch)),
                 ' of ',
                 c(length(unique(all.groups$homo.bio.groups)) *length(unique(all.groups$homo.uv.groups)) ),
-                ' maximum possible groups (',
+                ' possible groups (',
                 length(unique(all.groups$homo.bio.groups)),
                 ' biological groups * ',
                 length(unique(all.groups$homo.uv.groups)),
@@ -236,6 +235,7 @@ createPrPsForCategoricalUV <- function(
                 'groups are created.'),
             color = 'blue',
             verbose = verbose)
+        ## check samples distribution ####
         samples.dis <- table(all.groups$bio.batch, all.groups$uv.group)
         selected.groups <- sum(rowSums(samples.dis >= min.sample.for.prps) > 1)
         printColoredMessage(
@@ -249,8 +249,8 @@ createPrPsForCategoricalUV <- function(
                 main.uv.variable, '.'),
             color = 'blue',
             verbose = verbose )
-        # check connection between PRPS sets ####
-        if(check.prps.connectedness){
+        ## check connection between PRPS sets ####
+        if(isTRUE(check.prps.connectedness)){
             printColoredMessage(
                 message = paste0(
                     '-- Check the connection between possible PRPS sets across batches of ',
@@ -263,7 +263,7 @@ createPrPsForCategoricalUV <- function(
                 min.samples = min.sample.for.prps,
                 batch.name = main.uv.variable)
         }
-        # check samples abundance ####
+        ## check samples abundance ####
         printColoredMessage(
             message = '-- Check samples abundance of groups before create PRPS:',
             color = 'magenta',
@@ -280,14 +280,18 @@ createPrPsForCategoricalUV <- function(
             color = 'red',
             verbose = verbose)
         printColoredMessage(
-            message = 'Please note, the high average sample size, may result in a contamination of PRPS with some other variation.',
+            message = paste0(
+                'Please note, the high average sample size,',
+                ' may result in a contamination of PRPS with some other variation.'),
             color = 'red',
             verbose = verbose)
         printColoredMessage(
-            message = 'To avoid this, you may consider increase number of clustering of continuous biological and unwanted variables.',
+            message = paste0(
+                'To avoid this, you may consider increase number',
+                'of clustering of continuous biological and unwanted variables.'),
             color = 'red',
             verbose = verbose)
-        # create PRPS sets ####
+        ## create PRPS sets ####
         prps.sets <- lapply(
             1:nrow(samples.dis),
             function(x) {
@@ -313,15 +317,33 @@ createPrPsForCategoricalUV <- function(
             color = 'blue',
             verbose = verbose)
     }
-    # PRPS within just homogeneous biological populations ####
+    ## create PRPS without considering other uv variables ####
     if(is.null(other.uv.variables)) {
+        printColoredMessage(
+            message = '- Create PRPS without considering "other.uv.variables" :',
+            color = 'blue',
+            verbose = verbose )
+        homo.bio.groups <- createHomogeneousBioGroups(
+            se.obj = se.obj,
+            bio.variables = bio.variables,
+            nb.clusters = nb.bio.clusters,
+            clustering.method = bio.clustering.method,
+            assess.se.obj = assess.se.obj,
+            assess.variables = assess.variables,
+            cont.cor.coef = cont.cor.coef,
+            cat.cor.coef = cat.cor.coef,
+            save.se.obj = FALSE,
+            remove.na = 'none',
+            verbose = verbose)
+        if(sum(table(homo.bio.groups) == 1) == length(unique(homo.bio.groups)))
+            stop('All the homogeneous biological group of samples have only 1 sample. PRPS cannot be created.')
         all.groups <- data.frame(
             uv.group = se.obj[[main.uv.variable]],
             bio.groups = homo.bio.groups
             )
         samples.dis <- table(all.groups$bio.groups, all.groups$uv.group)
 
-        ## check connection between PRPS sets ####
+        ### check connection between PRPS sets ####
         if(check.prps.connectedness){
             printColoredMessage(
                 message = paste0(
@@ -335,7 +357,7 @@ createPrPsForCategoricalUV <- function(
                 min.samples = min.sample.for.prps,
                 batch.name = main.uv.variable)
         }
-        # check samples abundance ####
+        ## check samples abundance ####
         printColoredMessage(
             message = '-- Check samples abundance of groups before create PRPS:',
             color = 'magenta',
@@ -344,7 +366,10 @@ createPrPsForCategoricalUV <- function(
         samples.dis <- samples.dis[rowSums(samples.dis >= min.sample.for.prps) > 1 , ]
         mean.samples <- round(mean(samples.dis[samples.dis >= min.sample.for.prps]), digits = 0)
         printColoredMessage(
-            message = paste0('The average sample size of groups to select ', min.sample.for.prps, ' samples for PRPS is ', mean.samples, '.'),
+            message = paste0(
+                'The average sample size of groups to select ',
+                min.sample.for.prps, ' samples for PRPS is ',
+                mean.samples, '.'),
             color = 'red',
             verbose = verbose)
         printColoredMessage(
@@ -356,7 +381,7 @@ createPrPsForCategoricalUV <- function(
             color = 'red',
             verbose = verbose)
 
-        # create PRPS sets ####
+        ## create PRPS sets ####
         prps.sets <- lapply(
             1:nrow(samples.dis),
             function(x) {
@@ -383,8 +408,8 @@ createPrPsForCategoricalUV <- function(
             color = 'blue',
             verbose = verbose)
     }
-    # plot output #####
-    if (plot.prps.map) {
+    ## plot PRPS map #####
+    if (isTRUE(plot.prps.map)) {
         ## PRPS map plot
         printColoredMessage(message = '-- Plot PRPS map:',
                             color = 'magenta',
@@ -425,7 +450,8 @@ createPrPsForCategoricalUV <- function(
             )
         if(verbose) print(p)
     }
-    # saving the output ####
+    # Save the results ####
+    ## select output name ####
     if(!is.null(other.uv.variables)) {
         out.put.name <- paste0(
             main.uv.variable,
@@ -446,8 +472,8 @@ createPrPsForCategoricalUV <- function(
     if(is.null(prps.set.name)){
         prps.set.name <- 'PRPS_Set1'
     }
-
-    if (save.se.obj) {
+    ## save the output in the SummarizedExperiment object ####
+    if (isTRUE(save.se.obj)) {
         ## check if PRPS already exists in the metadata
         if (!'PRPS' %in% names(se.obj@metadata)) {
             se.obj@metadata[['PRPS']] <- list()
@@ -477,7 +503,9 @@ createPrPsForCategoricalUV <- function(
                             color = 'white',
                             verbose = verbose)
         return(se.obj)
-    } else {
+    }
+    ## save the output in as data frame ####
+    if(isFALSE(save.se.obj)) {
         printColoredMessage(message = '------------The prpsForCategoricalUV function finished.',
                             color = 'white',
                             verbose = verbose)
