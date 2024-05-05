@@ -645,6 +645,7 @@ identifyUnknownUV <- function(
     } else{
         if (ncol(input.data) == 1) {
             data.to.plot <- as.data.frame(input.data)
+            input <- samples <- batches <- NULL
             colnames(data.to.plot) <- 'input'
             data.to.plot$batches <- factor(
                 x = uv.sources,
