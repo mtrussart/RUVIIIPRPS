@@ -21,7 +21,7 @@
 #' @param variable String of the label of a categorical variable such as
 #' sample types or batches from colData(se.obj).
 #' @param method A character string indicating which method
-#' is to be used for the differential analysis: "aov" or "welch.correction". By default "aov" will
+#' is to be used for the differential analysis: "aov" or "welch". By default "aov" will
 #' be selected.
 #' @param plot.top.genes Logical. Indicates whether to plot the gene expression of the number of genes
 #' from the top listing of anova by default it is set to FALSE.
@@ -87,8 +87,8 @@ computeGenesVariableAnova <- function(
     } else if (length(unique(se.obj@colData[, variable])) < 2) {
         stop(paste0('The ', variable, ', contains only one level. ANOVA cannot be performed.'))
     }
-    if (!method %in% c('aov', 'welch.correction')) {
-        stop('The method should be one of the "aov" or "welch.correction".')
+    if (!method %in% c('aov', 'welch')) {
+        stop('The method should be one of the "aov" or "welch".')
     }
     if (apply.log){
         if(pseudo.count < 0 )
@@ -167,7 +167,7 @@ computeGenesVariableAnova <- function(
                 anova.genes.var <- row_oneway_equalvar(
                     x = all.assays[[x]],
                     g = se.obj@colData[, variable])
-            } else if (method == 'welch.correction') {
+            } else if (method == 'welch') {
                 printColoredMessage(
                     message = paste0(
                         'Perform ANOVA with Welch correction between individual genes expression of the ',
