@@ -51,8 +51,8 @@
 #' @return A SummarizedExperiment object or a list that contains all the RLE data of individual assay(s) in the
 #' SummarizedExperiment object.
 
-#' @importFrom SummarizedExperiment assays assay
 #' @importFrom matrixStats rowMedians colMedians colIQRs
+#' @importFrom SummarizedExperiment assays assay
 #' @importFrom stats median
 #' @import ggplot2
 #' @export
@@ -70,13 +70,20 @@ computeRLE <- function(
     printColoredMessage(message = '------------The computeRLE function starts:',
                         color = 'white',
                         verbose = verbose)
-    # check inputs ####
-    if(is.list(assay.names)){
+
+    # Check inputs ####
+    if(is.list(assay.names) | !is.vector(assay.names) | is.logical(assay.names)){
         stop('The "assay.names" must be a vector of assay names(s) or assay.names = "all".')
+    }
+    if (isFALSE(is.logical(apply.log))) {
+        stop('The "apply.log" must be "TRUE" or "FALSE".')
     }
     if (isTRUE(apply.log)){
         if (pseudo.count < 0)
             stop('The value of "pseudo.count" cannot be negative.')
+    }
+    if (is.logical(outputs.to.return)) {
+        stop('The "outputs.to.return" must be one of the "all", "rle", "rle.med", "rle.iqr" or "rle.med.iqr".')
     }
     if (!outputs.to.return %in% c('all', 'rle', 'rle.med', 'rle.iqr', 'rle.med.iqr')) {
         stop('The "outputs.to.return" must be one of the "all", "rle", "rle.med", "rle.iqr" or "rle.med.iqr".')
@@ -85,15 +92,15 @@ computeRLE <- function(
         stop('The "remove.na" must be one of the "assays" or "none".')
     }
 
-    # assays ####
+    # Assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
-        assay.names <- as.factor(names(assays(se.obj)))
+        assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else  assay.names <- factor(x = assay.names , levels = assay.names)
     if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
-    # assess the SummarizedExperiment object ####
+    # Assess the SummarizedExperiment object ####
     if (assess.se.obj) {
         se.obj <- checkSeObj(
             se.obj = se.obj,
@@ -101,9 +108,10 @@ computeRLE <- function(
             variables = NULL,
             remove.na = remove.na,
             verbose = verbose)
-        }
-    # data transformation ####
-    printColoredMessage( message ='-- Data transformation:',
+    }
+
+    # Data log transformation ####
+    printColoredMessage( message ='-- Data log transformation:',
         color = 'magenta',
         verbose = verbose)
     all.assays <- lapply(
@@ -112,31 +120,31 @@ computeRLE <- function(
             # log transformation ####
             if (isTRUE(apply.log) & !is.null(pseudo.count)) {
                 printColoredMessage(
-                    message = paste0('Apply log2 + ', pseudo.count,  ' (pseudo.count) on the ', x, ' data.'),
+                    message = paste0('- Apply log2 + ', pseudo.count,  ' (pseudo.count) on the ', x, ' data.'),
                     color = 'blue',
                     verbose = verbose)
-                expr <- log2(assay(x = se.obj, i = x) + pseudo.count)
+                expr.data <- log2(assay(x = se.obj, i = x) + pseudo.count)
             } else if (isTRUE(apply.log) & is.null(pseudo.count)){
                 printColoredMessage(
-                    message = paste0('Apply log2 on the ', x, ' data.'),
+                    message = paste0('- Apply log2 on the ', x, ' data.'),
                     color = 'blue',
                     verbose = verbose)
-                expr <- log2(assay(x = se.obj, i = x))
+                expr.data <- log2(assay(x = se.obj, i = x))
             } else if (isFALSE(apply.log)){
                 printColoredMessage(
-                    message = paste0('The ', x, ' data will be used without log transformation.'),
+                    message = paste0('- The ', x, ' data will be used without log transformation.'),
                     color = 'blue',
                     verbose = verbose)
                 printColoredMessage(
-                    message = 'Please note, the assay should be in log scale before computing RLE.',
+                    message = '- Please note, the assay should be in log scale before computing RLE.',
                     color = 'red',
                     verbose = verbose)
-                expr <- assay(x = se.obj, i = x)
+                expr.data <- assay(x = se.obj, i = x)
                 }
         })
     names(all.assays) <- levels(assay.names)
 
-    # compute RLE for each assay ####
+    # Compute RLE for each assay ####
     printColoredMessage(
         message = '-- Compute the RLE:',
         color = 'magenta',
@@ -145,17 +153,17 @@ computeRLE <- function(
         levels(assay.names),
         function(x) {
             printColoredMessage(
-                message = paste0('- Compute the RLE on the ', x, ' data.'),
+                message = paste0('-- Compute the RLE for the ', x, ' data:'),
                 color = 'blue',
                 verbose = verbose)
             rle.data <- all.assays[[x]] - matrixStats::rowMedians(all.assays[[x]])
             if(outputs.to.return == 'all'){
                 printColoredMessage(
-                    message = 'obtain the RLE data.',
+                    message = '- Obtain the RLE data.',
                     color = 'blue',
                     verbose = verbose)
                 printColoredMessage(
-                    message = 'obtain the RLE medians and interquartile ranges.',
+                    message = '- Obtain the RLE medians and interquartile ranges.',
                     color = 'blue',
                     verbose = verbose)
                 rle.med <- matrixStats::colMedians(rle.data)
@@ -166,13 +174,13 @@ computeRLE <- function(
                     rle.iqr = rle.iqr)
             } else if (outputs.to.return == 'rle.data'){
                 printColoredMessage(
-                    message = '- obtain the RLE data.',
+                    message = '- Obtain the RLE data.',
                     color = 'blue',
                     verbose = verbose)
                 rle <- list(rle.data = rle.data)
             } else if (outputs.to.return == 'rle.med'){
                 printColoredMessage(
-                    message = 'obtain the RLE data.',
+                    message = '- Obtain the RLE data.',
                     color = 'blue',
                     verbose = verbose)
                 printColoredMessage(
@@ -183,22 +191,22 @@ computeRLE <- function(
                 rle <- list(rle.data = rle.data, rle.med = rle.med)
             } else if (outputs.to.return == 'rle.iqr'){
                 printColoredMessage(
-                    message = 'obtain the RLE data.',
+                    message = '- Obtain the RLE data.',
                     color = 'blue',
                     verbose = verbose)
                 printColoredMessage(
-                    message = 'obtain the interquartile ranges.',
+                    message = '- Obtain the interquartile ranges.',
                     color = 'blue',
                     verbose = verbose)
                 rle.iqr <- matrixStats::colIQRs(rle.data)
                 rle <- list(rle.data = rle.data, rle.iqr = rle.iqr)
             } else if (outputs.to.return == 'rle.med.iqr'){
                 printColoredMessage(
-                    message = 'obtain the RLE data.',
+                    message = '- Obtain the RLE data.',
                     color = 'blue',
                     verbose = verbose)
                 printColoredMessage(
-                    message = 'obtain the RLE medians and interquartile ranges.',
+                    message = '- Obtain the RLE medians and interquartile ranges.',
                     color = 'blue',
                     verbose = verbose)
                 rle.med <- matrixStats::colMedians(rle.data)
@@ -209,43 +217,43 @@ computeRLE <- function(
         })
     names(all.assays) <- levels(assay.names)
 
-    # save the results ####
+    # Save the results ####
     ## add results to the SummarizedExperiment object ####
     printColoredMessage(
         message = '-- Save the RLE data:',
         color = 'magenta',
         verbose = verbose)
-    if (save.se.obj == TRUE) {
+    if (isTRUE(save.se.obj)) {
         printColoredMessage(
             message = '- Save all the RLE data to the "metadata" of the SummarizedExperiment object.',
             color = 'blue',
             verbose = verbose)
-        ### for all assays ####
+        ### for all assays
         for (x in levels(assay.names)) {
-            ## check if metadata metric already exist ####
+            ## check if metadata metric already exist
             if (length(se.obj@metadata) == 0) {
                 se.obj@metadata[['metric']] <- list()
             }
-            ## check if metadata metric already exist ####
+            ## check if metadata metric already exist
             if (!'metric' %in% names(se.obj@metadata)) {
                 se.obj@metadata[['metric']] <- list()
             }
-            ## check if metadata metric already exist for this assay ####
+            ## check if metadata metric already exist for this assay
             if (!x %in% names(se.obj@metadata[['metric']])) {
                 se.obj@metadata[['metric']][[x]] <- list()
             }
-            ## check if metadata metric already exist for this assay and this metric ####
+            ## check if metadata metric already exist for this assay and this metric
             if (!'RLE' %in% names(se.obj@metadata[['metric']][[x]])) {
                 se.obj@metadata[['metric']][[x]][['RLE']] <- list()
             }
-            ## check if metadata metric already exist for this assay and this metric ####
+            ## check if metadata metric already exist for this assay and this metric
             if (!'rle.data' %in% names(se.obj@metadata[['metric']][[x]][['RLE']])) {
                 se.obj@metadata[['metric']][[x]][['RLE']][['rle.data']] <- list()
             }
             se.obj@metadata[['metric']][[x]][['RLE']][['rle.data']] <- all.assays[[x]]
         }
         printColoredMessage(
-            message = paste0('The RLE data of individual assay is saved to metadata@metric.'),
+            message = paste0('The RLE data of individual assay is saved to the metadata@metric in SummarizedExperiment object.'),
             color = 'blue',
             verbose = verbose
         )
@@ -253,10 +261,12 @@ computeRLE <- function(
                             color = 'white',
                             verbose = verbose)
         return(se.obj = se.obj)
-    } else if (save.se.obj == FALSE) {
-        ### return a list ####
+    }
+
+    ## return a list ####
+    if (isFALSE(save.se.obj)) {
         printColoredMessage(
-            message = 'The RLE data of individual assay(s) are outputed as a list.',
+            message = 'The RLE data of individual assay is outputed as a list.',
             color = 'blue',
             verbose = verbose)
         printColoredMessage(message = '------------The computeRLE function finished.',
