@@ -1,10 +1,10 @@
-#' compute the average Silhouette coefficient.
+#' Compute the average silhouette width.
 
 #' @author Ramyar Molania
 
 #' @description
-#' This function calculates the mean Silhouette coefficient for categorical variables such as sample subtypes, batches,
-#' etc., and a distance matrix based on the principal components of assay(s).
+#' This function calculates the average silhouette width for each categorical variables such as sample biological subtypes,
+#'  batches, etc.. The distance matrix is based on the principal components.
 
 #' @details
 #' We use silhouette coefficient analysis to assess the separation of biological populations and batch effects. The
