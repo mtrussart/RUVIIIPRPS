@@ -60,7 +60,7 @@ getAssessmentMetrics <- function(
     general.plot <- data.frame(
         Variables = 'General',
         Factors = 'General',
-        PlotTypes = 'RLEplot',
+        PlotTypes = 'rlePlot',
         Metrics = 'RLE')
 
     # possible metrics for continuous variables #####
@@ -107,8 +107,8 @@ getAssessmentMetrics <- function(
             'pcs||lineDotPlot||VCA',
             'ariCoeff||barPlot||ARI',
             'silhouetteCoeff||barPlot||Silhouette',
-            'geneAnov||boxPlot||ANOVA',
-            'pvaluse||pvalHist||DGE')
+            'geneAnova||boxPlot||ANOVA',
+            'pvalue||pvalHist||DGE')
         metrics.for.cat.var <- expand.grid(
             categorical.var,
             metrics.for.cat.var)
@@ -198,7 +198,45 @@ getAssessmentMetrics <- function(
     }
     final.metrics.table.toplot <- final.metrics.table
     final.metrics.table <- rbind(final.metrics.table , general.plot)
-
+    final.metrics.table$Assessments <- paste(
+        final.metrics.table$Variables,
+        final.metrics.table$Factors,
+        final.metrics.table$PlotTypes,
+        sep = '||')
+    index <- final.metrics.table$PlotTypes == 'scatterPlot'
+    final.metrics.table$Assessments[index] <- 'CorrCoeff'
+    index <- final.metrics.table$Metrics == 'LRA'
+    final.metrics.table$Assessments[index] <- 'AverageRseq'
+    index <- final.metrics.table$Metrics == 'VCA'
+    final.metrics.table$Assessments[index] <- 'AverageCorr'
+    index <- final.metrics.table$Factors == 'General'
+    final.metrics.table$Assessments[index] <- 'rleMed||rleIqr'
+    index <- final.metrics.table$Factors == 'geneCorr'
+    final.metrics.table$Assessments[index] <- 'CorrCoeff||PvalDis||qVal'
+    index <- final.metrics.table$Factors == 'geneAnova'
+    final.metrics.table$Assessments[index] <- 'Fstat||Pval||qVal'
+    index <- final.metrics.table$Metrics == 'DGE'
+    final.metrics.table$Assessments[index] <- 'PvalDis||qVal'
+    index <- final.metrics.table$PlotTypes == 'coloredRLEplot'
+    final.metrics.table$Assessments[index] <- 'rleMed||rleIqr'
+    index <- final.metrics.table$Metrics == 'ARI'
+    final.metrics.table$Assessments[index] <- 'ARI'
+    index <- final.metrics.table$Metrics == 'Silhouette'
+    final.metrics.table$Assessments[index] <- 'Silhouette'
+    index <- final.metrics.table$Metrics == 'RLE' & final.metrics.table$PlotTypes == 'boxPlot'
+    final.metrics.table$Assessments[index] <- 'rleMed'
+    index <- final.metrics.table$Metrics == 'PCA' & final.metrics.table$PlotTypes == 'boxPlot'
+    final.metrics.table$Assessments[index] <- 'Uni'
+    index <- final.metrics.table$PlotTypes == 'combinedPlot'
+    final.metrics.table$Assessments[index] <- 'DA'
+    index <- final.metrics.table$Metrics == 'PCA' & final.metrics.table$PlotTypes == 'boxPlot'
+    final.metrics.table$Assessments[index] <- 'DA'
+    index <- final.metrics.table$Metrics == 'PCA' & final.metrics.table$PlotTypes == 'scatterPlot'
+    final.metrics.table$Assessments[index] <- 'DA'
+    index <- final.metrics.table$PlotTypes == 'coloredRLEplot'
+    final.metrics.table$Assessments[index] <- 'DA'
+    final.metrics.table <- final.metrics.table[ , c(1,4,2,3,5)]
+    final.metrics.table$Code <- paste0('PA', 1:nrow(final.metrics.table))
     # plot ####
     steps <- y <- label <- xmin <- xmax <- type <- s_e <- ymin <- ymax <- id <- NULL
     plot.metrics <- lapply(
