@@ -1,12 +1,13 @@
-#' is used to print colored messages.
-#'
-#'
+#' Print colored messages.
+
 #' @param message Message to be printed.
 #' @param color The color of the message.
 #' @param verbose whether to show the messages or not.
 
-############################################# print_colored_message
-printColoredMessage <- function(message, color, verbose) {
+printColoredMessage <- function(
+        message,
+        color,
+        verbose) {
     # ANSI escape sequence for color
     colors <- switch(
         tolower(color),
