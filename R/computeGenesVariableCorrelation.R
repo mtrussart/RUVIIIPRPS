@@ -16,7 +16,7 @@
 #' @param variable Symbol. Indicates a column name of the SummarizedExperiment object that contains a continuous variable
 #' such as library size, tumor purity, ....
 #' @param method Symbol. Indicates which correlation methods should be used. The options are 'pearson', 'kendall', or
-#' "spearman". The default is 'spearman'.
+#' "spearman". The default is set to 'spearman'.
 #' @param a Numeric. The significance level used for the confidence intervals in the correlation, by default it is set to
 #' 0.05. We refer to the correls function from the Rfast package for more details.
 #' @param rho Numeric. The value of the hypothesized correlation to be used in the hypothesis testing, by default it is
@@ -86,11 +86,10 @@ computeGenesVariableCorrelation <- function(
         stop(paste0('The ', variable, ' appears to have no variation.'))
     }
 
-
     # assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
-        assay.names <- as.factor(names(assays(se.obj)))
-    } else assay.names <- factor(x = assay.names, levels = assay.names)
+        assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
+    } else  assay.names <- factor(x = assay.names , levels = assay.names)
     if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
@@ -273,6 +272,9 @@ computeGenesVariableCorrelation <- function(
             message = 'The correlation results for indiviaul assay are saved to metadata@metric',
             color = 'blue',
             verbose = verbose)
+        printColoredMessage(message = '------------The computeGenesVariableCorrelation function finished.',
+                            color = 'white',
+                            verbose = verbose)
         return(se.obj = se.obj)
 
         # return only the correlation result ####
