@@ -50,7 +50,8 @@
 #' The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
 #' the checkSeObj function for more details.
 #' @param save.se.obj Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object
-#'  or to output the result as list. By default it is set to TRUE.
+#' or to output the result as list. By default it is set to TRUE.
+#' @param prps.set.name TTTTT
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
 #' @importFrom SummarizedExperiment assay colData
@@ -333,8 +334,8 @@ createPrPsByMnn <- function(
             se.obj@metadata[['PRPS']][['un.supervised']][[prps.set.name]] <- list()
         }
         ## check if out.put.name already exists in the PRPS$supervised$prps.set.name slot
-        if (!out.put.name %in% names(se.obj@metadata[['PRPS']][['un.supervised']][[prps.set.name]])) {
-            se.obj@metadata[['PRPS']][['un.supervised']][[prps.set.name]][[out.put.name]] <- prps.data
+        if (!prps.set.name %in% names(se.obj@metadata[['PRPS']][['un.supervised']][[prps.set.name]])) {
+            se.obj@metadata[['PRPS']][['un.supervised']][[prps.set.name]][[prps.set.name]] <- prps.data
         }
         printColoredMessage(message = '------------The unsupervisedPRPSmnn function finished.',
                             color = 'white',
