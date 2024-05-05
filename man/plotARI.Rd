@@ -39,7 +39,7 @@ a scatter plot of the adjusted rand index of each variable against each other.}
 \item{save.se.obj}{Logical. Indicates whether to save the plots in the metadata of the SummarizedExperiment  object
 or to output the result as list. By default it is set to TRUE.}
 
-\item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
+\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
 \value{
 A SummarizedExperiment object or a list that containing all the plots of the computed ARI on the categorical

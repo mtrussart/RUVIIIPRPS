@@ -2,7 +2,7 @@
 % Please edit documentation in R/prepareSeObj.R
 \name{prepareSeObj}
 \alias{prepareSeObj}
-\title{Create a SummarizedExperiment object.}
+\title{prepare a SummarizedExperiment object.}
 \usage{
 prepareSeObj(
   data = NULL,
