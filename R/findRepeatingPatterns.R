@@ -1,10 +1,11 @@
-#' find repeating factors ro characters in a vector.
-#'
+#' Find repeating factors or characters in a vector.
+
+#' @author Ramyar Molania
+
 #' @param vec A vector of factors or characters.
 #' @param n.repeat Numeric. Indicates the minimum repeat of individual factors ro characters in the vector.
-#'
-#'
-#' @return A vec of factors ro characters that are repeated at least "n.repeat" times.
+
+#' @return A vector of factors or characters that are repeated at least "n.repeat" times.
 
 findRepeatingPatterns <- function(vec, n.repeat) {
     char.counts <- table(vec)
