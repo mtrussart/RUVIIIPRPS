@@ -2,7 +2,7 @@
 % Please edit documentation in R/printColoredMessage.R
 \name{printColoredMessage}
 \alias{printColoredMessage}
-\title{is used to print colored messages.}
+\title{Print colored messages.}
 \usage{
 printColoredMessage(message, color, verbose)
 }
@@ -14,5 +14,5 @@ printColoredMessage(message, color, verbose)
 \item{verbose}{whether to show the messages or not.}
 }
 \description{
-is used to print colored messages.
+Print colored messages.
 }

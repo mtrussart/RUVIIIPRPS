@@ -2,7 +2,7 @@
 % Please edit documentation in R/computeSilhouette.R
 \name{computeSilhouette}
 \alias{computeSilhouette}
-\title{compute the average Silhouette coefficient.}
+\title{Compute the average silhouette width.}
 \usage{
 computeSilhouette(
   se.obj,
@@ -45,8 +45,8 @@ SummarizedExperiment A SummarizedExperiment object containing the computed silho
 on the categorical variable.
 }
 \description{
-This function calculates the mean Silhouette coefficient for categorical variables such as sample subtypes, batches,
-etc., and a distance matrix based on the principal components of assay(s).
+This function calculates the average silhouette width for each categorical variables such as sample biological subtypes,
+batches, etc.. The distance matrix is based on the principal components.
 }
 \details{
 We use silhouette coefficient analysis to assess the separation of biological populations and batch effects. The

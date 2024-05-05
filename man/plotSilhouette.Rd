@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotSilhouette.R
 \name{plotSilhouette}
 \alias{plotSilhouette}
-\title{compute the average Silhouette coefficients.}
+\title{Compute the average Silhouette coefficients.}
 \usage{
 plotSilhouette(
   se.obj,
@@ -18,7 +18,7 @@ plotSilhouette(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or list of symbols for the selection of the name(s) of the assay(s) in the
+\item{assay.names}{Symbol. A symbol or vector of symbols for the selection of the name(s) of the assay(s) in the
 SummarizedExperiment object to generate barplot or scatter plots of the computed adjusted rand index. By default all
 the assays of the SummarizedExperiment object will be selected.}
 

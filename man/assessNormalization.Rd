@@ -19,7 +19,7 @@ assessNormalization(
   fstat.cutoff = 1,
   corr.coef.cutoff = 0.2,
   corr.method = "spearman",
-  anove.method = "aov",
+  anova.method = "aov",
   output.file = NULL,
   plot.output = TRUE,
   verbose = TRUE
@@ -71,21 +71,13 @@ lower than this value with continuous variables. The default value is 0.2.}
 
 \item{corr.method}{Symbol. Indicates which correlation methods should be used. Options are The default is 'spearman'.}
 
-\item{anove.method}{Symbol. Indicates which ANOVA methods should be used. Options are ... . The default is 'aov'.}
+\item{anova.method}{Symbol. Indicates which ANOVA methods should be used. Options are ... . The default is 'aov'.}
 
 \item{output.file}{Path and name of the output file to save the assessments plots in a pdf format.}
 
 \item{plot.output}{BB}
 
 \item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
-
-\item{sil.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the silhouette coefficients.}
-
-\item{ari.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the ARI.}
-
-\item{vca.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the ARI.}
-
-\item{lra.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the ARI.}
 }
 \value{
 A SummarizedExperiment object containing all the assessments plots and metrics. If specified it will generate

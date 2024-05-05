@@ -30,7 +30,7 @@ of the assay(s) of the SummarizedExperiment class object to compute the ANOVA. B
 sample types or batches from colData(se.obj).}
 
 \item{method}{A character string indicating which method
-is to be used for the differential analysis: "aov" or "welch.correction". By default "aov" will
+is to be used for the differential analysis: "aov" or "welch". By default "aov" will
 be selected.}
 
 \item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data. By default
