@@ -700,7 +700,7 @@ prepareSeObj <- function(
                 colnames(gene.annotation) <- gene.group
             }
             row.names(gene.annotation) <- row.names(se.obj)
-            rowData(se.obj) <- DataFrame(gene.annotation)
+            SummarizedExperiment::rowData(se.obj) <- DataFrame(gene.annotation)
         }
 
         if(is.logical(estimate.tumor.purity)){
@@ -955,7 +955,7 @@ prepareSeObj <- function(
                 by = gene.group,
                 multiple = 'first'
             ))
-            rowData(se.obj) <- as.data.frame(gene.annotation)
+            SummarizedExperiment::rowData(se.obj) <- as.data.frame(gene.annotation)
             printColoredMessage(
                 message = 'The immune and stromal genes signature from Kosuke Yoshihara et.al are added.',
                 color = 'blue',
