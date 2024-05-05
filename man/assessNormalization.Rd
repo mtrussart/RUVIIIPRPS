@@ -13,13 +13,9 @@ assessNormalization(
   assessments.to.exclude = NULL,
   fast.pca = TRUE,
   sil.dist.measure = "euclidian",
-  sil.nb.pcs = 3,
   ari.clustering.method = "hclust",
   ari.hclust.method = "complete",
   ari.hclust.dist.measure = "euclidian",
-  ari.nb.pcs = 3,
-  vca.nb.pcs = 3,
-  lra.nb.pcs = 3,
   fstat.cutoff = 1,
   corr.coef.cutoff = 0.2,
   corr.method = "spearman",
@@ -57,8 +53,6 @@ to speed up the process, by default is set to 'TRUE'.}
 is to be used for the differential analysis: 'euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'.
 By default 'euclidean' will be selected.}
 
-\item{sil.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the silhouette coefficients.}
-
 \item{ari.clustering.method}{Symbol. Indicates which clustering methods should be applied on the PCs calculate the ARI.
 The function provides the 'mclust' or 'hclust' methods. The default is 'hclust'.}
 
@@ -68,12 +62,6 @@ one of 'ward.D', 'ward.D2', 'single', 'complete', 'average' (= UPGMA), 'mcquitty
 
 \item{ari.hclust.dist.measure}{Symbol. Indicates the distance measure to be used in the dist function. This must be
 one of euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'. See the dist function for more details.}
-
-\item{ari.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the ARI.}
-
-\item{vca.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the ARI.}
-
-\item{lra.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the ARI.}
 
 \item{fstat.cutoff}{Numeric. Specifies the threshold for selecting genes that have a F-statistics lower than this value
 with categorical variables. The default value is 1.}
@@ -90,6 +78,14 @@ lower than this value with continuous variables. The default value is 0.2.}
 \item{plot.output}{BB}
 
 \item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
+
+\item{sil.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the silhouette coefficients.}
+
+\item{ari.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the ARI.}
+
+\item{vca.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the ARI.}
+
+\item{lra.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the ARI.}
 }
 \value{
 A SummarizedExperiment object containing all the assessments plots and metrics. If specified it will generate
