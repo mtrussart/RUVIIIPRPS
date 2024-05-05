@@ -31,7 +31,6 @@ Imports:
     purrr,
     BiocParallel,
     ggrepel,
-    kunstomverse,
     scales,
     RColorBrewer,
     grDevices,
