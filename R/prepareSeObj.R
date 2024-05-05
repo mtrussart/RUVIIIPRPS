@@ -1,4 +1,4 @@
-#' Create a SummarizedExperiment object.
+#' prepare a SummarizedExperiment object.
 
 #' @author Ramyar Molania
 
@@ -107,7 +107,7 @@ prepareSeObj <- function(
         metaData = NULL,
         verbose = TRUE)
 {
-    printColoredMessage(message = '------------The createSeObj function starts:',
+    printColoredMessage(message = '------------The prepareSeObj function starts:',
                         color = 'white',
                         verbose = verbose)
     if(inherits(data, what = 'list')){
@@ -654,13 +654,13 @@ prepareSeObj <- function(
         )
         if (!is.null(sample.annotation))
             printColoredMessage(
-                message = paste0('-', ncol(colData(se.obj)), ' annotations for the samples'),
+                message = paste0('-', ncol(SummarizedExperiment::colData(se.obj)), ' annotations for the samples'),
                 color = 'blue',
                 verbose = verbose
             )
         if (!is.null(gene.annotation))
             printColoredMessage(
-                message = paste0('-', ncol(rowData(se.obj)), ' annotations for the genes'),
+                message = paste0('-', ncol(SummarizedExperiment::rowData(se.obj)), ' annotations for the genes'),
                 color = 'blue',
                 verbose = verbose
             )
@@ -678,15 +678,15 @@ prepareSeObj <- function(
                             color = 'white',
                             verbose = verbose)
         se.obj <- data
-        sample.annotation <- colData(se.obj)
+        sample.annotation <- SummarizedExperiment::colData(x = se.obj)
         if(ncol(sample.annotation) == 0){
             printColoredMessage(
                 message = 'The SummarizedExperiment does no contain sample annotation.',
                 color = 'blue',
                 verbose = verbose)
-            colData(se.obj) <- DataFrame(sample.ids = colnames(se.obj))
+            SummarizedExperiment::colData(se.obj) <- DataFrame(sample.ids = colnames(se.obj))
         }
-        gene.annotation <- rowData(se.obj)
+        gene.annotation <- SummarizedExperiment::rowData(se.obj)
         if(ncol(gene.annotation) == 0){
             printColoredMessage(
                 message = 'The SummarizedExperiment does no contain gene.annotation.',
@@ -730,7 +730,7 @@ prepareSeObj <- function(
                 stop('To find and remove lowly expressed genes, the "raw.count.assay.name" must be provided.')
             }
             if(!is.null(biological.group)){
-                if(!biological.group %in% colnames(colData(se.obj))){
+                if(!biological.group %in% colnames(SummarizedExperiment::colData(se.obj))){
                     stop('The "biological.group" cannot be found in the sample annotation of the SummarizedExperiment object.')
                 }
             }
@@ -796,7 +796,7 @@ prepareSeObj <- function(
                 verbose = verbose
             )
             se.obj <- se.obj[keep.genes , ]
-            gene.annotation <- as.data.frame(rowData(se.obj))
+            gene.annotation <- as.data.frame(SummarizedExperiment::rowData(se.obj))
         }
         ### calculate library size
         if(calculate.library.size){
@@ -817,7 +817,7 @@ prepareSeObj <- function(
                 verbose = verbose
             )
             if(verbose) print(summary(library.size/10^6), color = 'blue')
-            if('library.size' %in% colnames(colData(se.obj))){
+            if('library.size' %in% colnames(SummarizedExperiment::colData(se.obj))){
                 stop('There is "library.size" column name in the SummarizedExperiment object.')
             } else se.obj[['library.size']] <- library.size
 
@@ -854,13 +854,13 @@ prepareSeObj <- function(
                     mart = ensembl
                 )
                 bioMart.geneAnnot <- bioMart.geneAnnot[!duplicated(bioMart.geneAnnot[[gene.group]]), ]
-                gene.annotation <- as.data.frame(rowData(se.obj))
+                gene.annotation <- as.data.frame(SummarizedExperiment::rowData(se.obj))
                 gene.annotation <- dplyr::left_join(
                     x = gene.annotation,
                     y = bioMart.geneAnnot,
                     by = gene.group,
                     multiple = 'first')
-                rowData(se.obj) <- as.data.frame(gene.annotation)
+                SummarizedExperiment::rowData(se.obj) <- as.data.frame(gene.annotation)
             } else if(!is.null(gene.details)){
                 printColoredMessage(
                     message = 'Obtain gene details from the bioMart R package.',
@@ -890,13 +890,13 @@ prepareSeObj <- function(
                     mart = ensembl
                 )
                 bioMart.geneAnnot <- bioMart.geneAnnot[!duplicated(bioMart.geneAnnot[[gene.group]]), ]
-                gene.annotation <- as.data.frame(rowData(se.obj))
+                gene.annotation <- as.data.frame(SummarizedExperiment::rowData(se.obj))
                 gene.annotation <- dplyr::left_join(
                     x = gene.annotation,
                     y = bioMart.geneAnnot,
                     multiple = 'first',
                     by = gene.group)
-                rowData(se.obj) <- as.data.frame(gene.annotation)
+                SummarizedExperiment::rowData(se.obj) <- as.data.frame(gene.annotation)
             }
         } else{
             printColoredMessage(
@@ -914,14 +914,14 @@ prepareSeObj <- function(
             )
             hk.im.genes <- hk_immunStroma
             keep.cols <- c(which(colnames(hk.im.genes) %in% gene.group), 4:9)
-            gene.annotation <- as.data.frame(rowData(se.obj))
+            gene.annotation <- as.data.frame(SummarizedExperiment::rowData(se.obj))
             gene.annotation <- dplyr::left_join(
                 x = gene.annotation,
                 y = hk.im.genes[ , keep.cols],
                 by = gene.group,
                 multiple = 'first'
             )
-            rowData(se.obj) <- as.data.frame(gene.annotation)
+            SummarizedExperiment::rowData(se.obj) <- as.data.frame(gene.annotation)
             printColoredMessage(
                 message = 'Seven different lists of housekeeping genes are added to the gene annotation.',
                 color = 'blue',
@@ -948,7 +948,7 @@ prepareSeObj <- function(
             keep.cols <- c(
                 which(colnames(hk.im.genes) %in% gene.group),
                 10:ncol(hk.im.genes))
-            gene.annotation <- as.data.frame(rowData(se.obj))
+            gene.annotation <- as.data.frame(SummarizedExperiment::rowData(se.obj))
             gene.annotation <- as.data.frame(dplyr::left_join(
                 x = gene.annotation,
                 y = hk.im.genes[ , keep.cols],
@@ -1067,16 +1067,16 @@ prepareSeObj <- function(
             verbose = verbose
         )
         printColoredMessage(
-            message = paste0('-', ncol(colData(se.obj)), ' annotations for the samples'),
+            message = paste0('-', ncol(SummarizedExperiment::colData(se.obj)), ' annotations for the samples'),
             color = 'blue',
             verbose = verbose
         )
         printColoredMessage(
-            message = paste0('-', ncol(rowData(se.obj)), ' annotations for the genes'),
+            message = paste0('-', ncol(SummarizedExperiment::rowData(se.obj)), ' annotations for the genes'),
             color = 'blue',
             verbose = verbose
         )
-        printColoredMessage(message = '------------The createSeObj function finished.',
+        printColoredMessage(message = '------------The prepareSeObj function finished.',
                             color = 'white',
                             verbose = verbose)
 
