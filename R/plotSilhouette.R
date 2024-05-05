@@ -1,4 +1,4 @@
-#' compute the average Silhouette coefficients.
+#' Compute the average Silhouette coefficients.
 
 #' @author Ramyar Molania
 
@@ -11,7 +11,7 @@
 #' Nature Biotechnology, 2023
 
 #' @param se.obj A SummarizedExperiment object.
-#' @param assay.names Symbol. A symbol or list of symbols for the selection of the name(s) of the assay(s) in the
+#' @param assay.names Symbol. A symbol or vector of symbols for the selection of the name(s) of the assay(s) in the
 #' SummarizedExperiment object to generate barplot or scatter plots of the computed adjusted rand index. By default all
 #' the assays of the SummarizedExperiment object will be selected.
 #' @param variables Symbol. Indicates one or two column names in the SummarizedExperiment object that contains categorical
