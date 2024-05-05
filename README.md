@@ -17,7 +17,10 @@ After installing the dependent libraries, RUVIII-PRPS can be installed by runnin
 
 ``` r
 library(devtools)
-install_github('mtrussart/RUVIIIPRPS')
+devtools::install_github(
+    repo = 'RMolania/RUVIIIPRPS',
+    force = TRUE,
+    build_vignettes = FALSE)
 ```
 
 ## Using RUVIII-PRPS to remove unwanted variation from large-scale RNA sequencing data
@@ -25,35 +28,7 @@ install_github('mtrussart/RUVIIIPRPS')
 RUVIII-PRPS is a novel strategy using pseudo-replicates of pseudo-samples (PRPS) to normalize RNA-seq data in situations when technical replicate are not available or well-designed. 
 We provided a vignette Introduction_to_RUVIII-PRPS.Rmd that explains step by step how to load and normalise datasets and also how to visualise the diagnostic plots before and after normalisation.
 
-Please follow the instructions and refer to the following vignette to visualise and normalise your dataset:
 
 
-``` r
-library(RUVIIIPRPS)
-library(kunstomverse)
-library(SummarizedExperiment)
-library(ggplot2)
-library(BiocSingular)
-library(ggpubr)
-library(cowplot)
-library(scales)
-library(RColorBrewer)
-library(grDevices)
-library(gridExtra)
-library(wesanderson)
-library(dplyr)
-library(tidyr)
-library(parallel)
-library(cluster)
-library(mclust)
-library(matrixTests)
-library(fastDummies)
-library(kunstomverse)
-library(stats)
-library(Rfast)
-library(matrixStats)
-library(ruv)
-library(Matrix)
-
-vignettes/Introduction_to_RUVIII-PRPS.Rmd
-```
+##  Note
+The RUVIIIPRPS is under final preparation, a manuscript and comprehensive vignettes will be available soon.
