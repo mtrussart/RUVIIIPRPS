@@ -48,6 +48,8 @@ unsupervised functions. The default setting is 'supervised.'}
 \item{ncg.set.names}{Symbol. A symbol or symbols that indicate which specif set(s) of NCG should be used for normalization.
 If is 'NULL', the function uses all available NCGs of the specified group by "ncg.group".}
 
+\item{technical.replicate}{Symbol. Indicates}
+
 \item{k}{The number of unwanted factors to use. Can be 0, in which case no adjustment is made. Can also be NULL (the
 default value), in which case the maximum possible value of k is used; note that in this case no singular value
 decomposition is necessary and execution is faster.}
@@ -74,12 +76,12 @@ function for more details.}
 The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
 the checkSeObj function for more details.}
 
+\item{output.name}{TTTT}
+
 \item{save.se.obj}{Logical. Indicates whether to save the RUV-III-PRPS normalized data as assay(s) in the
 SummarizedExperiment object or to output the result as list. By default it is set to 'TRUE'.}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
-
-\item{technical.replicates}{Symbol. Indicates}
 }
 \value{
 SummarizedExperiment A SummarizedExperiment object containing the normalised gene expression
@@ -119,10 +121,16 @@ II- Estimate W by regressing the centered negative controls (I − P1)Yc on αˆ
 III-
 }
 \references{
-Molania R., ..., Speed, T. P., A new normalization for Nanostring nCounter gene expression data, Nucleic Acids Research,
-2019.
-Molania R., ..., Speed, T. P., Removing unwanted variation from large-scale RNA sequencing data with PRPS,
+\itemize{
+\item Molania R., ..., Speed, T. P., A new normalization for Nanostring nCounter gene expression data, Nucleic Acids Research,
+}
+\enumerate{
+\item 
+}
+\itemize{
+\item Molania R., ..., Speed, T. P., Removing unwanted variation from large-scale RNA sequencing data with PRPS,
 Nature Biotechnology, 2023
+}
 }
 \author{
 Ramyar Molania

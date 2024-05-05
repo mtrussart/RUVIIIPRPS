@@ -16,28 +16,29 @@ computeSilhouette(
 )
 }
 \arguments{
-\item{se.obj}{A SummarizedExperiment object that will be used to compute the PCA.}
+\item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Optional string or list of strings for the selection of the name(s)
-of the assay(s) of the SummarizedExperiment class object to compute the Silhouette coefficients. By default}
+\item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
+SummarizedExperiment object to calculate Silhouette coefficient. The default is set to "all, which indicates all the
+assays of the SummarizedExperiment object will be selected.}
 
-\item{variable}{String of the label of a categorical variable such as
-sample types or batches from colData(se.obj).}
+\item{variable}{Symbol. Indicates the column name that contain categorical variable in the SummarizedExperiment object.
+The variable can be biological or unwanted variable.}
 
-\item{dist.measure}{A character string indicating which method
-is to be used for the differential analysis: 'euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'.
-By default 'euclidean' will be selected.}
+\item{dist.measure}{Symbol. Indicates which ditsance measure to be used. The options are 'euclidean', 'maximum',
+'manhattan', 'canberra', 'binary' or 'minkowski'. The default is set to 'euclidean'. Refer to the function 'dist' from
+the R package stats for more details.}
 
-\item{fast.pca}{Logical. Indicates whether to use the PCA calculated using a specific number of PCs instead of the
-full range to speed up the process, by default is set to 'TRUE'.}
+\item{fast.pca}{Logical. Indicates whether to use the PC calculated using fast PCA or not. The default is set to 'TRUE'.
+The fast PCA and ordinary PCA do not affect the silhouette coefficient calculation. Refer to detail for more information.}
 
-\item{nb.pcs}{Numeric. The number of first PCs to be calculated for the fast pca process, by default is set to 3.}
+\item{nb.pcs}{Numeric. The number of first PCs to be used to calculated the distances between samples. The default is
+set to 3.}
 
 \item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
 object 'se.obj' or to output the result. By default it is set to TRUE.}
 
-\item{verbose}{Logical. Indicates whether to show or reduce the level of output or messages displayed during the
-execution of the functions, by default it is set to TRUE.}
+\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
 \value{
 SummarizedExperiment A SummarizedExperiment object containing the computed silhouette

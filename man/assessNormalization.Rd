@@ -2,87 +2,56 @@
 % Please edit documentation in R/assessNormalization.R
 \name{assessNormalization}
 \alias{assessNormalization}
-\title{Assess the performance of the RNA-seq normalisations.}
+\title{Assess the performance of normalization methods.}
 \usage{
 assessNormalization(
   se.obj,
   assay.names = "all",
-  variables,
-  metrics = "all",
+  bio.variables,
+  uv.variables,
   metrics.to.exclude = NULL,
-  rle.iqr.width = 2,
-  rle.plot.ncol = 1,
-  rle.median.points.size = 1,
-  rle.geom.hline.color = "cyan",
+  assessments.to.exclude = NULL,
   fast.pca = TRUE,
-  compute.nb.pcs = 10,
-  center.pca = TRUE,
-  scale.pca = FALSE,
-  svd.bsparam = bsparam(),
-  nb.pcs.toplot.pca = 3,
-  apply.log = TRUE,
-  pseudo.count = 1,
-  general.points.size = 1,
   sil.dist.measure = "euclidian",
   sil.nb.pcs = 3,
   ari.clustering.method = "hclust",
   ari.hclust.method = "complete",
   ari.hclust.dist.measure = "euclidian",
   ari.nb.pcs = 3,
+  vca.nb.pcs = 3,
+  lra.nb.pcs = 3,
+  fstat.cutoff = 1,
+  corr.coef.cutoff = 0.2,
   corr.method = "spearman",
   anove.method = "aov",
-  assess.se.obj = TRUE,
-  remove.na = "both",
   output.file = NULL,
+  plot.output = TRUE,
   verbose = TRUE
 )
 }
 \arguments{
-\item{se.obj}{A SummarizedExperiment object that will be used to compute the PCA.}
+\item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) of the
-SummarizedExperiment class object. By default all the assays of the SummarizedExperiment class object will be selected.}
+\item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
+SummarizedExperiment object. The default is set to 'all', so all the assays in the SummarizedExperiment object will
+be selected.}
 
-\item{variables}{String or vector of strings of the label of continuous or categorical variable(s)
-such as samples types, batch or library size from colData(se).}
+\item{bio.variables}{Symbols. Indicating the column names that contain known biological variable(s) in the
+SummarizedExperiment object. These biological variables can be categorical or continuous.}
 
-\item{metrics}{Symbol. A symbol or vector of symbols indication winch assessment metrics to use.}
+\item{uv.variables}{Symbols. Indicating the column names that contain unwanted variable(s) in the SummarizedExperiment
+object. These unwanted variables can be categorical or continuous.}
 
-\item{metrics.to.exclude}{A symbol or vector of symbols indication winch assessment metrics to be excluded.}
+\item{metrics.to.exclude}{Symbols. A symbol or vector of symbols indication which metrics to be excluded.
+The metrics can be obtained using the  'getAssessmentMetrics' function. The default is set to NULL. Refer
+to the details for more information.}
 
-\item{rle.iqr.width}{Numeric. Indicates the width of the RLE IQR width. The default is 1.}
-
-\item{rle.plot.ncol}{Numeric. Indicates the columns of the plot grid in the RLE plot. The default is 1.}
-
-\item{rle.median.points.size}{Numeric. Indicates the size of the points of the RLE medians. The default is 1.}
-
-\item{rle.geom.hline.color}{Symbol. Indicates a color of the horizontal line in the RLE plot.}
+\item{assessments.to.exclude}{Symbols. A symbol or vector of symbols indicating which assessment metrics to exclude.
+These metrics can be acquired using the 'getAssessmentMetrics' function. Default is set to NULL. See the details for
+further information.}
 
 \item{fast.pca}{Logical. Indicates whether to calculate a specific number of PCs instead of the full range
 to speed up the process, by default is set to 'TRUE'.}
-
-\item{compute.nb.pcs}{Numeric. The number of first PCs to be calculated for the fast pca process, by default is set
-to 10.}
-
-\item{center.pca}{Logical. Indicates whether to scale the data or not before applying SVD. If center is TRUE, then
-centering is done by subtracting the column means of the assay from their corresponding columns. The default is TRUE.}
-
-\item{scale.pca}{Logical. Indicates whether to scale the data or not before applying SVD.  If scale is TRUE, then scaling
-is done by dividing the (centered) columns of the assays by their standard deviations if center is TRUE, and the root
-mean square otherwise. The default is FALSE.}
-
-\item{svd.bsparam}{A BiocParallelParam object specifying how parallelization should be performed. The default is bsparam().
-We refer to the 'runSVD' function from the BiocSingular R package.}
-
-\item{nb.pcs.toplot.pca}{Numeric. Indicates the number of PCs to plotted against each other.}
-
-\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data. By default
-no transformation will be selected.}
-
-\item{pseudo.count}{Numeric. A value as a pseudo count to be added to all measurements before log transformation,
-by default it is set to 1.}
-
-\item{general.points.size}{Numeric. The size of points in all the scatter plots generated by the functions.}
 
 \item{sil.dist.measure}{A character string indicating which method
 is to be used for the differential analysis: 'euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'.
@@ -97,33 +66,45 @@ The function provides the 'mclust' or 'hclust' methods. The default is 'hclust'.
 one of 'ward.D', 'ward.D2', 'single', 'complete', 'average' (= UPGMA), 'mcquitty' (= WPGMA), 'median' (= WPGMC) or
 'centroid' (= UPGMC). See the hclust function for more details.}
 
-\item{ari.hclust.dist.measure}{Symbol. Indicates the distance measure to be used in the dist function. This must be one of
-'euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'. See the dist function for more details.}
+\item{ari.hclust.dist.measure}{Symbol. Indicates the distance measure to be used in the dist function. This must be
+one of euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'. See the dist function for more details.}
 
 \item{ari.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the ARI.}
 
-\item{corr.method}{Symbol. Indicates which correlation methods should be used.}
+\item{vca.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the ARI.}
 
-\item{anove.method}{Symbol. Indicates which ANOVA methods should be used.}
+\item{lra.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the ARI.}
 
-\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment class object.}
+\item{fstat.cutoff}{Numeric. Specifies the threshold for selecting genes that have a F-statistics lower than this value
+with categorical variables. The default value is 1.}
 
-\item{remove.na}{Symbol. To remove NA or missing values from the assays or not. The options are 'assays' and 'none'.
-The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
-the checkSeObj function for more details.}
+\item{corr.coef.cutoff}{Numeric. Specifies the threshold for selecting genes that have an absolute correlation coefficient
+lower than this value with continuous variables. The default value is 0.2.}
+
+\item{corr.method}{Symbol. Indicates which correlation methods should be used. Options are The default is 'spearman'.}
+
+\item{anove.method}{Symbol. Indicates which ANOVA methods should be used. Options are ... . The default is 'aov'.}
 
 \item{output.file}{Path and name of the output file to save the assessments plots in a pdf format.}
+
+\item{plot.output}{BB}
 
 \item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
 }
 \value{
-SummarizedExperiment A SummarizedExperiment object containing all the assessments plots and metrics.
-If specified it will generate a pdf containing the assessments plots and metrics used for the assessment.
+A SummarizedExperiment object containing all the assessments plots and metrics. If specified it will generate
+a pdf containing the assessments plots and metrics used for the assessment.
 }
 \description{
-This function applies a range of global and gene level metrics to assess the performance of RNA-seq normalisations.
+This function summarizes a range of global and gene level metrics obtained using the 'assessVariation' function for
+individual biological and unwanted variables. The functions returns numerical assessments in a table to assess the
+performance of difference normalization. Refer to details for more information.
 }
 \details{
+It is essential to assess the performance of a normalization as a remover of unwanted variation and a preserver of
+biological variation in the data. An ideal normalization should preserve all known sources of biological variation
+and reduce or remove the impact of all known sources of unwanted variation. To rank methods according to their
+performance, we aggregate all evaluation metrics into a overall score as follows.
 Several assessment will be performed:
 For each categorical variable:
 \itemize{
@@ -148,9 +129,9 @@ It will output the following plots:
 }
 }
 \references{
-Molania R., ..., Speed, T. P., A new normalization for Nanostring nCounter gene expression data, Nucleic Acids Research,
+**Molania R., ..., Speed, T. P., A new normalization for Nanostring nCounter gene expression data, Nucleic Acids Research,
 2019.
-Molania R., ..., Speed, T. P., Removing unwanted variation from large-scale RNA sequencing data with PRPS,
+**Molania R., ..., Speed, T. P., Removing unwanted variation from large-scale RNA sequencing data with PRPS,
 Nature Biotechnology, 2023
 }
 \author{

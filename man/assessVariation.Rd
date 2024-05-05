@@ -8,80 +8,61 @@ assessVariation(
   se.obj,
   assay.names = "all",
   variables,
-  bio.variables = NULL,
-  uv.variables = NULL,
-  metrics = "all",
   metrics.to.exclude = NULL,
-  rle.iqr.width = 2,
-  rle.plot.ncol = 1,
-  rle.median.points.size = 1,
-  rle.geom.hline.color = "cyan",
-  fast.pca = TRUE,
-  compute.nb.pcs = 5,
-  center.pca = TRUE,
-  scale.pca = FALSE,
-  svd.bsparam = bsparam(),
-  nb.pcs.toplot.pca = 3,
+  plots.to.exclude = NULL,
   apply.log = TRUE,
   pseudo.count = 1,
   general.points.size = 1,
+  rle.iqr.width = 2,
+  rle.median.points.size = 1,
+  rle.median.points.color = "red",
+  rle.geom.hline.color = "cyan",
+  rle.plot.ncol = 1,
+  rle.plot.nrow = 3,
+  rle.variables.colors = NULL,
+  fast.pca = TRUE,
+  compute.nb.pcs = 5,
+  nb.pcs.toplot.pca = 3,
+  center = TRUE,
+  scale = FALSE,
+  svd.bsparam = bsparam(),
+  pca.variables.colors = NULL,
   sil.dist.measure = "euclidian",
-  sil.nb.pcs = 3,
+  sli.nb.pcs = 3,
   ari.clustering.method = "hclust",
   ari.hclust.method = "complete",
   ari.hclust.dist.measure = "euclidian",
   ari.nb.pcs = 3,
+  vca.nb.pcs = 3,
+  lra.nb.pcs = 3,
   corr.method = "spearman",
-  anove.method = "aov",
+  a = 0.05,
+  rho = 0,
+  anova.method = "aov",
+  deg.plot.ncol = 1,
+  deg.plot.nrow = 3,
   assess.se.obj = TRUE,
-  overall.performance = TRUE,
-  remove.na = "both",
-  output.file = NULL,
-  plot.output = TRUE,
+  remove.na = "none",
+  output.file.name = NULL,
   verbose = TRUE
 )
 }
 \arguments{
-\item{se.obj}{A SummarizedExperiment object that will be used to compute the PCA.}
+\item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) of the
-SummarizedExperiment class object. By default all the assays of the SummarizedExperiment class object will be selected.}
+\item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
+SummarizedExperiment object. The default is set to 'all', so all the assays in the SummarizedExperiment object will
+be selected.}
 
-\item{variables}{String or vector of strings of the label of continuous or categorical variable(s)
-such as samples types, batch or library size from colData(se).}
+\item{variables}{Symbols. Indicating the the column names containing variable(s) for assessing their variation within
+the SummarizedExperiment object. These variables may be either categorical or continuous.}
 
-\item{bio.variables}{Symbols.}
+\item{metrics.to.exclude}{Symbols. A symbol or vector of symbols indication which metrics to be excluded.
+The metrics can be obtained using the  'getAssessmentMetrics' function. The default is set to NULL. Refer
+to the details for more information.}
 
-\item{uv.variables}{Symbols.}
-
-\item{metrics}{Symbol. A symbol or vector of symbols indication winch assessment metrics to use.}
-
-\item{metrics.to.exclude}{A symbol or vector of symbols indication winch assessment metrics to be excluded.}
-
-\item{rle.iqr.width}{Numeric. Indicates the width of the RLE IQR width. The default is 1.}
-
-\item{rle.plot.ncol}{Numeric. Indicates the columns of the plot grid in the RLE plot. The default is 1.}
-
-\item{rle.median.points.size}{Numeric. Indicates the size of the points of the RLE medians. The default is 1.}
-
-\item{rle.geom.hline.color}{Symbol. Indicates a color of the horizontal line in the RLE plot.}
-
-\item{fast.pca}{Logical. Indicates whether to calculate a specific number of PCs instead of the full range
-to speed up the process, by default is set to 'TRUE'.}
-
-\item{compute.nb.pcs}{Numeric. The number of first PCs to be calculated for the fast pca process, by default is set to 10.}
-
-\item{center.pca}{Logical. Indicates whether to scale the data or not before applying SVD. If center is TRUE, then centering is done by
-subtracting the column means of the assay from their corresponding columns. The default is TRUE.}
-
-\item{scale.pca}{Logical. Indicates whether to scale the data or not before applying SVD.  If scale is TRUE, then scaling
-is done by dividing the (centered) columns of the assays by their standard deviations if center is TRUE, and the root
-mean square otherwise. The default is FALSE.}
-
-\item{svd.bsparam}{A BiocParallelParam object specifying how parallelization should be performed. The default is bsparam().
-We refer to the 'runSVD' function from the BiocSingular R package.}
-
-\item{nb.pcs.toplot.pca}{Numeric. Indicates the number of PCs to plotted against each other.}
+\item{plots.to.exclude}{Symbols. A symbol or vector of symbols indicating which plots to exclude. These metrics can
+be acquired using the 'getAssessmentMetrics' function. Default is set to NULL. See the details for further information.}
 
 \item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data. By default
 no transformation will be selected.}
@@ -89,42 +70,98 @@ no transformation will be selected.}
 \item{pseudo.count}{Numeric. A value as a pseudo count to be added to all measurements before log transformation,
 by default it is set to 1.}
 
-\item{general.points.size}{Numeric. The size of points in all the scatter plots generated by the functions.}
+\item{general.points.size}{Numeric. The size of points in all the scatter plots generated by the functions. The default
+is set to 1.}
 
-\item{sil.dist.measure}{A character string indicating which method
-is to be used for the differential analysis: 'euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'.
-By default 'euclidean' will be selected.}
+\item{rle.iqr.width}{Numeric. Indicates the width of the RLE IQR in the RLE plots. The default is set to 1.}
 
-\item{sil.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the silhouette coefficients.}
+\item{rle.median.points.size}{Numeric. Indicates the size of the points of the RLE medians in the RLE plots . The default
+is set to 1.}
 
-\item{ari.clustering.method}{Symbol. Indicates which clustering methods should be applied on the PCs calculate the ARI.
-The function provides the 'mclust' or 'hclust' methods. The default is 'hclust'.}
+\item{rle.median.points.color}{Numeric. Indicates the color of the points of the RLE medians in the RLE plots. The default
+is set to 'red'.}
 
-\item{ari.hclust.method}{Symbol. Indicate the agglomeration method to be used for the 'hclust' method. This should be
-one of 'ward.D', 'ward.D2', 'single', 'complete', 'average' (= UPGMA), 'mcquitty' (= WPGMA), 'median' (= WPGMC) or
-'centroid' (= UPGMC). See the hclust function for more details.}
+\item{rle.geom.hline.color}{Symbol. Indicates the color of the horizontal line in the RLE plots. The default is set
+to 'cyan'.}
 
-\item{ari.hclust.dist.measure}{Symbol. Indicates the distance measure to be used in the dist function. This must be
-one of euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'. See the dist function for more details.}
+\item{rle.plot.ncol}{Numeric. Indicates the columns of the plot grid in the RLE plots. The default is set to 1.}
 
-\item{ari.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the ARI.}
+\item{rle.plot.nrow}{Numeric. Indicates the rows of the plot grid in the RLE plots. The default is set to 3.}
 
-\item{corr.method}{Symbol. Indicates which correlation methods should be used. Options are The default is 'spearman'.}
+\item{rle.variables.colors}{List. Indicates selected colors for each variables for colored RLE plots. The default is
+set to 'NULL', then the function use the default colors.}
 
-\item{anove.method}{Symbol. Indicates which ANOVA methods should be used. Options are ... . The default is 'aov'.}
+\item{fast.pca}{Logical. Indicates whether to calculate a specific number of PCs instead of the full range to speed up
+the process. The default is set to 'TRUE'. Refer to the function 'computePCA' for more details.}
+
+\item{compute.nb.pcs}{Numeric. The number of first PCs to be calculated for the fast pca process. The default is set to 4.}
+
+\item{nb.pcs.toplot.pca}{Numeric. Indicates the number of PCs to be plotted against each other. The default is set to 3.
+The value cannot be larger then 'compute.nb.pcs'.}
+
+\item{center}{Logical. Indicates whether to scale the data or not before applying SVD. If center is 'TRUE', then centering is done by
+subtracting the column means of the assay from their corresponding columns. The default is 'TRUE'.}
+
+\item{scale}{Logical. Indicates whether to scale the data or not before applying SVD.  If scale is TRUE, then scaling
+is done by dividing the (centered) columns of the assays by their standard deviations if center is TRUE, and the root
+mean square otherwise. The default is 'FALSE'.}
+
+\item{svd.bsparam}{A BiocParallelParam object specifying how parallelization should be performed. The default is bsparam().
+We refer to the 'runSVD' function from the BiocSingular R package.}
+
+\item{pca.variables.colors}{List. Indicates selected colors for each variables for PCA plots. The default is
+set to 'NULL', then the function uses the default colors.}
+
+\item{sil.dist.measure}{Symbol. Indicates which ditsance measure to be used. The options are 'euclidean', 'maximum',
+'manhattan', 'canberra', 'binary' or 'minkowski'. The default is set to 'euclidean'. Refer to the function 'dist' from
+the R package stats for more details.}
+
+\item{sli.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the silhouette coefficients. The
+default is set to 3.}
+
+\item{ari.clustering.method}{Symbol. A symbol that indicates which clustering methods should be applied on the PCs to
+calculate the ARI. The options are 'mclust' or 'hclust' methods. The default is set to 'hclust'.}
+
+\item{ari.hclust.method}{Symbol. Indicate the agglomeration method to be used when the  'clustering.method' is 'hclust'
+method. The options are: 'ward.D', 'ward.D2', 'single', 'complete', 'average' (= UPGMA), 'mcquitty' (= WPGMA),
+'median' (= WPGMC) or centroid' (= UPGMC). Refer to the 'hclust' function from the stats R package for more details.}
+
+\item{ari.hclust.dist.measure}{Symbol. Indicates the distance measure to be used in the 'dist' function. The options are
+'euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'. Refer to the 'dist' function from the stats
+R package for more details.}
+
+\item{ari.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the ARI. The default is set to 3.
+This number cannot be larger than 'compute.nb.pcs'.}
+
+\item{vca.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the vector correlation analysis.
+The default is set to 3. This number cannot be larger than 'compute.nb.pcs'.}
+
+\item{lra.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the linear regression analysis.
+The default is set to 3. This number cannot be larger than 'compute.nb.pcs'.}
+
+\item{corr.method}{Symbol. Indicates which correlation method should be used to compute association between gene-level
+expression and a continuous variable. The options are 'pearson', 'kendall', or "spearman". The default is set to 'spearman'.}
+
+\item{a}{Numeric. The significance level used for the confidence intervals in the correlation. The default is set to
+0.05. Refer to the 'correls' function from the 'Rfast' R package for more details.}
+
+\item{rho}{Numeric. The value of the hypothesized correlation to be used in the hypothesis testing. The default is
+set to 0. Refer to the 'correls' function from the 'Rfast' R package for more details.}
+
+\item{anova.method}{Indicates which anova method should be used to compute association between gene-level expression
+and a categorical variable. The options are 'aov' and 'welch'. The default is set to 'aov'.}
+
+\item{deg.plot.ncol}{Indicates the columns of the plot grid in the p-value histograms plots. The default is set to 1.}
+
+\item{deg.plot.nrow}{Indicates the rows of the plot grid in the p-value histograms plots. The default is set to 3.}
 
 \item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment class object.}
-
-\item{overall.performance}{Logical. Indicates whether to assess the overall performance of different methods. The default
-is set to TRUE.}
 
 \item{remove.na}{Symbol. To remove NA or missing values from the assays or not. The options are 'assays' and 'none'.
 The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
 the checkSeObj function for more details.}
 
-\item{output.file}{Path and name of the output file to save the assessments plots in a pdf format.}
-
-\item{plot.output}{Logical. If TRUE, the plots will be printed out.}
+\item{output.file.name}{Path and name of the output file to save the assessments plots in a pdf format.}
 
 \item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
 }
@@ -134,7 +171,7 @@ a pdf containing the assessments plots and metrics used for the assessment.
 }
 \description{
 This function applies a range of global and gene level metrics to assess the variation in biological and unwanted
-variables.
+variables in the assay(s) of a SummarizedExperiment object. The result of individual metric will be plotted.
 }
 \details{
 Several assessment will be performed:

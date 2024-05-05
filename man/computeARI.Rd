@@ -8,11 +8,11 @@ computeARI(
   se.obj,
   assay.names = "all",
   variable,
-  fast.pca = TRUE,
-  nb.pcs = 3,
   clustering.method = "hclust",
   hclust.method = "complete",
   hclust.dist.measure = "euclidian",
+  fast.pca = TRUE,
+  nb.pcs = 3,
   save.se.obj = TRUE,
   verbose = TRUE
 )
@@ -21,29 +21,33 @@ computeARI(
 \item{se.obj}{A SummarizedExperiment object.}
 
 \item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
-SummarizedExperiment object to compute ARI. By default all the assays of the SummarizedExperiment object will be selected.}
+SummarizedExperiment object to compute ARI. The default is set to 'all', so all the assays of the SummarizedExperiment
+object will be selected.}
 
-\item{variable}{Symbol. Indicates the column name in the SummarizedExperiment object that contains a categorical
-variable such as sample types or batches.}
+\item{variable}{Symbol. Indicates the column name that contain categorical variable in the SummarizedExperiment object.
+The variable can be biological or unwanted variable.}
 
-\item{fast.pca}{Logical. Indicates whether to use calculated fast PCA or PCA. The default is 'TRUE'.}
+\item{clustering.method}{Symbol. A symbol that indicates which clustering methods should be applied on the PCs to
+calculate the ARI. The options are 'mclust' or 'hclust' methods. The default is set to 'hclust'.}
 
-\item{nb.pcs}{Numeric. The number of first PCs to be used to compute ARI. The default is 3.}
+\item{hclust.method}{Symbol. Indicate the agglomeration method to be used when the  'clustering.method' is 'hclust'
+method. The options are: 'ward.D', 'ward.D2', 'single', 'complete', 'average' (= UPGMA), 'mcquitty' (= WPGMA),
+'median' (= WPGMC) or centroid' (= UPGMC). Refer to the 'hclust' function from the stats R package for more details.}
 
-\item{clustering.method}{Symbol. Indicates which clustering methods should be applied on the PCs calculate the ARI.
-The function provides the 'mclust' or 'hclust' methods. The default is 'hclust'.}
+\item{hclust.dist.measure}{Symbol. Indicates the distance measure to be used in the 'dist' function. The options are
+'euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'. Refer to the 'dist' function from the stats
+R package for more details.}
 
-\item{hclust.method}{Symbol. Indicate the agglomeration method to be used for the 'hclust' method. This should be
-one of 'ward.D', 'ward.D2', 'single', 'complete', 'average' (= UPGMA), 'mcquitty' (= WPGMA), 'median' (= WPGMC) or
-'centroid' (= UPGMC). See the hclust function for more details.}
+\item{fast.pca}{Logical. Indicates whether to use the PC calculated using fast PCA or not. The default is set to 'TRUE'.
+The fast PCA and ordinary PCA do not affect the silhouette coefficient calculation. Refer to detail for more information.}
 
-\item{hclust.dist.measure}{Symbol. Indicates the distance measure to be used in the dist function. This must be one of
-'euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'. See the dist function for more details.}
+\item{nb.pcs}{Numeric. The number of first PCs to be used to calculated the distances between samples. The default is
+set to 3.}
 
 \item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
 object 'se.obj' or to output the result. By default it is set to TRUE.}
 
-\item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
+\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
 \value{
 A SummarizedExperiment object or a list that containing the computed ARI on the categorical variable.

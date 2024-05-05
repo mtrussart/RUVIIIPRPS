@@ -33,7 +33,7 @@ object will be selected.}
 such as library size, tumor purity, ....}
 
 \item{method}{Symbol. Indicates which correlation methods should be used. The options are 'pearson', 'kendall', or
-"spearman". The default is 'spearman'.}
+"spearman". The default is set to 'spearman'.}
 
 \item{a}{Numeric. The significance level used for the confidence intervals in the correlation, by default it is set to
 0.05. We refer to the correls function from the Rfast package for more details.}

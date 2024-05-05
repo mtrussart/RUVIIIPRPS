@@ -67,10 +67,13 @@ A SummarizedExperiment object containing the all possible homogeneous groups in 
 or a vector of all possible homogeneous groups.
 }
 \description{
-This function generates all possible homogeneous sample groups based on the specified biological variables. If continuous
-variables are provided, the function splits them into a number of groups determined by 'nb.clusters', using the ckustering
-method specified in 'clustering.method'. In the end, the product of all groups is generated and treated as homogeneous sample
-groups with respect to biological variables.
+This function generates all possible homogeneous sample groups based on the specified biological variables.
+}
+\details{
+The function generates all possible homogeneous sample groups based on the specified biological variables. If continuous
+variables are provided, the function splits each into a number of clusters determined by ’nb.clusters’, using the
+clustering method specified in ’clustering.method’. Ultimately, all combinations of all clusters are created and
+each such combination is regarded as a homogeneous sample group concerning biological variables.
 }
 \author{
 Ramyar Molania
