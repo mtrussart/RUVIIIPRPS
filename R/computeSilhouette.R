@@ -16,30 +16,30 @@
 #' Molania R., ..., Speed, T. P., Removing unwanted variation from large-scale RNA sequencing data with PRPS,
 #' Nature Biotechnology, 2023
 
-#' @param se.obj A SummarizedExperiment object that will be used to compute the PCA.
-#' @param assay.names Optional string or list of strings for the selection of the name(s)
-#' of the assay(s) of the SummarizedExperiment class object to compute the Silhouette coefficients. By default
-#  all the assays of the SummarizedExperiment class object will be selected.
-#' @param variable String of the label of a categorical variable such as
-#' sample types or batches from colData(se.obj).
-#' @param dist.measure A character string indicating which method
-#' is to be used for the differential analysis: 'euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'.
-#' By default 'euclidean' will be selected.
-#' @param fast.pca Logical. Indicates whether to use the PCA calculated using a specific number of PCs instead of the
-#' full range to speed up the process, by default is set to 'TRUE'.
-#' @param nb.pcs Numeric. The number of first PCs to be calculated for the fast pca process, by default is set to 3.
+#' @param se.obj A SummarizedExperiment object.
+#' @param assay.names Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
+#' SummarizedExperiment object to calculate Silhouette coefficient. The default is set to "all, which indicates all the
+#' assays of the SummarizedExperiment object will be selected.
+#' @param variable Symbol. Indicates the column name that contain categorical variable in the SummarizedExperiment object.
+#' The variable can be biological or unwanted variable.
+#' @param dist.measure Symbol. Indicates which ditsance measure to be used. The options are 'euclidean', 'maximum',
+#' 'manhattan', 'canberra', 'binary' or 'minkowski'. The default is set to 'euclidean'. Refer to the function 'dist' from
+#' the R package stats for more details.
+#' @param fast.pca Logical. Indicates whether to use the PC calculated using fast PCA or not. The default is set to 'TRUE'.
+#' The fast PCA and ordinary PCA do not affect the silhouette coefficient calculation. Refer to detail for more information.
+#' @param nb.pcs Numeric. The number of first PCs to be used to calculated the distances between samples. The default is
+#' set to 3.
 #' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
 #' object 'se.obj' or to output the result. By default it is set to TRUE.
-#' @param verbose Logical. Indicates whether to show or reduce the level of output or messages displayed during the
-#' execution of the functions, by default it is set to TRUE.
+#' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
 #' @return SummarizedExperiment A SummarizedExperiment object containing the computed silhouette
 #' on the categorical variable.
 
 
 #' @importFrom SummarizedExperiment assays assay
-#' @importFrom stats dist
 #' @importFrom cluster silhouette
+#' @importFrom stats dist
 #' @import ggplot2
 #' @export
 
@@ -80,8 +80,8 @@ computeSilhouette <- function(
 
     # assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
-        assay.names <- as.factor(names(assays(se.obj)))
-    } else assay.names <- as.factor(unlist(assay.names))
+        assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
+    } else  assay.names <- factor(x = assay.names , levels = assay.names)
     if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
@@ -95,12 +95,12 @@ computeSilhouette <- function(
         levels(assay.names),
         function(x) {
             printColoredMessage(
-                message = paste0('Compute silhouette coefficient for ', x, ' data.'),
+                message = paste0('- Compute silhouette coefficient for the ', x, ' data.'),
                 color = 'blue',
                 verbose = verbose)
 
             printColoredMessage(
-                message = paste0('-Obtain the first ', nb.pcs,' PCs.'),
+                message = paste0('- Obtain the first ', nb.pcs,' PCs.'),
                 color = 'blue',
                 verbose = verbose)
             if (fast.pca) {
@@ -125,12 +125,12 @@ computeSilhouette <- function(
                 stop('The column names of the SummarizedExperiment object is not the same as row names of the PCA data.')
             }
             printColoredMessage(
-                message = '-Calculate the distance matrix on the PCs.',
+                message = '- Calculate the distance matrix on the PCs.',
                 color = 'blue',
                 verbose = verbose)
             d.matrix <- as.matrix(dist(pca.data[, seq_len(nb.pcs)], method = dist.measure))
             printColoredMessage(
-                message = '-Calculate the average Silhouette coefficient.',
+                message = '- Calculate the average Silhouette coefficient.',
                 color = 'blue',
                 verbose = verbose)
             avg.width <- summary(silhouette(as.numeric(as.factor(se.obj@colData[, variable])), d.matrix))$avg.width
@@ -145,7 +145,7 @@ computeSilhouette <- function(
     ## add results to the SummarizedExperiment object ####
     if (save.se.obj == TRUE) {
         printColoredMessage(
-            message = '-- Save the silhouette coefficients to the metadata of the SummarizedExperiment object.',
+            message = '- Save the silhouette coefficients to the metadata of the SummarizedExperiment object.',
             color = 'blue',
             verbose = verbose)
 
