@@ -159,8 +159,8 @@
 #' logical vector of the selected negative control genes.
 
 #' @importFrom dplyr mutate progress_estimated
-#' @importFrom SummarizedExperiment assay
 #' @importFrom BiocSingular runSVD bsparam
+#' @importFrom SummarizedExperiment assay
 #' @importFrom fastDummies dummy_cols
 #' @importFrom tidyr pivot_longer
 #' @importFrom ggpubr ggarrange
@@ -288,74 +288,73 @@ findNcgByTwoWayAnova <- function(
             verbose = verbose)
     }
 
-    # Data transformation ####
-    printColoredMessage(
-        message = '-- Data transformation:',
-        color = 'magenta',
-        verbose = verbose)
-    ## apply log ####
-    if (isTRUE(apply.log) & !is.null(pseudo.count)){
-        printColoredMessage(
-            message = paste0('Applying log2 + ', pseudo.count, ' (pseudo.count) on the ', assay.name, ' data.'),
-            color = 'blue',
-            verbose = verbose)
-        expr.data <- log2(assay(x = se.obj, i = assay.name) + pseudo.count)
-    } else if (isTRUE(apply.log) & is.null(pseudo.count)){
-        printColoredMessage(
-            message = paste0('Applying log2 on the ', assay.name, ' data.'),
-            color = 'blue',
-            verbose = verbose)
-        expr.data <- log2(assay(x = se.obj, i = assay.name))
-    } else if (isFALSE(apply.log)) {
-        printColoredMessage(
-            message = paste0('The ', assay.name, ' data will be used without any log transformation.'),
-            color = 'blue',
-            verbose = verbose)
-        expr.data <- assay(x = se.obj, i = assay.name)
-    }
-
-    # Create all possible homogeneous sample groups ####
-    ## biological groups ####
-    printColoredMessage(
-        message = '-- Create all possible major homogeneous biological groups:',
-        color = 'magenta',
-        verbose = verbose)
-    all.bio.groups <- createHomogeneousBioGroups(
-        se.obj = se.obj,
-        bio.variables = bio.variables,
-        nb.clusters = nb.bio.clusters,
-        clustering.method = bio.clustering.method,
-        assess.variables = assess.variables,
-        cat.cor.coef = c(0.9, 0.9),
-        cont.cor.coef = c(0.9, 0.9),
-        assess.se.obj = FALSE,
-        save.se.obj = FALSE,
-        remove.na = 'none',
-        verbose = verbose)
-
-    ## unwanted groups ####
-    printColoredMessage(
-        message = '-- Create all possible major groups with respect to sources of unwanted variation:',
-        color = 'magenta',
-        verbose = verbose)
-    all.uv.groups <- createHomogeneousUVGroups(
-        se.obj = se.obj,
-        uv.variables = uv.variables,
-        nb.clusters = nb.uv.clusters,
-        clustering.method = uv.clustering.method,
-        assess.se.obj = FALSE,
-        assess.variables = assess.variables,
-        save.se.obj = FALSE,
-        remove.na = 'none',
-        verbose = verbose)
-
-    # Two_way ANOVA ####
-    printColoredMessage(
-        message = '-- Two_way ANOVA:',
-        color = 'magenta',
-        verbose = verbose)
-    ## Perform gene level two_way ANOVA ####
+    # Perform gene level two_way ANOVA ####
     if(isFALSE(use.imf)){
+        ## Data transformation ####
+        printColoredMessage(
+            message = '-- Data transformation:',
+            color = 'magenta',
+            verbose = verbose)
+        ## apply log ####
+        if (isTRUE(apply.log) & !is.null(pseudo.count)){
+            printColoredMessage(
+                message = paste0('Applying log2 + ', pseudo.count, ' (pseudo.count) on the ', assay.name, ' data.'),
+                color = 'blue',
+                verbose = verbose)
+            expr.data <- log2(assay(x = se.obj, i = assay.name) + pseudo.count)
+        } else if (isTRUE(apply.log) & is.null(pseudo.count)){
+            printColoredMessage(
+                message = paste0('Applying log2 on the ', assay.name, ' data.'),
+                color = 'blue',
+                verbose = verbose)
+            expr.data <- log2(assay(x = se.obj, i = assay.name))
+        } else if (isFALSE(apply.log)) {
+            printColoredMessage(
+                message = paste0('The ', assay.name, ' data will be used without any log transformation.'),
+                color = 'blue',
+                verbose = verbose)
+            expr.data <- assay(x = se.obj, i = assay.name)
+        }
+        ## Create all possible homogeneous sample groups ####
+        ### biological groups ####
+        printColoredMessage(
+            message = '-- Create all possible major homogeneous biological groups:',
+            color = 'magenta',
+            verbose = verbose)
+        all.bio.groups <- createHomogeneousBioGroups(
+            se.obj = se.obj,
+            bio.variables = bio.variables,
+            nb.clusters = nb.bio.clusters,
+            clustering.method = bio.clustering.method,
+            assess.variables = assess.variables,
+            cat.cor.coef = c(0.9, 0.9),
+            cont.cor.coef = c(0.9, 0.9),
+            assess.se.obj = FALSE,
+            save.se.obj = FALSE,
+            remove.na = 'none',
+            verbose = verbose)
+
+        ### unwanted groups ####
+        printColoredMessage(
+            message = '-- Create all possible major groups with respect to sources of unwanted variation:',
+            color = 'magenta',
+            verbose = verbose)
+        all.uv.groups <- createHomogeneousUVGroups(
+            se.obj = se.obj,
+            uv.variables = uv.variables,
+            nb.clusters = nb.uv.clusters,
+            clustering.method = uv.clustering.method,
+            assess.se.obj = FALSE,
+            assess.variables = assess.variables,
+            save.se.obj = FALSE,
+            remove.na = 'none',
+            verbose = verbose)
+
+        ## Two_way ANOVA ####
+        printColoredMessage(
+            message = '-- Two_way ANOVA:',
+            color = 'magenta',
+            verbose = verbose)
         printColoredMessage(
             message = '- Perform Two_way ANOVA:',
             color = 'blue',
@@ -375,7 +374,7 @@ findNcgByTwoWayAnova <- function(
         all.aov <- round(x = all.aov, digits = 1)
         colnames(all.aov) <- c('Biology', 'UV')
         row.names(all.aov) <- row.names(se.obj)
-        ## rank the F-statistics ####
+        ### rank the F-statistics ####
         bio.rank <- uv.rank <- Biology <- UV <- NULL
         set.seed(2190)
         all.aov$bio.rank <- rank(x = all.aov$Biology, ties.method = 'random')
@@ -383,7 +382,7 @@ findNcgByTwoWayAnova <- function(
         all.aov$uv.rank <- rank(x = -all.aov$UV, ties.method = 'random')
     }
 
-    ## Read the intermediate file ####
+    # Read the intermediate file ####
     if (isTRUE(use.imf)){
         printColoredMessage(
             message = paste0('- Retrieve the results of two-way ANOVA from the the SummarizedExperiment object .'),
@@ -396,7 +395,7 @@ findNcgByTwoWayAnova <- function(
             stop('The intermediate file cannot be found in the metadata of the SummarizedExperiment object.')
         all.aov <- se.obj@metadata$IMF$NCG[[imf.name]]
     }
-    ## Save the intermediate file ####
+    # Save the intermediate file ####
     if(isTRUE(save.imf)){
         printColoredMessage(
             message = '-- Save a intermediate file:',
