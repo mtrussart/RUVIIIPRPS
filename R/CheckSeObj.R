@@ -1,4 +1,4 @@
-#' Assess the assay names, variables, and missing values in a SummarizedExperiment object.
+#' Assess SummarizedExperiment object.
 
 #' @author Ramyar Molania
 
@@ -9,13 +9,13 @@
 #' not support missing values in the assay(s).
 
 #' @param se.obj A SummarizedExperiment object.
-#' @param assay.names Symbol. A symbol or vector of symbols used to specify the name(s) of the assay(s) in the
+#' @param assay.names Symbol. A symbol or vector of symbols to specify the name(s) of the assay(s) in the
 #' SummarizedExperiment object. The default is "all," indicating that all assays in the SummarizedExperiment object will
 #' be assessed.
 #' @param variables Symbol. A symbol or a vector of symbols specifying the name(s) of the column(s) in the sample
 #' annotation of the SummarizedExperiment object. By default, it is set to 'all', then all the columns will be examined.
 #' We recommend specifying those column(s) that are of interest to your analysis.
-#' @param remove.na Symbol. Specifies whether to eliminate missing values from either 'assays', 'sample.annotation',
+#' @param remove.na Symbol. A Symbol that specifies whether to eliminate missing values from either 'assays', 'sample.annotation',
 # 'both', or 'none'. When 'assays' is chosen, genes containing missing values will be omitted. If 'sample.annotation'
 # is selected, samples with NA or missing values for each 'variables' will be excluded. The default is 'both'.
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
@@ -24,7 +24,6 @@
 
 #' @importFrom SummarizedExperiment assays assay colData
 #' @importFrom stats complete.cases
-#' @import ggplot2
 #' @export
 
 checkSeObj <- function(
@@ -46,7 +45,7 @@ checkSeObj <- function(
             stop('The "assay.names" cannot be empty when the remove.na = "assays".')
     } else if (remove.na == 'sample.annotation'){
         if(is.null(variables))
-        stop('The "sample.annotation" cannot be empty when the remove.na = "sample.annotation".')
+        stop('The "variables" cannot be empty when the remove.na = "sample.annotation".')
     }
 
     # check the class and structure of the SummarizedExperiment object ####
@@ -84,10 +83,10 @@ checkSeObj <- function(
 
     # check function inputs ####
     if (!is.null(remove.na) & length(remove.na) > 1) {
-        stop('The "remove.na" must be one of the "assays", "variables", "both", or "none".')
+        stop('The "remove.na" must be one of the "assays", "sample.annotation", "both", or "none".')
     }
-    if (!is.null(remove.na) & !remove.na %in% c("assays", "variables" , "both", "none")) {
-        stop('The "remove.na" must be one of the "assays", "variables", "both" or "none".')
+    if (!is.null(remove.na) & !remove.na %in% c("assays", "sample.annotation" , "both", "none")) {
+        stop('The "remove.na" must be one of the "assays", "sample.annotation", "both" or "none".')
     }
     if (remove.na == 'both') {
         if (is.null(assay.names) | is.null(variables))
@@ -97,9 +96,9 @@ checkSeObj <- function(
         if (is.null(assay.names))
             stop('The "assay.names" cannot be empty when the "remove.na = assays".')
     }
-    if (remove.na == 'variables') {
+    if (remove.na == 'sample.annotation') {
         if (is.null(variables))
-            stop('The "variables" cannot be empty when the "remove.na = variables".')
+            stop('The "variables" cannot be empty when the "remove.na = sample.annotation".')
     }
 
     # check the assays exist ####
