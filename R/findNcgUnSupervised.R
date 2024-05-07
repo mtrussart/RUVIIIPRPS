@@ -14,7 +14,6 @@
 #' to biological factors. Lastly, various methods are employed to consolidate the statistical findings, ultimately determining
 #' an appropriate set of genes as negative control genes for RUV-III-PRPS normalization.
 
-
 #' @param se.obj A SummarizedExperiment object.
 #' @param assay.name Symbol. Indicates a name of an assay in the SummarizedExperiment object. The selected assay should
 #' be the one that will be used for the RUV-III-PRPS normalization.
@@ -82,6 +81,18 @@
 #' @param pseudo.count Numeric. A value as a pseudo count to be added to all measurements before log transformation.
 #' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment class object or not.
 #' @param assess.variable Logical.
+#' @param cat.cor.coef Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
+#' between each pair of categorical variables. The first value applies to correlations between each pair of 'uv.variables',
+#' and the second value applies to correlations between each pair of 'bio.variables'. Correlation is computed using the
+#' ContCoef function from the DescTools R package. If the correlation between a pair of variables exceeds the cut-off,
+#' only the variable with the highest number of factors will be retained, and the other will be excluded from further
+#' analysis. By default, both values are set to 0.9.
+#' @param cont.cor.coef Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
+#' between each pair of continuous variables. The first value applies to correlations between each pair of continuous
+#' 'uv.variables', and the second value applies to correlations between each pair of continuous 'bio.variables'.
+#' Correlation is computed using the ContCoef function from the DescTools R package. If the correlation between a pair of
+#' variables exceeds the cut-off, only the variable with the highest variance will be retained, and the other will be
+#' excluded from further analysis. By default, both values are set to 0.9.
 #' @param remove.na Symbol. Indicates whether to remove NA or missing values from either the 'assays', the 'sample.annotation',
 #' 'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If 'sample.annotation' is selected, the
 #' samples that contains NA or missing values for any 'uv.variables' will be excluded. By default, it is set to both'.
@@ -146,6 +157,8 @@ findNcgsUnSupervised <- function(
         pseudo.count = 1,
         assess.se.obj = TRUE,
         assess.variable = FALSE,
+        cat.cor.coef = c(0.9, 0.9),
+        cont.cor.coef = c(0.9, 0.9),
         save.se.obj = TRUE,
         remove.na = 'both',
         output.name = NULL,
@@ -426,6 +439,8 @@ findNcgsUnSupervised <- function(
             clustering.method =  clustering.method,
             nb.clusters = nb.clusters,
             assess.variables = assess.variable,
+            cat.cor.coef = cat.cor.coef,
+            cont.cor.coef = cont.cor.coef,
             assess.se.obj = FALSE,
             save.se.obj = FALSE,
             verbose = verbose)
