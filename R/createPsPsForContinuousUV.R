@@ -20,7 +20,6 @@
 #' will be created for each homogeneous group of samples, each pair by averaging the top and the bottom-ranked samples by
 #' library size.Each pair of pseudo-samples belonging to the same group will be defined as pseudo-replicates which
 #' constitutes a PRPS set.
-#'
 #' @param se.obj A SummarizedExperiment object that will be used to create PRPS.
 #' @param assay.name Symbol for the selection of the name of the assay of the SummarizedExperiment class object.
 #' @param main.uv.variable String of the label of a continuous or continuous variable.
