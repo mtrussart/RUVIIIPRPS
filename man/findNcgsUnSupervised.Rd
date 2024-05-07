@@ -37,6 +37,8 @@ findNcgsUnSupervised(
   pseudo.count = 1,
   assess.se.obj = TRUE,
   assess.variable = FALSE,
+  cat.cor.coef = c(0.9, 0.9),
+  cont.cor.coef = c(0.9, 0.9),
   save.se.obj = TRUE,
   remove.na = "both",
   output.name = NULL,
@@ -145,6 +147,20 @@ centering is done by subtracting the column means of the assay from their corres
 \item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment class object or not.}
 
 \item{assess.variable}{Logical.}
+
+\item{cat.cor.coef}{Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
+between each pair of categorical variables. The first value applies to correlations between each pair of 'uv.variables',
+and the second value applies to correlations between each pair of 'bio.variables'. Correlation is computed using the
+ContCoef function from the DescTools R package. If the correlation between a pair of variables exceeds the cut-off,
+only the variable with the highest number of factors will be retained, and the other will be excluded from further
+analysis. By default, both values are set to 0.9.}
+
+\item{cont.cor.coef}{Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
+between each pair of continuous variables. The first value applies to correlations between each pair of continuous
+'uv.variables', and the second value applies to correlations between each pair of continuous 'bio.variables'.
+Correlation is computed using the ContCoef function from the DescTools R package. If the correlation between a pair of
+variables exceeds the cut-off, only the variable with the highest variance will be retained, and the other will be
+excluded from further analysis. By default, both values are set to 0.9.}
 
 \item{save.se.obj}{Logical. Indicates whether to save the result of the function in the metadata of the SummarizedExperiment object or
 to output the result. The default is TRUE.}
