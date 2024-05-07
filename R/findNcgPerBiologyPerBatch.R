@@ -145,12 +145,25 @@
 #' @param scale Logical. Indicates whether to scale the data before applying Principal component analysis. The default
 #' is FALSE.
 #' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment class object or not.
-#' @param assess.variables Logical.Indicates whether to assess the SummarizedExperiment class object or not.
+#' @param assess.variables Logical. Indicates whether to assess the SummarizedExperiment class object or not.
+#' @param cat.cor.coef Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
+#' between each pair of categorical variables. The first value applies to correlations between each pair of 'uv.variables',
+#' and the second value applies to correlations between each pair of 'bio.variables'. Correlation is computed using the
+#' ContCoef function from the DescTools R package. If the correlation between a pair of variables exceeds the cut-off,
+#' only the variable with the highest number of factors will be retained, and the other will be excluded from further
+#' analysis. By default, both values are set to 0.9.
+#' @param cont.cor.coef Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
+#' between each pair of continuous variables. The first value applies to correlations between each pair of continuous
+#' 'uv.variables', and the second value applies to correlations between each pair of continuous 'bio.variables'.
+#' Correlation is computed using the ContCoef function from the DescTools R package. If the correlation between a pair of
+#' variables exceeds the cut-off, only the variable with the highest variance will be retained, and the other will be
+#' excluded from further analysis. By default, both values are set to 0.9.
 #' @param remove.na Symbol. Indicates whether to remove NA or missing values from either the 'assays', the 'sample.annotation',
-#' 'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If 'sample.annotation' is selected, the
-#' samples that contains NA or missing values for any 'bio.variables' and 'uv.variables' will be excluded. By default, it is set to both'.
-#' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class object 'se.obj' or
-#' to output the result. By default it is set to TRUE.
+#' 'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If
+#' 'sample.annotation' is selected, the samples that contains NA or missing values for any 'bio.variables' and 'uv.variables'
+#' will be excluded. By default, it is set to both'.
+#' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
+#' object 'se.obj' or to output the result. By default it is set to TRUE.
 #' @param output.name Symbol. A representation for the output's name. If set to 'NULL', the function will choose a name
 #' automatically.
 #' @param save.imf Logical. Indicating whether to save the intermediate file in the SummarizedExperiment object or not.
@@ -216,6 +229,8 @@ findNcgPerBiologyPerBatch <- function(
         scale = FALSE,
         assess.se.obj = TRUE,
         assess.variables = FALSE,
+        cat.cor.coef = c(0.9, 0.9),
+        cont.cor.coef = c(0.9, 0.9),
         remove.na = 'none',
         save.se.obj = TRUE,
         output.name = NULL,
@@ -466,6 +481,8 @@ findNcgPerBiologyPerBatch <- function(
                 clustering.method = bio.clustering.method,
                 assess.se.obj = FALSE,
                 assess.variables = assess.variables,
+                cat.cor.coef = cat.cor.coef,
+                cont.cor.coef = cont.cor.coef,
                 save.se.obj = FALSE,
                 remove.na = 'none',
                 verbose = verbose)
@@ -483,6 +500,8 @@ findNcgPerBiologyPerBatch <- function(
                 clustering.method = bio.clustering.method,
                 assess.se.obj = FALSE,
                 assess.variables = assess.variables,
+                cat.cor.coef = cat.cor.coef,
+                cont.cor.coef = cont.cor.coef,
                 save.se.obj = FALSE,
                 remove.na = 'none',
                 verbose = verbose)
@@ -539,7 +558,7 @@ findNcgPerBiologyPerBatch <- function(
                     ' (min.sample.for.correlation) samples for correlation analysis.'))
         } else corr.genes.uv <- NULL
 
-        ### anova between gene expression and all categorical source of variation with each biological groups ####
+        ### anova between gene expression and all categorical source of variation within each biological groups ####
         categorical.uv <- uv.variables[uv.var.class %in% c('factor', 'character')]
         if (isTRUE(length(categorical.uv) > 0)) {
             printColoredMessage(
@@ -629,6 +648,8 @@ findNcgPerBiologyPerBatch <- function(
                 clustering.method = uv.clustering.method,
                 assess.se.obj = FALSE,
                 assess.variables = assess.variables,
+                cat.cor.coef = cat.cor.coef,
+                cont.cor.coef = cont.cor.coef,
                 save.se.obj = FALSE,
                 verbose = verbose)
         } else if(!is.null(uv.groups)){
@@ -647,6 +668,8 @@ findNcgPerBiologyPerBatch <- function(
                 clustering.method = uv.clustering.method,
                 assess.se.obj = FALSE,
                 assess.variables = assess.variables,
+                cat.cor.coef = cat.cor.coef,
+                cont.cor.coef = cont.cor.coef,
                 save.se.obj = FALSE,
                 verbose = verbose)
         }
