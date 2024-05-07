@@ -3,30 +3,32 @@
 #' @author Ramyar Molania
 
 #' @param se.obj A SummarizedExperiment object.
-#' @param assay.name Symbol. Indicating the name of the assay in the SummarizedExperiment object. This assay should
-#' be the one that will be used for RUV-III-PRPS normalization. We recommend to use raw data.
-#' @param approach Symbols. Indicats which NCGs selection method should be used. The options are 'AnovaCorr.PerBatchPerBio',
-#' 'AnovaCorr.AcrossAllSamples' and'TwoWayAnova'. The default is set to 'TwoWayAnova'. Refer to details for more information.
-#' @param nb.bio.genes Numeric. Indicating how many genes should be selected as NCG. The value represents the proportion of the
-#' total genes in the SummarizedExperiment object. The default is set to 0.1.
-#' @param bio.variables Symbols. Indicating the column names that contain known biological variable(s) in the
-#' SummarizedExperiment object. These biological variables can be categorical or continuous. Continuous variables will be
-#' divided into 'nb.bio.clusters' groups based on a clustering method selected in the 'bio.clustering.method' argument.
-#' This argument cannot be empty.
-#' @param uv.variables Symbols. Indicating the column names that contain unwanted variable(s) in the SummarizedExperiment
-#' object. These unwanted variables can be categorical or continuous. Continuous variables will be divided into
-#' 'nb.uv.clusters' groups based on a clustering method selected in the 'uv.clustering.method' argument. This argument
-#' cannot be empty.
-#' @param bio.clustering.method Symbols. Indicating which clustering methods should be used to group continuous sources
-#' of biological variation. Refer to the 'createHomogeneousBioGroups' function for more details. The default is set to
-#' 'kmeans' clustering .
-#' @param nb.bio.clusters Numeric. Indicating the number of clusters for each continuous sources of biological variation.
-#' The by default it is set to 2. This means individual continuous sources of biological variation will be divided into two
-#' groups.
-#' @param uv.groups TTT
-#' @param uv.clustering.method Symbols. Indicates which clustering methods should be used to group continuous sources
-#' of unwanted variation. Refer to the 'createHomogeneousUvGroups' function for more details. The default is set to
-#' 'kmeans' cluster.
+#' @param assay.name Symbol. A symbol that indicates the name of the assay in the SummarizedExperiment object.
+#' @param approach Symbol. A symbol that indicates which biological gene selection methods should be used. The options
+#' are 'AnovaCorr.PerBatchPerBio', 'AnovaCorr.AcrossAllSamples', 'TwoWayAnova' and 'mad.unsupervised'. The default is set
+#' to 'TwoWayAnova'. Refer to the function details for more information.
+#' @param nb.bio.genes Numeric. A numeric value indicates how many genes should be selected as biological genes. The value
+#' represents the proportion of the total genes in the SummarizedExperiment object. The default is set to 0.1.
+#' @param bio.variables Symbol. A symbol or a vector of symbols indicating the column names that contain known biological
+#' variable(s) in the SummarizedExperiment object. These biological variables can be categorical or continuous. Continuous
+#' variables will be divided into 'nb.bio.clusters' groups based on a clustering method selected in the 'bio.clustering.method'
+#' argument.
+#' @param uv.variables Symbols. A symbol or a vector of symbols indicating the column names that contain unwanted variable(s)
+#' in the SummarizedExperiment object. These unwanted variables can be categorical or continuous. Continuous variables
+#' will be divided into nb.uv.clusters' groups based on a clustering method selected in the 'uv.clustering.method' argument.
+#' @param bio.clustering.method Symbol. A symbol that indicates which clustering methods should be used to group continuous
+#' sources of biological variation.  The default is set to kmeans' clustering. Refer to the 'createHomogeneousBioGroups'
+#' function for more details.
+#' @param nb.bio.clusters Numeric. A numeric value that indicates the number of clusters for each continuous sources of
+#' biological variation. The default is set to 3. This means individual continuous sources of biological variation will
+#' be divided into two groups based on the 'bio.clustering.method' method.
+#' @param uv.groups Symbol. A symbol or a vector of symbols indicating the column names that contain known unwanted
+#' variable(s) in the SummarizedExperiment object. These biological variables can be categorical or continuous. Continuous
+#' variables will be divided into 'nb.bio.clusters' groups based on a clustering method selected in the 'bio.clustering.method'
+#' argument.
+#' @param uv.clustering.method Symbol. A symbol that indicates which clustering methods should be used to group continuous
+#' sources of unwanted variation. The default is set to kmeans' cluster. Refer to the 'createHomogeneousUvGroups' function
+#' for more details.
 #' @param nb.uv.clusters Numeric. Indicates the number of clusters for each continuous sources of unwanted variation.
 #' The by default it is set to 2. This means individual continuous sources of biological variation will be divided into two
 #' groups.
@@ -96,7 +98,7 @@
 #' be recalculated. This accelerates parameter tuning for NCG selection. The default value is 'FALSE'.
 #' @param imf.name Symbol. Indicating the name to use when saving the intermediate file. If set to 'NULL', the function
 #' will create a name. In this case, the file name will be constructed as
-#' paste0(assay.name, '|TwoWayAnova|').The default is 'NULL'.
+#' paste0(assay.name, '|TwoWayAnova|'). The default is 'NULL'.
 #' @param use.imf Logical. Indicating whether to use the intermediate file or not. The default is set to 'FALSE'.
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
@@ -111,14 +113,14 @@ findBioGenes <- function(
         se.obj,
         assay.name,
         approach = 'TwoWayAnova',
-        nb.bio.genes = .1,
+        nb.bio.genes = 0.1,
         bio.variables,
         uv.variables,
         bio.clustering.method = 'kmeans',
         nb.bio.clusters = 3,
         uv.groups = NULL,
         uv.clustering.method = 'kmeans',
-        nb.uv.clusters = 'kmeans',
+        nb.uv.clusters = 3,
         apply.log = TRUE,
         pseudo.count = 1,
         normalization = 'CPM',
@@ -147,7 +149,6 @@ findBioGenes <- function(
         use.imf = FALSE,
         verbose = TRUE
         ){
-
     # Check inputs ####
     if(length(assay.name) > 1 | is.logical(assay.name) | assay.name == 'all'){
         stop('The "assay.name" must be a single assay name in the SummarizedExperiment object.')
@@ -184,7 +185,6 @@ findBioGenes <- function(
             stop('The "pseudo.count" must be 0 or a postive integer value.')
     }
 
-
     if (is.null(assess.se.obj)) {
         if (isTRUE(sum(bio.variables %in% colnames(colData(se.obj))) != length(bio.variables))) {
             stop('All or some of "bio.variables" cannot be found in the SummarizedExperiment object.')
@@ -199,19 +199,18 @@ findBioGenes <- function(
     }
 
     # check inputs ####
-    if(!approach %in% c('AnovaCorr.PerBatchPerBio', 'AnovaCorr.AcrossAllSamples', 'TwoWayAnova')){
-        stop('The approach must be one of the "AnovaCorr.PerBatchPerBio", "AnovaCorr.AcrossAllSamples" or "TwoWayAnova".')
+    if(!approach %in% c('AnovaCorr.PerBatchPerBio', 'AnovaCorr.AcrossAllSamples', 'TwoWayAnova', 'mad.unsupervised')){
+        stop('The approach must be one of the "AnovaCorr.PerBatchPerBio", "AnovaCorr.AcrossAllSamples", "TwoWayAnova" or "mad.unsupervised".')
     }
     # Check the SummarizedExperiment object ####
     if (isTRUE(assess.se.obj)) {
         se.obj <- checkSeObj(
             se.obj = se.obj,
             assay.names = assay.name,
-            variables = unique(c(bio.variables, uv.variables, variables.to.assess.ncg)),
+            variables = unique(c(bio.variables, uv.variables, variables.to.assess.bio.genes)),
             remove.na = remove.na,
             verbose = verbose)
     }
-
 
     # Two-way anova approach ####
     if(approach == 'TwoWayAnova'){
@@ -305,7 +304,7 @@ findBioGenes <- function(
                 ## rank the F-statistics ####
                 bio.rank <- uv.rank <- Biology <- UV <- NULL
                 set.seed(2190)
-                all.aov$bio.rank <- rank(x = all.aov$Biology, ties.method = 'random')
+                all.aov$bio.rank <- rank(x = -all.aov$Biology, ties.method = 'random')
         }
         ## Read the intermediate file ####
         if (isTRUE(use.imf)){
@@ -316,7 +315,7 @@ findBioGenes <- function(
             if(is.null(imf.name)){
                 imf.name <- paste0(assay.name, '|TwoWayAnova|')
             }
-            if(is.null(se.obj@metadata$IMF$NCG[[imf.name]]))
+            if(is.null(se.obj@metadata$IMF$BioGenes[[imf.name]]))
                 stop('The intermediate file cannot be found in the metadata of the SummarizedExperiment object.')
             all.aov <- se.obj@metadata$IMF$NCG[[imf.name]]
         }
@@ -345,7 +344,8 @@ findBioGenes <- function(
             se.obj@metadata[['IMF']][['BioGenes']][[imf.name]] <- all.aov
         }
         selected.bio.genes <- round(x = nb.bio.genes * nrow(se.obj) , digits = 0)
-        selected.bio.genes <- all.aov$bio.rank[1:selected.bio.genes]
+        selected.bio.genes <- row.names(all.aov)[all.aov$bio.rank < selected.bio.genes]
+        selected.bio.genes <- row.names(se.obj) %in% selected.bio.genes
     }
 
     # Per biology and per batch ####
@@ -546,7 +546,7 @@ findBioGenes <- function(
                             all.corr
                         })
                     names(corr.genes.bio) <- continuous.bio
-                } else {
+                } else if (length(selected.uv.groups) == 0) {
                     stop(
                         paste0(
                             'There are not homogeneous groups with respect to sources of unwanted variation that have at least ',
@@ -625,7 +625,7 @@ findBioGenes <- function(
             }
             if(is.null(se.obj@metadata$IMF$BioGenes[[imf.name]]))
                 stop('The intermediate file cannot be found in the metadata of the SummarizedExperiment object.')
-            all.tests <- se.obj@metadata$IMF$NCG[[imf.name]]
+            all.tests <- se.obj@metadata$IMF$BioGenes[[imf.name]]
             anova.genes.bio <- all.tests$anova.genes.bio
             corr.genes.bio <- all.tests$corr.genes.bio
         }
@@ -910,9 +910,9 @@ findBioGenes <- function(
             if(is.null(imf.name)){
                 imf.name <- paste0(assay.name, '|AcrossSamples|')
             }
-            if(is.null(se.obj@metadata$IMF$NCG[[imf.name]]))
+            if(is.null(se.obj@metadata$IMF$BioGenes[[imf.name]]))
                 stop('The intermediate file cannot be found in the metadata of the SummarizedExperiment object.')
-            all.tests <- se.obj@metadata$IMF$NCG[[imf.name]]
+            all.tests <- se.obj@metadata$IMF$BioGenes[[imf.name]]
             anova.genes.bio <- all.tests$anova.genes.bio
             corr.genes.bio <- all.tests$corr.genes.bio
         }
@@ -960,7 +960,7 @@ findBioGenes <- function(
         selected.bio.genes <- row.names(se.obj) %in% selected.bio.genes
     }
     ## Unsupervised approach ####
-    if(approach == 'unsupervised'){
+    if(approach == 'mad.unsupervised'){
         ## Finding negative control genes ####
         if(isFALSE(use.imf)){
             # Data transformation and normalization ####
@@ -1016,7 +1016,7 @@ findBioGenes <- function(
                 printColoredMessage(
                     message = paste0(
                         'The ',
-                        paste0(regress.out.variables, collapse = ' & '),
+                        paste0(regress.out.uv.variables, collapse = ' & '),
                         ' variables will be regressed out from the data,',
                         ' please make sure your data is log transformed.'),
                     color = 'blue',
@@ -1072,9 +1072,9 @@ findBioGenes <- function(
             if(is.null(imf.name)){
                 imf.name <- paste0(assay.name, '|un.supervised|')
             }
-            if(is.null(se.obj@metadata$IMF$NCG[[imf.name]]))
+            if(is.null(se.obj@metadata$IMF$BioGenes[[imf.name]]))
                 stop('The intermediate file cannot be found in the metadata of the SummarizedExperiment object.')
-            all.tests <- se.obj@metadata$IMF$NCG[[imf.name]]
+            all.tests <- se.obj@metadata$IMF$BioGenes[[imf.name]]
             bio.genes <- all.tests$bio.genes
         }
 
@@ -1084,7 +1084,7 @@ findBioGenes <- function(
                 se.obj@metadata[['IMF']] <- list()
             }
             if(!'BioGenes' %in% names(se.obj@metadata[['IMF']])){
-                se.obj@metadata[['IMF']][['NCG']] <- list()
+                se.obj@metadata[['IMF']][['BioGenes']] <- list()
             }
             if(is.null(imf.name)){
                 imf.name <- paste0(assay.name, '|un.supervised|')
@@ -1202,13 +1202,13 @@ findBioGenes <- function(
             color = 'magenta',
             verbose = verbose)
         ## Check if metadata NCG already exists
-        if(length(se.obj@metadata$NCG) == 0 ) {
+        if(length(se.obj@metadata$BioGenes) == 0 ) {
             se.obj@metadata[['BioGenes']] <- list()
         }
         if(!'supervised' %in% names(se.obj@metadata[['BioGenes']])){
             se.obj@metadata[['BioGenes']][['supervised']] <- list()
         }
-        if(!output.name %in% names(se.obj@metadata[['NCG']][['supervised']])){
+        if(!output.name %in% names(se.obj@metadata[['BioGenes']][['supervised']])){
             se.obj@metadata[['BioGenes']][['supervised']][[output.name]] <- list()
         }
         se.obj@metadata[['BioGenes']][['supervised']][[output.name]] <- selected.bio.genes
