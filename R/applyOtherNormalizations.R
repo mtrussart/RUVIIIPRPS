@@ -141,8 +141,7 @@ applyOtherNormalizations <- function(
                 verbose = verbose)
         norm.data <- DESeq2::vst(object = assay(x = se.obj, i = assay.name))
         norm.data
-    } else
-        stop(paste0('The normalization method ', method,' is not supported by this function'))
+    }
 
     # Save the data ####
     printColoredMessage(
