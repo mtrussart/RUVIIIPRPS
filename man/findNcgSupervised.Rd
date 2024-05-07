@@ -9,16 +9,16 @@ findNcgSupervised(
   assay.name,
   bio.variables,
   uv.variables,
-  approach = "TWAnova",
+  approach = "TwoWayAnova",
   ncg.selection.method = "non.overlap",
   nb.ncg = 0.1,
-  grid.nb = 20,
   top.rank.bio.genes = 0.5,
   top.rank.uv.genes = 0.5,
   bio.percentile = 0.2,
   uv.percentile = 0.2,
   grid.group = "uv",
   grid.direction = "increase",
+  grid.nb = 20,
   bio.groups = NULL,
   bio.clustering.method = "kmeans",
   nb.bio.clusters = 3,
@@ -42,10 +42,10 @@ findNcgSupervised(
   center = TRUE,
   scale = FALSE,
   assess.se.obj = TRUE,
-  assess.variables = TRUE,
+  assess.variables = FALSE,
   cat.cor.coef = c(0.95, 0.95),
   cont.cor.coef = c(0.95, 0.95),
-  remove.na = "both",
+  remove.na = "none",
   save.se.obj = TRUE,
   output.name = NULL,
   use.imf = FALSE,
@@ -57,7 +57,7 @@ findNcgSupervised(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.name}{Symbol. Indicating the name of the assay in the SummarizedExperiment object. This assay should
+\item{assay.name}{Symbol. Indicates the name of the assay in the SummarizedExperiment object. This assay should
 be the one that will be used for RUV-III-PRPS normalization. We recommend to use raw data.}
 
 \item{bio.variables}{Symbols. Indicating the column names that contain known biological variable(s) in the
@@ -70,7 +70,8 @@ object. These unwanted variables can be categorical or continuous. Continuous va
 'nb.uv.clusters' groups based on a clustering method selected in the 'uv.clustering.method' argument. This argument
 cannot be empty.}
 
-\item{approach}{TTT}
+\item{approach}{Symbols. Indicats which NCGs selection method should be used. The options are 'AnovaCorr.PerBatchPerBio',
+'AnovaCorr.AcrossAllSamples' and'TwoWayAnova'. The default is set to 'TwoWayAnova'. Refer to details for more information.}
 
 \item{ncg.selection.method}{Symbol. Indicating how to summarize F-statistics obtained from two-way ANOVA and select a
 set genes as negative control genes. The options are 'prod', 'average', 'sum', 'non.overlap', 'auto' and 'quantile'.
@@ -78,10 +79,6 @@ The default is set to non.overlap'. For more information, refer to the details o
 
 \item{nb.ncg}{Numeric. Indicating how many genes should be selected as NCG. The value represents the proportion of the
 total genes in the SummarizedExperiment object. The default is set to 0.1.}
-
-\item{grid.nb}{Numeric. Indicating the number of genes for grid search when the 'ncg.selection.method' is set to 'auto'.
-In the 'auto' approach, the grid search increases or decreases the initial values of 'top.rank.bio.genes' or
-'top.rank.uv.genes' or 'both' to find ~'nb.ncg' of genes as NCGs. The default is set to 20.}
 
 \item{top.rank.bio.genes}{Numeric. Indicating the top ranked genes that are highly affected by the biological variation.
 This is required to be specified when the 'ncg.selection.method' is set to either 'non.overlap' or 'auto'. The default
@@ -106,7 +103,14 @@ set to 'uv'.}
 \item{grid.direction}{Symbol. Indicating the grid search should be performed in decreasing or increasing order. The
 option are 'increase' or 'decrease'. The default is set to 'decrease'.}
 
-\item{bio.groups}{TTT}
+\item{grid.nb}{Numeric. Indicating the number of genes for grid search when the 'ncg.selection.method' is set to 'auto'.
+In the 'auto' approach, the grid search increases or decreases the initial values of 'top.rank.bio.genes' or
+'top.rank.uv.genes' or 'both' to find ~'nb.ncg' of genes as NCGs. The default is set to 20.}
+
+\item{bio.groups}{Symbol. A symbol or a vector of symbols indicating the columns names that contains biological variables
+in the SummarizedExperiment object. If is specified, the 'bio.groups' will be used for grouping samples into different
+homogeneous biological groups. If is 'NULL', the 'bio.variables' will be used for grouping samples into different
+homogeneous biological groups.}
 
 \item{bio.clustering.method}{Symbols. Indicating which clustering methods should be used to group continuous sources
 of biological variation. Refer to the 'createHomogeneousBioGroups' function for more details. The default is set to
@@ -116,7 +120,10 @@ of biological variation. Refer to the 'createHomogeneousBioGroups' function for 
 The by default it is set to 2. This means individual continuous sources of biological variation will be divided into two
 groups.}
 
-\item{uv.groups}{TTT}
+\item{uv.groups}{Symbol. A symbol or a vector of symbols indicating the columns names that contains biological variables
+in the SummarizedExperiment object. If is specified, the 'uv.groups' will be used for grouping samples into possible
+homogeneous sample groups with respect to unwanted variables. If is 'NULL', the 'uv.variables' will be used for grouping
+samples.}
 
 \item{uv.clustering.method}{Symbols. Indicates which clustering methods should be used to group continuous sources
 of unwanted variation. Refer to the 'createHomogeneousUvGroups' function for more details. The default is set to
@@ -126,7 +133,9 @@ of unwanted variation. Refer to the 'createHomogeneousUvGroups' function for mor
 The by default it is set to 2. This means individual continuous sources of biological variation will be divided into two
 groups.}
 
-\item{normalization}{TTT}
+\item{normalization}{Symbol. Indicates which normalization method should be applied to the data before finding genes
+that are affected by biological variation. The default is set to 'CPM'. If is 'NULL', no normalization will be applied.
+Refer to the 'applyOtherNormalizations' function for more details.}
 
 \item{regress.out.uv.variables}{Symbols. Indicates the columns names that contain unwanted variation variables in the
 SummarizedExperiment object. These variables will be regressed out from the data before finding genes that are highly
@@ -181,9 +190,19 @@ Refer to the 'computePCA' function for more details. The default is 'FALSE'.}
 variables separately when creating homogeneous sample groups. Refer to the function 'assessVariablesAssociation' for
 more details. The default is set to 'FLASE'.}
 
-\item{cat.cor.coef}{TTT}
+\item{cat.cor.coef}{Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
+between each pair of categorical variables. The first value applies to correlations between each pair of 'uv.variables',
+and the second value applies to correlations between each pair of 'bio.variables'. Correlation is computed using the
+ContCoef function from the DescTools R package. If the correlation between a pair of variables exceeds the cut-off,
+only the variable with the highest number of factors will be retained, and the other will be excluded from further
+analysis. By default, both values are set to 0.9.}
 
-\item{cont.cor.coef}{TTT}
+\item{cont.cor.coef}{Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
+between each pair of continuous variables. The first value applies to correlations between each pair of continuous
+'uv.variables', and the second value applies to correlations between each pair of continuous 'bio.variables'.
+Correlation is computed using the ContCoef function from the DescTools R package. If the correlation between a pair of
+variables exceeds the cut-off, only the variable with the highest variance will be retained, and the other will be
+excluded from further analysis. By default, both values are set to 0.9.}
 
 \item{remove.na}{Symbol. Indicates whether to remove NA or missing values from either the 'assays', 'sample.annotation',
 'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If
@@ -212,7 +231,8 @@ paste0(assay.name, '|TwoWayAnova|', ncg.selection.method).The default is 'NULL'.
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
 \value{
-a list of negative control genes.
+Either the SummarizedExperiment object containing the a set of negative control genes in the metadata  or a
+logical vector of the selected negative control genes.
 }
 \description{
 This function contains three different functions including 'findNcgByTwoWayAnova', 'findNcgAcrossSamples' and
