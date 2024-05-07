@@ -8,7 +8,7 @@
 #' refer to each function for more details.
 
 #' @param se.obj A SummarizedExperiment object.
-#' @param assay.name Symbol. Indicating the name of the assay in the SummarizedExperiment object. This assay should
+#' @param assay.name Symbol. Indicates the name of the assay in the SummarizedExperiment object. This assay should
 #' be the one that will be used for RUV-III-PRPS normalization. We recommend to use raw data.
 #' @param bio.variables Symbols. Indicating the column names that contain known biological variable(s) in the
 #' SummarizedExperiment object. These biological variables can be categorical or continuous. Continuous variables will be
@@ -18,12 +18,8 @@
 #' object. These unwanted variables can be categorical or continuous. Continuous variables will be divided into
 #' 'nb.uv.clusters' groups based on a clustering method selected in the 'uv.clustering.method' argument. This argument
 #' cannot be empty.
-#' @param approach TTT
-#' @param bio.groups TTT
-#' @param uv.groups TTT
-#' @param normalization TTT
-#' @param cat.cor.coef TTT
-#' @param cont.cor.coef TTT
+#' @param approach Symbols. Indicats which NCGs selection method should be used. The options are 'AnovaCorr.PerBatchPerBio',
+#' 'AnovaCorr.AcrossAllSamples' and'TwoWayAnova'. The default is set to 'TwoWayAnova'. Refer to details for more information.
 #' @param ncg.selection.method Symbol. Indicating how to summarize F-statistics obtained from two-way ANOVA and select a
 #' set genes as negative control genes. The options are 'prod', 'average', 'sum', 'non.overlap', 'auto' and 'quantile'.
 #' The default is set to non.overlap'. For more information, refer to the details of the function.
@@ -49,37 +45,48 @@
 #' @param grid.nb Numeric. Indicating the number of genes for grid search when the 'ncg.selection.method' is set to 'auto'.
 #' In the 'auto' approach, the grid search increases or decreases the initial values of 'top.rank.bio.genes' or
 #' 'top.rank.uv.genes' or 'both' to find ~'nb.ncg' of genes as NCGs. The default is set to 20.
-#' @param regress.out.bio.variables Symbols. Indicates the columns names that contain biological variables in the
-#' SummarizedExperiment object. These variables will be regressed out from the data before finding genes that are highly
-#' affected by unwanted variation variable. The default is NULL, indicates the regression will not be applied.
-#' @param regress.out.uv.variables Symbols. Indicates the columns names that contain unwanted variation variables in the
-#' SummarizedExperiment object. These variables will be regressed out from the data before finding genes that are highly
-#' affected by biological variation. The default is NULL, indicates the regression will not be applied.
+#' @param bio.groups Symbol. A symbol or a vector of symbols indicating the columns names that contains biological variables
+#' in the SummarizedExperiment object. If is specified, the 'bio.groups' will be used for grouping samples into different
+#' homogeneous biological groups. If is 'NULL', the 'bio.variables' will be used for grouping samples into different
+#' homogeneous biological groups.
 #' @param bio.clustering.method Symbols. Indicating which clustering methods should be used to group continuous sources
 #' of biological variation. Refer to the 'createHomogeneousBioGroups' function for more details. The default is set to
 #' 'kmeans' clustering .
 #' @param nb.bio.clusters Numeric. Indicating the number of clusters for each continuous sources of biological variation.
 #' The by default it is set to 2. This means individual continuous sources of biological variation will be divided into two
 #' groups.
+#' @param uv.groups Symbol. A symbol or a vector of symbols indicating the columns names that contains biological variables
+#' in the SummarizedExperiment object. If is specified, the 'uv.groups' will be used for grouping samples into possible
+#' homogeneous sample groups with respect to unwanted variables. If is 'NULL', the 'uv.variables' will be used for grouping
+#' samples.
 #' @param uv.clustering.method Symbols. Indicates which clustering methods should be used to group continuous sources
 #' of unwanted variation. Refer to the 'createHomogeneousUvGroups' function for more details. The default is set to
 #' 'kmeans' cluster.
 #' @param nb.uv.clusters Numeric. Indicates the number of clusters for each continuous sources of unwanted variation.
 #' The by default it is set to 2. This means individual continuous sources of biological variation will be divided into two
 #' groups.
-#' @param min.sample.for.aov Numeric. Indicates the minimum number of samples to be present in each group before applying
-#' the ANOVA. The default is 3.
-#' @param min.sample.for.correlation Numeric. Indicates the minimum number of samples to be considered in each group before
-#' applying the correlation analysis. The default is 10.
-#' @param corr.method Symbol. Indicates which correlation method should be used to compute association between gene-level
-#' expression and a continuous variable. The default is 'spearman'.
-#' @param a The significance level used for the confidence intervals in the correlation, by default it is set to 0.05.
-#' @param rho The value of the hypothesised correlation to be used in the hypothesis testing, by default it is set to 0.
-#' @param anova.method Indicates which anova method should be used to compute association between gene-level
+#' @param normalization Symbol. Indicates which normalization method should be applied to the data before finding genes
+#' that are affected by biological variation. The default is set to 'CPM'. If is 'NULL', no normalization will be applied.
+#' Refer to the 'applyOtherNormalizations' function for more details.
+#' @param regress.out.bio.variables Symbols. Indicates the columns names that contain biological variables in the
+#' SummarizedExperiment object. These variables will be regressed out from the data before finding genes that are highly
+#' affected by unwanted variation variable. The default is NULL, indicates the regression will not be applied.
+#' @param regress.out.uv.variables Symbols. Indicates the columns names that contain unwanted variation variables in the
+#' SummarizedExperiment object. These variables will be regressed out from the data before finding genes that are highly
+#' affected by biological variation. The default is NULL, indicates the regression will not be applied.
 #' @param apply.log Logical. Indicates whether to apply a log-transformation to the data before performing any statistical
 #' analysis. The default it is set to 'TRUE'.
 #' @param pseudo.count Numeric. A value as a pseudo count to be added to all measurements before log transformation. The
 #' default is 1.
+#' @param anova.method Indicates which anova method should be used to compute association between gene-level
+#' @param min.sample.for.aov Numeric. Indicates the minimum number of samples to be present in each group before applying
+#' the ANOVA. The default is 3.
+#' @param corr.method Symbol. Indicates which correlation method should be used to compute association between gene-level
+#' expression and a continuous variable. The default is 'spearman'.
+#' @param a The significance level used for the confidence intervals in the correlation, by default it is set to 0.05.
+#' @param rho The value of the hypothesised correlation to be used in the hypothesis testing, by default it is set to 0.
+#' @param min.sample.for.correlation Numeric. Indicates the minimum number of samples to be considered in each group before
+#' applying the correlation analysis. The default is 10.
 #' @param assess.ncg Logical. Indicates whether to assess the performance of selected NCG or not. This analysis involves
 #' principal component analysis on only the selected NCG and then explore the R^2 or vector correlation between the 'nb.pcs'
 #' first principal components and with the specified variables.
@@ -97,6 +104,18 @@
 #' @param assess.variables Logical. Indicates whether to assess the correlation between biological and unwanted variation
 #' variables separately when creating homogeneous sample groups. Refer to the function 'assessVariablesAssociation' for
 #' more details. The default is set to 'FLASE'.
+#' @param cat.cor.coef Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
+#' between each pair of categorical variables. The first value applies to correlations between each pair of 'uv.variables',
+#' and the second value applies to correlations between each pair of 'bio.variables'. Correlation is computed using the
+#' ContCoef function from the DescTools R package. If the correlation between a pair of variables exceeds the cut-off,
+#' only the variable with the highest number of factors will be retained, and the other will be excluded from further
+#' analysis. By default, both values are set to 0.9.
+#' @param cont.cor.coef Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
+#' between each pair of continuous variables. The first value applies to correlations between each pair of continuous
+#' 'uv.variables', and the second value applies to correlations between each pair of continuous 'bio.variables'.
+#' Correlation is computed using the ContCoef function from the DescTools R package. If the correlation between a pair of
+#' variables exceeds the cut-off, only the variable with the highest variance will be retained, and the other will be
+#' excluded from further analysis. By default, both values are set to 0.9.
 #' @param remove.na Symbol. Indicates whether to remove NA or missing values from either the 'assays', 'sample.annotation',
 #' 'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If
 #' 'sample.annotation' is selected, the samples that contains NA or missing values for any 'bio.variables' and
@@ -107,6 +126,7 @@
 #' @param output.name Symbol. A representation for the output s name. If set to 'NULL', the function will choose a name
 #' automatically. In this case, the file name will be constructed as paste0(sum(ncg.selected),'|', paste0(bio.variables,
 #' collapse = '&'), '|', paste0(uv.variables, collapse = '&'),'|TWAnova:', ncg.selection.method, '|', assay.name).
+#' @param use.imf Logical. Indicating whether to use the intermediate file or not. The default is set to 'FALSE'.
 #' @param save.imf Logical. Indicating whether to save the intermediate file in the SummarizedExperiment object or not.
 #' If set to 'TRUE', the function saves the results of the two-way ANOVA. Subsequently, if users wish to adjust parameters
 #' such as 'nb.ncg', 'ncg.selection.method', 'top.rank.bio.genes', and 'top.rank.uv.genes', the two-way ANOVA will not
@@ -114,10 +134,10 @@
 #' @param imf.name Symbol. Indicating the name to use when saving the intermediate file. If set to 'NULL', the function
 #' will create a name. In this case, the file name will be constructed as
 #' paste0(assay.name, '|TwoWayAnova|', ncg.selection.method).The default is 'NULL'.
-#' @param use.imf Logical. Indicating whether to use the intermediate file or not. The default is set to 'FALSE'.
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
-#' @return a list of negative control genes.
+#' @return Either the SummarizedExperiment object containing the a set of negative control genes in the metadata  or a
+#' logical vector of the selected negative control genes.
 
 #' @importFrom SummarizedExperiment assay SummarizedExperiment
 #' @export
@@ -127,16 +147,16 @@ findNcgSupervised <- function(
         assay.name,
         bio.variables,
         uv.variables,
-        approach = 'TWAnova',
+        approach = 'TwoWayAnova',
         ncg.selection.method = 'non.overlap',
         nb.ncg = 0.1,
-        grid.nb = 20,
         top.rank.bio.genes = 0.5,
         top.rank.uv.genes = 0.5,
         bio.percentile = 0.2,
         uv.percentile = 0.2,
         grid.group = 'uv',
         grid.direction = 'increase',
+        grid.nb = 20,
         bio.groups = NULL,
         bio.clustering.method = 'kmeans',
         nb.bio.clusters = 3,
@@ -160,10 +180,10 @@ findNcgSupervised <- function(
         center = TRUE,
         scale = FALSE,
         assess.se.obj = TRUE,
-        assess.variables = TRUE,
+        assess.variables = FALSE,
         cat.cor.coef = c(0.95, 0.95),
         cont.cor.coef = c(0.95, 0.95),
-        remove.na = 'both',
+        remove.na = 'none',
         save.se.obj = TRUE,
         output.name = NULL,
         use.imf = FALSE,
@@ -175,13 +195,13 @@ findNcgSupervised <- function(
                         color = 'white',
                         verbose = verbose)
     # check inputs ####
-    if(!approach %in% c('PbPbio', 'AnoCorrAs', 'TWAnova')){
-        stop('The approach must be one of the "PbPbio", "AnoCorrAs" or "TWAnova".')
+    if(!approach %in% c('AnovaCorr.PerBatchPerBio', 'AnovaCorr.AcrossAllSamples', 'TwoWayAnova')){
+        stop('The approach must be one of the "AnovaCorr.PerBatchPerBio", "AnovaCorr.AcrossAllSamples" or "TwoWayAnova".')
     }
 
     # find NCGs ####
-    ## find NCGs using PbPbio approach ####
-    if(approach == 'PbPbio'){
+    ## find NCGs using AnovaCorr.PerBatchPerBio approach ####
+    if(approach == 'AnovaCorr.PerBatchPerBiology'){
         ncg.set <- findNcgPerBiologyPerBatch(
             se.obj = se.obj,
             assay.name = assay.name,
@@ -229,8 +249,8 @@ findNcgSupervised <- function(
             verbose = verbose
             )
     }
-    ## find NCGs using AnoCorrAs approach ####
-    if(approach == 'AnoCorrAs'){
+    ## find NCGs using AnovaCorr.AcrossAllSamples approach ####
+    if(approach == 'AnovaCorr.AcrossAllSamples'){
         ncg.set <- findNcgAcrossSamples(
             se.obj = se.obj,
             assay.name = assay.name,
@@ -271,8 +291,8 @@ findNcgSupervised <- function(
             verbose = verbose
             )
     }
-    ## find NCGs using TWAnova approach ####
-    if(approach == 'TWAnova'){
+    ## find NCGs using TwoWayAnova approach ####
+    if(approach == 'TwoWayAnova'){
         ncg.set <- findNcgByTwoWayAnova(
             se.obj = se.obj,
             assay.name = assay.name,
