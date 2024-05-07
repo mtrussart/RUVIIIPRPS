@@ -15,7 +15,6 @@
 #' argument, several group of pseudo-samples will be created, one for each homogeneous group of samples and for each batch.
 #' All those pseudo-samples belonging to the same group across batches will be defined as pseudo-replicates which constitutes
 #' a PRPS set.
-
 #' @param se.obj A SummarizedExperiment object.
 #' @param assay.name Symbol. Indicates a name of an assay in the SummarizedExperiment object. The selected assay should
 #' be the one that will be used for RUV-III-PRPS normalization.
