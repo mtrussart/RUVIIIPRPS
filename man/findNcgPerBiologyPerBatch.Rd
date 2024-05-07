@@ -42,6 +42,8 @@ findNcgPerBiologyPerBatch(
   scale = FALSE,
   assess.se.obj = TRUE,
   assess.variables = FALSE,
+  cat.cor.coef = c(0.9, 0.9),
+  cont.cor.coef = c(0.9, 0.9),
   remove.na = "none",
   save.se.obj = TRUE,
   output.name = NULL,
@@ -167,14 +169,29 @@ is FALSE.}
 
 \item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment class object or not.}
 
-\item{assess.variables}{Logical.Indicates whether to assess the SummarizedExperiment class object or not.}
+\item{assess.variables}{Logical. Indicates whether to assess the SummarizedExperiment class object or not.}
+
+\item{cat.cor.coef}{Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
+between each pair of categorical variables. The first value applies to correlations between each pair of 'uv.variables',
+and the second value applies to correlations between each pair of 'bio.variables'. Correlation is computed using the
+ContCoef function from the DescTools R package. If the correlation between a pair of variables exceeds the cut-off,
+only the variable with the highest number of factors will be retained, and the other will be excluded from further
+analysis. By default, both values are set to 0.9.}
+
+\item{cont.cor.coef}{Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
+between each pair of continuous variables. The first value applies to correlations between each pair of continuous
+'uv.variables', and the second value applies to correlations between each pair of continuous 'bio.variables'.
+Correlation is computed using the ContCoef function from the DescTools R package. If the correlation between a pair of
+variables exceeds the cut-off, only the variable with the highest variance will be retained, and the other will be
+excluded from further analysis. By default, both values are set to 0.9.}
 
 \item{remove.na}{Symbol. Indicates whether to remove NA or missing values from either the 'assays', the 'sample.annotation',
-'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If 'sample.annotation' is selected, the
-samples that contains NA or missing values for any 'bio.variables' and 'uv.variables' will be excluded. By default, it is set to both'.}
+'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If
+'sample.annotation' is selected, the samples that contains NA or missing values for any 'bio.variables' and 'uv.variables'
+will be excluded. By default, it is set to both'.}
 
-\item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class object 'se.obj' or
-to output the result. By default it is set to TRUE.}
+\item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
+object 'se.obj' or to output the result. By default it is set to TRUE.}
 
 \item{output.name}{Symbol. A representation for the output's name. If set to 'NULL', the function will choose a name
 automatically.}
