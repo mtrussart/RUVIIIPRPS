@@ -78,7 +78,8 @@
 #' @param remove.na Symbol. To remove NA or missing values from the assays or not. The options are 'assays' and 'none'.
 #' The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
 #' the checkSeObj function for more details.
-#' @param output.name TTTT
+#' @param output.name Symbol. A Symbol to use for the name(s) of the RUV-III normalized datasets. The default is set to
+#' 'NULL', them individual RUV-III normalized data will be names as paste0('RUVIIII', k).
 #' @param save.se.obj Logical. Indicates whether to save the RUV-III-PRPS normalized data as assay(s) in the
 #' SummarizedExperiment object or to output the result as list. By default it is set to 'TRUE'.
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
