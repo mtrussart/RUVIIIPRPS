@@ -19,20 +19,22 @@ applyOtherNormalizations(
 \arguments{
 \item{se.obj}{A summarized experiment object.}
 
-\item{assay.name}{Symbol.  Specifies the name of the assay within the SummarizedExperiment object. The specified assay
+\item{assay.name}{Symbol. A symbol that indicates the name of the assay in the SummarizedExperiment object. The specified assay
 should be in raw count format.}
 
 \item{method}{Symbol. Indicates the normalization method to apply on the 'assay.name'. Options are:
-'CPM': Count Per Million from the edger R package.
-'TMM': Trimmed Mean of M-values from the edger R package,
-'upper':a scaling normalization that forces the median of each lane to be the same from the EDAseq R package.
-'median': a scaling normalization that forces the upper quartile of each lane to be the same from the EDAseq R package.
-'full': a non linear full quantile normalization from the EDAseq R package
-'VST', variance stabilizing transformation from the DESeq2 R package.
-By default it is set to 'CPM'.}
+\itemize{
+\item 'CPM': Count Per Million from the edger R package.
+\item 'TMM': Trimmed Mean of M-values from the edger R package,
+\item 'upper':a scaling normalization that forces the median of each lane to be the same from the EDAseq R package.
+\item 'median': a scaling normalization that forces the upper quartile of each lane to be the same from the EDAseq R package.
+\item 'full': a non linear full quantile normalization from the EDAseq R package
+\item 'VST', variance stabilizing transformation from the DESeq2 R package.
+The default is set to 'CPM'.
+}}
 
 \item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data or not after the normalization
-specified in the 'method' is performed. The default is 'TRUE'.}
+is performed. The default is 'TRUE'.}
 
 \item{pseudo.count}{Numeric. A value as a pseudo count to be added to all measurements of the assay(s) after applying
 the normalization to avoid -Inf for measurements that are equal to 0. The default is 1.}
@@ -52,7 +54,7 @@ during the execution of the functions, by default it is set to TRUE.}
 a SummarizedExperiment object containing an assay with the selected normalisation method
 }
 \description{
-This functions provides different normalization methods: CPM, TMM, upper, full, median, VST for RNA-seq
+This functions provides different normalization methods including CPM, TMM, upper, full, median, VST for RNA-seq
 data.
 }
 \author{
