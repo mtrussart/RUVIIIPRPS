@@ -2,7 +2,7 @@
 % Please edit documentation in R/checkSeObj.R
 \name{checkSeObj}
 \alias{checkSeObj}
-\title{Assess the assay names, variables, and missing values in a SummarizedExperiment object.}
+\title{Assess SummarizedExperiment object.}
 \usage{
 checkSeObj(
   se.obj,
@@ -15,7 +15,7 @@ checkSeObj(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or vector of symbols used to specify the name(s) of the assay(s) in the
+\item{assay.names}{Symbol. A symbol or vector of symbols to specify the name(s) of the assay(s) in the
 SummarizedExperiment object. The default is "all," indicating that all assays in the SummarizedExperiment object will
 be assessed.}
 
@@ -23,7 +23,7 @@ be assessed.}
 annotation of the SummarizedExperiment object. By default, it is set to 'all', then all the columns will be examined.
 We recommend specifying those column(s) that are of interest to your analysis.}
 
-\item{remove.na}{Symbol. Specifies whether to eliminate missing values from either 'assays', 'sample.annotation',}
+\item{remove.na}{Symbol. A Symbol that specifies whether to eliminate missing values from either 'assays', 'sample.annotation',}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
