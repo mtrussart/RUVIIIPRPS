@@ -15,7 +15,7 @@ findBioGenes(
   nb.bio.clusters = 3,
   uv.groups = NULL,
   uv.clustering.method = "kmeans",
-  nb.uv.clusters = "kmeans",
+  nb.uv.clusters = 3,
   apply.log = TRUE,
   pseudo.count = 1,
   normalization = "CPM",
@@ -48,38 +48,40 @@ findBioGenes(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.name}{Symbol. Indicating the name of the assay in the SummarizedExperiment object. This assay should
-be the one that will be used for RUV-III-PRPS normalization. We recommend to use raw data.}
+\item{assay.name}{Symbol. A symbol that indicates the name of the assay in the SummarizedExperiment object.}
 
-\item{approach}{Symbols. Indicats which NCGs selection method should be used. The options are 'AnovaCorr.PerBatchPerBio',
-'AnovaCorr.AcrossAllSamples' and'TwoWayAnova'. The default is set to 'TwoWayAnova'. Refer to details for more information.}
+\item{approach}{Symbol. A symbol that indicates which biological gene selection methods should be used. The options
+are 'AnovaCorr.PerBatchPerBio', 'AnovaCorr.AcrossAllSamples', 'TwoWayAnova' and 'mad.unsupervised'. The default is set
+to 'TwoWayAnova'. Refer to the function details for more information.}
 
-\item{nb.bio.genes}{Numeric. Indicating how many genes should be selected as NCG. The value represents the proportion of the
-total genes in the SummarizedExperiment object. The default is set to 0.1.}
+\item{nb.bio.genes}{Numeric. A numeric value indicates how many genes should be selected as biological genes. The value
+represents the proportion of the total genes in the SummarizedExperiment object. The default is set to 0.1.}
 
-\item{bio.variables}{Symbols. Indicating the column names that contain known biological variable(s) in the
-SummarizedExperiment object. These biological variables can be categorical or continuous. Continuous variables will be
-divided into 'nb.bio.clusters' groups based on a clustering method selected in the 'bio.clustering.method' argument.
-This argument cannot be empty.}
+\item{bio.variables}{Symbol. A symbol or a vector of symbols indicating the column names that contain known biological
+variable(s) in the SummarizedExperiment object. These biological variables can be categorical or continuous. Continuous
+variables will be divided into 'nb.bio.clusters' groups based on a clustering method selected in the 'bio.clustering.method'
+argument.}
 
-\item{uv.variables}{Symbols. Indicating the column names that contain unwanted variable(s) in the SummarizedExperiment
-object. These unwanted variables can be categorical or continuous. Continuous variables will be divided into
-'nb.uv.clusters' groups based on a clustering method selected in the 'uv.clustering.method' argument. This argument
-cannot be empty.}
+\item{uv.variables}{Symbols. A symbol or a vector of symbols indicating the column names that contain unwanted variable(s)
+in the SummarizedExperiment object. These unwanted variables can be categorical or continuous. Continuous variables
+will be divided into nb.uv.clusters' groups based on a clustering method selected in the 'uv.clustering.method' argument.}
 
-\item{bio.clustering.method}{Symbols. Indicating which clustering methods should be used to group continuous sources
-of biological variation. Refer to the 'createHomogeneousBioGroups' function for more details. The default is set to
-'kmeans' clustering .}
+\item{bio.clustering.method}{Symbol. A symbol that indicates which clustering methods should be used to group continuous
+sources of biological variation.  The default is set to kmeans' clustering. Refer to the 'createHomogeneousBioGroups'
+function for more details.}
 
-\item{nb.bio.clusters}{Numeric. Indicating the number of clusters for each continuous sources of biological variation.
-The by default it is set to 2. This means individual continuous sources of biological variation will be divided into two
-groups.}
+\item{nb.bio.clusters}{Numeric. A numeric value that indicates the number of clusters for each continuous sources of
+biological variation. The default is set to 3. This means individual continuous sources of biological variation will
+be divided into two groups based on the 'bio.clustering.method' method.}
 
-\item{uv.groups}{TTT}
+\item{uv.groups}{Symbol. A symbol or a vector of symbols indicating the column names that contain known unwanted
+variable(s) in the SummarizedExperiment object. These biological variables can be categorical or continuous. Continuous
+variables will be divided into 'nb.bio.clusters' groups based on a clustering method selected in the 'bio.clustering.method'
+argument.}
 
-\item{uv.clustering.method}{Symbols. Indicates which clustering methods should be used to group continuous sources
-of unwanted variation. Refer to the 'createHomogeneousUvGroups' function for more details. The default is set to
-'kmeans' cluster.}
+\item{uv.clustering.method}{Symbol. A symbol that indicates which clustering methods should be used to group continuous
+sources of unwanted variation. The default is set to kmeans' cluster. Refer to the 'createHomogeneousUvGroups' function
+for more details.}
 
 \item{nb.uv.clusters}{Numeric. Indicates the number of clusters for each continuous sources of unwanted variation.
 The by default it is set to 2. This means individual continuous sources of biological variation will be divided into two
@@ -175,7 +177,7 @@ be recalculated. This accelerates parameter tuning for NCG selection. The defaul
 
 \item{imf.name}{Symbol. Indicating the name to use when saving the intermediate file. If set to 'NULL', the function
 will create a name. In this case, the file name will be constructed as
-paste0(assay.name, '|TwoWayAnova|').The default is 'NULL'.}
+paste0(assay.name, '|TwoWayAnova|'). The default is 'NULL'.}
 
 \item{use.imf}{Logical. Indicating whether to use the intermediate file or not. The default is set to 'FALSE'.}
 
