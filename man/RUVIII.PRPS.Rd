@@ -76,7 +76,8 @@ function for more details.}
 The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
 the checkSeObj function for more details.}
 
-\item{output.name}{TTTT}
+\item{output.name}{Symbol. A Symbol to use for the name(s) of the RUV-III normalized datasets. The default is set to
+'NULL', them individual RUV-III normalized data will be names as paste0('RUVIIII', k).}
 
 \item{save.se.obj}{Logical. Indicates whether to save the RUV-III-PRPS normalized data as assay(s) in the
 SummarizedExperiment object or to output the result as list. By default it is set to 'TRUE'.}
