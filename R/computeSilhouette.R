@@ -4,13 +4,13 @@
 
 #' @description
 #' This function calculates the average silhouette width for each categorical variables such as sample biological subtypes,
-#'  batches, etc.. The distance matrix is based on the principal components.
+#' batches, etc.. The distance matrix is based on the principal components.
 
 #' @details
-#' We use silhouette coefficient analysis to assess the separation of biological populations and batch effects. The
-#' silhouette function uses Euclidean distance to calculate both the similarity between one patient and the other patients
-#' in each cluster and the separation between patients in different clusters. A better normalization method will lead to
-#' higher and lower silhouette coefficients for biological and batch labels, respectively.
+#' The Silhouette coefficient analysis is used to assess the separation of categorical samples groups. We use first few
+#' principal components to calculate both the similarity between one sample and the other samples in each cluster and the
+#' separation between samples in different clusters. A better normalization method will lead to higher and lower silhouette
+#' coefficients for biological and batch variables, respectively.
 
 #' @references
 #' Molania R., ..., Speed, T. P., Removing unwanted variation from large-scale RNA sequencing data with PRPS,
@@ -18,24 +18,23 @@
 
 #' @param se.obj A SummarizedExperiment object.
 #' @param assay.names Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
-#' SummarizedExperiment object to calculate Silhouette coefficient. The default is set to "all, which indicates all the
+#' SummarizedExperiment object to calculate Silhouette coefficient. The default is set to 'all', which indicates all the
 #' assays of the SummarizedExperiment object will be selected.
-#' @param variable Symbol. Indicates the column name that contain categorical variable in the SummarizedExperiment object.
-#' The variable can be biological or unwanted variable.
-#' @param dist.measure Symbol. Indicates which ditsance measure to be used. The options are 'euclidean', 'maximum',
-#' 'manhattan', 'canberra', 'binary' or 'minkowski'. The default is set to 'euclidean'. Refer to the function 'dist' from
-#' the R package stats for more details.
+#' @param variable Symbol. A symbol that indicates the column name that contain categorical variable in the
+#' SummarizedExperiment object. The variable can be biological or unwanted variable.
+#' @param dist.measure Symbol. A symbol that indicates which ditsance measure to be used to calculate silhouette coefficient.
+#' The options are 'euclidean', 'maximum', manhattan', 'canberra', 'binary' or 'minkowski'. The default is set to 'euclidean'.
+#' Refer to the function 'dist' from the 'stats' R package for more details.
 #' @param fast.pca Logical. Indicates whether to use the PC calculated using fast PCA or not. The default is set to 'TRUE'.
-#' The fast PCA and ordinary PCA do not affect the silhouette coefficient calculation. Refer to detail for more information.
-#' @param nb.pcs Numeric. The number of first PCs to be used to calculated the distances between samples. The default is
-#' set to 3.
-#' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
-#' object 'se.obj' or to output the result. By default it is set to TRUE.
+#' The fast PCA and ordinary PCA do not affect the silhouette coefficient calculation.
+#' @param nb.pcs Numeric. A numeric value indicates the number of first PCs to be used to calculated the distances between
+#' samples. The default is set to 3.
+#' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment object
+#' or to output the result. By default it is set to 'TRUE'.
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
-#' @return SummarizedExperiment A SummarizedExperiment object containing the computed silhouette
-#' on the categorical variable.
-
+#' @return Either the SummarizedExperiment object containing the computed silhouette coefficient in the metadata or a list
+#' of silhouette coefficient for all specified assay(s)
 
 #' @importFrom SummarizedExperiment assays assay
 #' @importFrom cluster silhouette
@@ -56,7 +55,7 @@ computeSilhouette <- function(
     printColoredMessage(message = '------------The computeSilhouette function starts:',
                         color = 'white',
                         verbose = verbose)
-    # check the inputs ####
+    # Check the inputs ####
     if (is.null(assay.names)) {
         stop('The "assay.names" cannot be empty.')
     } else if (is.null(variable)){
@@ -78,7 +77,7 @@ computeSilhouette <- function(
         stop("The dist.measure should be one of the: 'euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'.")
     }
 
-    # assays ####
+    # Assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else  assay.names <- factor(x = assay.names , levels = assay.names)
@@ -86,7 +85,7 @@ computeSilhouette <- function(
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
-    # silhouette coefficients on all assays ####
+    # Silhouette coefficients on all assays ####
     printColoredMessage(
         message = '-- Compute silhouette coefficient:',
         color = 'magenta',
@@ -137,13 +136,14 @@ computeSilhouette <- function(
             return(avg.width)
         })
     names(sil.coef) <- levels(assay.names)
-    # save the results ####
+
+    # Save the results ####
     printColoredMessage(
         message = '-- Save all the Silhouette:',
         color = 'magenta',
         verbose = verbose)
     ## add results to the SummarizedExperiment object ####
-    if (save.se.obj == TRUE) {
+    if (isTRUE(save.se.obj)) {
         printColoredMessage(
             message = '- Save the silhouette coefficients to the metadata of the SummarizedExperiment object.',
             color = 'blue',
@@ -183,8 +183,9 @@ computeSilhouette <- function(
                             verbose = verbose)
         return(se.obj = se.obj)
 
-        ## return only the correlation result ####
-    } else if (save.se.obj == FALSE) {
+    }
+    ## return only the correlation result ####
+    if (isFALSE(save.se.obj)) {
         printColoredMessage(message = '------------The computeSilhouette function finished.',
                             color = 'white',
                             verbose = verbose)
