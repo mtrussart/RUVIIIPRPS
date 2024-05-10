@@ -220,7 +220,6 @@ assessNormalization <- function(
         rle.iqr.scores <- NULL
     }
 
-
     ## rle medians and variable scores #####
     rle.med.variables <- assessments.table$Variables[metrics.table$Factors == 'rleMedians']
     if(!is.null(rle.med.variables)){
