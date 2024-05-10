@@ -67,7 +67,7 @@ findKnn <- function(
         svd.bsparam = bsparam(),
         clustering.method = 'kmeans',
         nb.clusters = 3,
-        k.nn = 2,
+        k.nn = 4,
         hvg = NULL,
         normalization = 'CPM',
         regress.out.bio.variables = NULL,
@@ -152,7 +152,7 @@ findKnn <- function(
                 include.lowest = TRUE))
             se.obj[[uv.variable]] <- factor(x = paste0(uv.variable, '_uv.variable', uv.cont.clusters))
         }
-    } else if(is.factor(se.obj[[uv.variable]])){
+    } else if(!class(se.obj[[uv.variable]]) %in% c('integer', 'numeric')){
         se.obj[[uv.variable]] <- factor(x = se.obj[[uv.variable]])
     }
     if (length(findRepeatingPatterns(vec = se.obj[[uv.variable]], n.repeat = k.nn)) != length(unique(se.obj[[uv.variable]])))
@@ -170,7 +170,7 @@ findKnn <- function(
             selected.samples <- colData(se.obj)[[uv.variable]] == x
             if (!is.null(normalization) &is.null(regress.out.bio.variables)) {
                 printColoredMessage(
-                    message = paste0('Applying the ', normalization,' within samples from ', x, 'group.'),
+                    message = paste0('Applying the ', normalization,' within samples from the ', x, ' group.'),
                     color = 'blue',
                     verbose = verbose
                 )
@@ -201,7 +201,7 @@ findKnn <- function(
                         assess.se.obj = FALSE,
                         save.se.obj = FALSE,
                         remove.na = 'none',
-                        verbose = FALSE)
+                        verbose = verbose)
                 sample.info <- as.data.frame(colData(se.obj[ , selected.samples]))
                 # regression
                 norm.data <- t(norm.data)
