@@ -1,4 +1,4 @@
-#' perform differential gene expression analysis using the Wilcoxon test.
+#' Perform differential gene expression analysis using the Wilcoxon test.
 
 #' @author Ramyar Molania
 
@@ -13,11 +13,12 @@
 #' distributed
 
 #' @param se.obj A SummarizedExperiment object.
-#' @param assay.names Symbol. Symbol or a vector of symbols for the selection of the name(s) of the assay(s) of the
+#' @param assay.names Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) of the
 #' SummarizedExperiment object to compute the differential gene expression analysis. By default all the assays of the
 #' SummarizedExperiment object will be selected.
-#' @param variable  Symbol. Indicates a column name of the SummarizedExperiment object that contains a categorical variable
-#' such as batches. If the variable has more than two levels, the function perform DEG between all possible pariwise groups.
+#' @param variable Symbol. A symbol that indicates a column name of the SummarizedExperiment object that contains a
+#' categorical variable such as batches. If the variable has more than two levels, the function perform DEG between all
+#' possible pariwise groups.
 #' @param apply.log Logical. Indicates whether to apply a log-transformation to the data before compuritn DGE. The
 #' default is 'TRUE'.
 #' @param pseudo.count Numeric. A value as a pseudo count to be added to all measurements before log transformation. The
@@ -45,14 +46,14 @@ computeDGE <- function(
         apply.log = TRUE,
         pseudo.count = 1,
         assess.se.obj = TRUE,
-        remove.na = 'both',
+        remove.na = 'none',
         save.se.obj = TRUE,
         verbose = TRUE
 ){
     printColoredMessage(message = '------------The computeDGE function starts:',
                         color = 'white',
                         verbose = verbose)
-    # check the inputs ####
+    # Check the inputs ####
     if (is.null(assay.names)) {
         stop('The "assay.names" cannot be empty.')
     } else if (is.null(variable)) {
@@ -60,14 +61,24 @@ computeDGE <- function(
     } else if (class(se.obj@colData[, variable]) %in% c('numeric', 'integer')) {
         stop('The "variable" must be a categorical variable.')
     } else if (length(unique(se.obj@colData[, variable])) < 2) {
-        stop('The "variable" must have at least two levels.')
+        stop('The "variable" must have at least two levels (factors).')
     }
-    if (apply.log){
+    if(!is.logical(apply.log)){
+        stop('The "apply.log" must be "FALSE" or "TRUE".')
+    }
+    if (isTRUE(apply.log)){
         if (pseudo.count < 0)
-            stop('The value of pseudo.count cannot be negative.')
+            stop('The value of "pseudo.count" cannot be negative.')
+    }
+    if(!is.logical(assess.se.obj)){
+        stop('The "assess.se.obj" must be "FALSE" or "TRUE".')
+    } else if (!is.logical(save.se.obj)){
+        stop('The "save.se.obj" must be "FALSE" or "TRUE".')
+    } else if (!is.logical(verbose)){
+        stop('The "verbose" must be "FALSE" or "TRUE".')
     }
 
-    # assays ####
+    # Assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else  assay.names <- factor(x = assay.names , levels = assay.names)
@@ -75,7 +86,7 @@ computeDGE <- function(
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
-    # assess the SummarizedExperiment object ####
+    # Assess the SummarizedExperiment object ####
     if (assess.se.obj) {
         se.obj <- checkSeObj(
             se.obj = se.obj,
@@ -85,33 +96,41 @@ computeDGE <- function(
             verbose = verbose)
     }
 
-    # data transformation ####
-    printColoredMessage(
-        message = '-- Data transformation:',
-        color = 'magenta',
-        verbose = verbose)
+    # Data log transformation ####
+    printColoredMessage( message ='-- Data log transformation:',
+                         color = 'magenta',
+                         verbose = verbose)
     all.log.data <- lapply(
         levels(assay.names),
         function(x){
-            if (apply.log) {
-                printColoredMessage(message = paste0(
-                    'Perform log2 + ',
-                    pseudo.count,
-                    ' (pseudo.count) on the ',
-                    x,
-                    ' data.'),
-                    color = 'blue',
-                    verbose = verbose)
-                temp.data <- log2(assay(x = se.obj, i = x) +  pseudo.count)
-            } else{
+            # log transformation ####
+            if (isTRUE(apply.log) & !is.null(pseudo.count)) {
                 printColoredMessage(
-                    message = paste0('Please make sure that the ', x, ' data is log transformed.'),
+                    message = paste0('- Apply log2 + ', pseudo.count,  ' (pseudo.count) on the ', x, ' data.'),
                     color = 'blue',
                     verbose = verbose)
-                temp.data <- assay(x = se.obj, i = x)
+                expr.data <- log2(assay(x = se.obj, i = x) + pseudo.count)
+            } else if (isTRUE(apply.log) & is.null(pseudo.count)){
+                printColoredMessage(
+                    message = paste0('- Apply log2 on the ', x, ' data.'),
+                    color = 'blue',
+                    verbose = verbose)
+                expr.data <- log2(assay(x = se.obj, i = x))
+            } else if (isFALSE(apply.log)){
+                printColoredMessage(
+                    message = paste0('- The ', x, ' data will be used without log transformation.'),
+                    color = 'blue',
+                    verbose = verbose)
+                printColoredMessage(
+                    message = '- Please note, the assay should be in log scale before computing RLE.',
+                    color = 'red',
+                    verbose = verbose)
+                expr.data <- assay(x = se.obj, i = x)
             }
-    })
+        })
     names(all.log.data) <- levels(assay.names)
+
+    # Apply Wilcoxon test ####
     printColoredMessage(
         message = '-- Perform Wilcoxon test:',
         color = 'magenta',
@@ -123,19 +142,19 @@ computeDGE <- function(
         levels(assay.names),
         function(x){
             printColoredMessage(
-                message = paste0('Apply the Wilcoxon test on the ', x, ' data:'),
+                message = paste0('- Apply the Wilcoxon test on the ', x, ' data:'),
                 color = 'blue',
                 verbose = verbose)
             de.results <- lapply(
                 1:ncol(all.contrasts),
                 function(i){
                     printColoredMessage(
-                        message = paste0('-Wilcoxon test between the ', all.contrasts[1 , i], ' and ', all.contrasts[2 , i],'.'),
+                        message = paste0('- Wilcoxon test between the ', all.contrasts[1 , i], ' and ', all.contrasts[2 , i],'.'),
                         color = 'blue',
                         verbose = verbose)
                     data1 <- all.log.data[[x]][ , colData(se.obj)[[variable]] == all.contrasts[1 , i] ]
                     data2 <- all.log.data[[x]][ , colData(se.obj)[[variable]] == all.contrasts[2 , i] ]
-                    de.table <- row_wilcoxon_twosample(data1, data2)[ , c('obs.x', 'obs.y', 'pvalue')]
+                    de.table <- matrixTests::row_wilcoxon_twosample(data1, data2)[ , c('obs.x', 'obs.y', 'pvalue')]
                 })
             names(de.results) <- sapply(
                 1:ncol(all.contrasts),
@@ -145,13 +164,13 @@ computeDGE <- function(
         })
     names(all.wilcoxon.tests) <- levels(assay.names)
 
-    # save the results ####
+    # Save the results ####
     printColoredMessage(
         message = '-- Save the Wilcoxon test results:',
         color = 'magenta',
         verbose = verbose)
     ## add results to the SummarizedExperiment object ####
-    if (save.se.obj == TRUE) {
+    if (isTRUE(save.se.obj)) {
         for (x in levels(assay.names)) {
             ## check if metadata metric already exist
             if (length(se.obj@metadata) == 0) {
@@ -181,8 +200,9 @@ computeDGE <- function(
                             color = 'white',
                             verbose = verbose)
         return(se.obj)
-        ## return the results as a list ####
-    } else if (save.se.obj == FALSE) {
+    }
+    ## return the results as a list ####
+    if (isFALSE(save.se.obj)) {
         printColoredMessage(
             message = 'The Wilcoxon results for indiviaul assay are outputed as list.',
             color = 'blue',
