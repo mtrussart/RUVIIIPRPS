@@ -43,8 +43,9 @@ findNcgByTwoWayAnova(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.name}{Symbol. Indicating the name of the assay in the SummarizedExperiment object. This assay should
-be the one that will be used for RUV-III-PRPS normalization. We recommend to use raw data.}
+\item{assay.name}{Symbol. A symbol that indicates the name of the assay in the SummarizedExperiment object. This assay
+should be the one that will be used as an input data for the RUV-III-PRPS normalization. We recommend to use raw data,
+if available.}
 
 \item{bio.variables}{Symbols. Indicating the column names that contain known biological variable(s) in the
 SummarizedExperiment object. These biological variables can be categorical or continuous. Continuous variables will be

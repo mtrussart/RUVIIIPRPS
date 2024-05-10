@@ -13,7 +13,7 @@ findMnn(
   nb.clusters = 3,
   normalization = "CPM",
   regress.out.bio.variables = NULL,
-  apply.log = FALSE,
+  apply.log = TRUE,
   pseudo.count = 1,
   mnn.bpparam = SerialParam(),
   assess.se.obj = TRUE,
@@ -25,28 +25,30 @@ findMnn(
 \arguments{
 \item{se.obj}{A summarized experiment object.}
 
-\item{assay.name}{Symbol. A symbol for the selection of the name of the assay in the SummarizedExperiment object to be
-used to find mutual nearest neighbors.}
+\item{assay.name}{Symbol. A symbol that indicates the name of the assay in the SummarizedExperiment object. This data
+should be the one that will be used as input for RUV-III normalization.}
 
-\item{uv.variable}{Symbol. Indicates the name of a column in the sample annotation of the SummarizedExperiment object.
-The 'uv.variable' can be either categorical and continuous. If 'uv.variable' is a continuous variable, this will be
-divided into 'nb.clusters' groups using the 'clustering.method'.}
+\item{uv.variable}{Symbol. A symbol that indicates the name of the column in the SummarizedExperiment object. The
+'uv.variable' can be either categorical and continuous. If 'uv.variable' is a continuous variable, this will be
+divided into 'nb.clusters' groups using the 'clustering.method' methdo.}
 
-\item{hvg}{Vector. A vector of the names of the highly variable genes. These genes will be used to find the anchors
-samples across the batches. The default is NULL.}
+\item{hvg}{Vector. A vector of the names of the highly variable genes. These genes will be used to find mutual nearest
+neighbors samples across the batches. The default is set to 'NULL'. The 'findBioGenes' function can be used for specify
+a set of genes.}
 
-\item{clustering.method}{Symbol.A symbol indicating the choice of clustering method for grouping the 'uv.variable'
+\item{clustering.method}{Symbol. A symbol that indicates the choice of clustering method for grouping the 'uv.variable'
 if a continuous variable is provided. Options include 'kmeans', 'cut', and 'quantile'. The default is set to 'kmeans'.}
 
 \item{nb.clusters}{Numeric. A numeric value indicating how many clusters should be found if the 'uv.variable' is a
 continuous variable. The default is 3.}
 
-\item{normalization}{Symbol. Indicates which normalization methods should be applied before finding the knn. The default
-is 'cpm'. If is set to NULL, no normalization will be applied.}
+\item{normalization}{Symbol. A Symbol that indicates which normalization methods should be applied before finding the
+knn. The option are 'CPM', 'TMM', 'VST'. The default is 'CPM'. Refer to the 'applyOtherNormalization' for more details.}
 
-\item{regress.out.bio.variables}{Symbols. Indicates the columns names that contain biological variables in the
-SummarizedExperiment object. These variables will be regressed out from the data before finding genes that are highly
-affected by unwanted variation variable. The default is NULL, indicates the regression will not be applied.}
+\item{regress.out.bio.variables}{Symbol. A symbol or vector of symbols indicating the column name(s) that contain
+biological variable(s) in the SummarizedExperiment object. These variables will be regressed out from the data before
+finding genes that are highly affected by unwanted variation variable. The default is set to 'NULL', indicates the
+regression will not be applied.}
 
 \item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data or not. The default is TRUE.
 Please, note, any RNA-seq data (assays) must be in log scale before computing RLE.}
@@ -71,7 +73,10 @@ or to output the result as list. By default it is set to TRUE.}
 }
 \description{
 This function finds mutual nearest neighbors between all pairs of batches in RNA-seq data. The mutual nearest neighbors
-will be used to find and create pseudo samples and eventually pseudo-replicates.
+will be used to find and create pseudo samples and eventually pseudo-replicates for RUV-III normalization.
+}
+\details{
+Additional details...
 }
 \author{
 Ramyar Molania

@@ -15,7 +15,7 @@ findKnn(
   svd.bsparam = bsparam(),
   clustering.method = "kmeans",
   nb.clusters = 3,
-  k.nn = 2,
+  k.nn = 4,
   hvg = NULL,
   normalization = "CPM",
   regress.out.bio.variables = NULL,

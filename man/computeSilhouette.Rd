@@ -19,40 +19,40 @@ computeSilhouette(
 \item{se.obj}{A SummarizedExperiment object.}
 
 \item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
-SummarizedExperiment object to calculate Silhouette coefficient. The default is set to "all, which indicates all the
+SummarizedExperiment object to calculate Silhouette coefficient. The default is set to 'all', which indicates all the
 assays of the SummarizedExperiment object will be selected.}
 
-\item{variable}{Symbol. Indicates the column name that contain categorical variable in the SummarizedExperiment object.
-The variable can be biological or unwanted variable.}
+\item{variable}{Symbol. A symbol that indicates the column name that contain categorical variable in the
+SummarizedExperiment object. The variable can be biological or unwanted variable.}
 
-\item{dist.measure}{Symbol. Indicates which ditsance measure to be used. The options are 'euclidean', 'maximum',
-'manhattan', 'canberra', 'binary' or 'minkowski'. The default is set to 'euclidean'. Refer to the function 'dist' from
-the R package stats for more details.}
+\item{dist.measure}{Symbol. A symbol that indicates which ditsance measure to be used to calculate silhouette coefficient.
+The options are 'euclidean', 'maximum', manhattan', 'canberra', 'binary' or 'minkowski'. The default is set to 'euclidean'.
+Refer to the function 'dist' from the 'stats' R package for more details.}
 
 \item{fast.pca}{Logical. Indicates whether to use the PC calculated using fast PCA or not. The default is set to 'TRUE'.
-The fast PCA and ordinary PCA do not affect the silhouette coefficient calculation. Refer to detail for more information.}
+The fast PCA and ordinary PCA do not affect the silhouette coefficient calculation.}
 
-\item{nb.pcs}{Numeric. The number of first PCs to be used to calculated the distances between samples. The default is
-set to 3.}
+\item{nb.pcs}{Numeric. A numeric value indicates the number of first PCs to be used to calculated the distances between
+samples. The default is set to 3.}
 
-\item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
-object 'se.obj' or to output the result. By default it is set to TRUE.}
+\item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment object
+or to output the result. By default it is set to 'TRUE'.}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
 \value{
-SummarizedExperiment A SummarizedExperiment object containing the computed silhouette
-on the categorical variable.
+Either the SummarizedExperiment object containing the computed silhouette coefficient in the metadata or a list
+of silhouette coefficient for all specified assay(s)
 }
 \description{
 This function calculates the average silhouette width for each categorical variables such as sample biological subtypes,
 batches, etc.. The distance matrix is based on the principal components.
 }
 \details{
-We use silhouette coefficient analysis to assess the separation of biological populations and batch effects. The
-silhouette function uses Euclidean distance to calculate both the similarity between one patient and the other patients
-in each cluster and the separation between patients in different clusters. A better normalization method will lead to
-higher and lower silhouette coefficients for biological and batch labels, respectively.
+The Silhouette coefficient analysis is used to assess the separation of categorical samples groups. We use first few
+principal components to calculate both the similarity between one sample and the other samples in each cluster and the
+separation between samples in different clusters. A better normalization method will lead to higher and lower silhouette
+coefficients for biological and batch variables, respectively.
 }
 \references{
 Molania R., ..., Speed, T. P., Removing unwanted variation from large-scale RNA sequencing data with PRPS,

@@ -46,11 +46,12 @@ A SummarizedExperiment object or a list that containing all the plots of the com
 on the categorical variable.
 }
 \description{
-This functions generates barplots of average Silhouette coefficients for individual assays. If two variables are provided, the
-function creates scatter plots of the average Silhouette coefficients of each variable for the individual assays.
+This functions generates barplots of average Silhouette coefficients for individual assays. If two variables are
+provided, the function creates combined scatter plots of the average Silhouette coefficients of each variables for the
+individual assays.
 }
 \references{
-Molania R., ..., Speed, T. P., Removing unwanted variation from large-scale RNA sequencing data with PRPS,
+*Molania R., ..., Speed, T. P., Removing unwanted variation from large-scale RNA sequencing data with PRPS,
 Nature Biotechnology, 2023
 }
 \author{

@@ -2,7 +2,7 @@
 % Please edit documentation in R/findBioGenes.R
 \name{findBioGenes}
 \alias{findBioGenes}
-\title{Perform several normalization methods for RNA-seq data.}
+\title{Find biological genes.}
 \usage{
 findBioGenes(
   se.obj,
@@ -188,7 +188,27 @@ Either the SummarizedExperiment object containing the a set of biological genes 
 logical vector of the selected biological genes
 }
 \description{
-Perform several normalization methods for RNA-seq data.
+This function uses different approaches to find genes that highly affected by biological variables or highly
+variable genes. Refer to the details for
+}
+\details{
+Additional details...
+\itemize{
+\item TwoWayAnov: In this process, all the biological and unwanted variables will be grouped into two categorical variables
+separately using the createHomogeneousBioGroups() and createHomogeneousUVGroups() functions. Then, a two-way ANOVA is
+applied to the expression levels of individual genes, considering the summarized biological and unwanted variables as
+two factors. A set of genes with the highest F-statistic the biological variables will be selected as biological genes.
+\item AnovaCorr.AcrossAllSamples: computes gene-level correlation and ANOVA to find genes that are highly affected by continuous
+and categorical sources biological variables across all samples, respectively.
+Then, a set of genes with highest absolute correlation coefficients and F-statistics will be selected as biological.
+\item AnovaCorr.PerBatchPerBio: computes gene-level correlation and ANOVA within groups of samples that are homogeneous
+with respect to biological or unwanted variation. This is useful in situations where the biological and unwanted variation
+are highly correlated.
+\item mad.unsupervised: If sources of unwanted variation are unknown, the identifyUnknownUV must be applied to
+estimate them. Subsequently, the functions conducts a Median Absolute Deviation (MAD) analysis on each gene within
+sample groups homogeneous with respect to unwanted variables, to pinpoint genes highly
+variable due to biological factors. The higher the MAD, the more likely the genes are to be biologically variable.
+}
 }
 \author{
 Ramyar Molania
