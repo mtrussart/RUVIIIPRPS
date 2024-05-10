@@ -1,15 +1,15 @@
-#' Create all possible assessment metrics for the variables.
+#' Create all possible assessment plots and metrics for the variables.
 
 #' @author Ramyar Molania
 
 #' @description
-#' This functions provides the names of all possible assessment metrics for the given variable(s). The list will be used
-#' in the 'assessVariation' and 'assessNormalization' functions.
+#' This functions provides the names of all possible assessment plots and metrics for the given variable(s). The list
+#' will be used in the 'assessVariation' and 'assessNormalization' functions.
 
 #' @param se.obj A summarized experiment object.
-#' @param variables Symbols. A symbol and a vector of symbols indicating the columns names of variables in the samples
-#' annotation in the SummarizedExperiment object. The 'variables' can be categorical and continuous.
-#' @param plot.output Logical. Whether to print the plot or not.
+#' @param variables Symbol. A symbol and a vector of symbols indicating the columns names of variables in the samples
+#' annotation in the SummarizedExperiment object. The 'variables' can be categorical and continuous variables.
+#' @param plot.output Logical. Whether to print the plot of all possible assessment plots or not. The default is set to 'TRUE'.
 #' @param save.se.obj Logical. Whether to save the results into the SummarizedExperiment object. The default is TRUE.
 #'
 #' @return A list of all possible assessment metrics for the variables.
@@ -59,33 +59,47 @@ getAssessmentMetrics <- function(
     # general plots #####
     general.plot <- data.frame(
         Variables = 'General',
+        Metrics = 'RLE',
         Factors = 'General',
         PlotTypes = 'rlePlot',
-        Metrics = 'RLE')
+        Assessments = 'rleMed||rleIqr')
+    bio.genes <- data.frame(
+        Variables = 'bioGenes',
+        Metrics = 'CorrelationAnova',
+        Factors = 'geneCorrGeneAnova',
+        PlotTypes = 'barplot',
+        Assessments = 'geneNumbers')
 
     # possible metrics for continuous variables #####
     if(length(continuous.var) > 0){
         metrics.for.cont.var <- c(
-            'rleMedians||scatterPlot||RLE',
-            'rleIqr||scatterPlot||RLE',
-            'pcs||scatterPlot||PCA',
-            'pcs||lineDotPlot||LRA',
-            'geneCorr||boxPlot||Correlation')
+            'rleMedians||scatterPlot||RLE_CorrCoeff',
+            'rleIqr||scatterPlot||RLE_CorrCoeff',
+            'pcs||scatterPlot||PCA_DA',
+            'pcs||lineDotPlot||LRA_AverageRseq',
+            'geneCorr||boxPlot||Correlation_CorrCoeff||PvalDis||qVal')
         metrics.for.cont.var <- expand.grid(
             continuous.var,
             metrics.for.cont.var)
-        colnames(metrics.for.cont.var) <- c('Variables', 'MetricsPlots')
+        colnames(metrics.for.cont.var) <- c('Variables', 'MetricsPlotsAssessment')
         metrics.for.cont.var <- metrics.for.cont.var[order(metrics.for.cont.var$Variables), ]
         metrics.for.cont.var$Metrics <- unlist(lapply(
-            metrics.for.cont.var$MetricsPlots,
-            function(x) strsplit(x = as.character(x), split = '\\|\\|')[[1]][3]))
+            metrics.for.cont.var$MetricsPlotsAssessment,
+            function(x){
+                d <- strsplit(x = as.character(x), split = '\\|\\|')[[1]][3]
+                strsplit(x = d, split = '_')[[1]][1]
+            }
+            ))
         metrics.for.cont.var$PlotTypes <- unlist(lapply(
-            metrics.for.cont.var$MetricsPlots,
+            metrics.for.cont.var$MetricsPlotsAssessment,
             function(x) strsplit(x = as.character(x), split = '\\|\\|')[[1]][2]))
         metrics.for.cont.var$Factors <- unlist(lapply(
             metrics.for.cont.var$MetricsPlots,
             function(x) strsplit(x = as.character(x), split = '\\|\\|')[[1]][1]))
-        metrics.for.cont.var.table <- metrics.for.cont.var[,c(1,5,4,3)]
+        metrics.for.cont.var$Assessments <- unlist(lapply(
+            metrics.for.cont.var$MetricsPlotsAssessment,
+            function(x) strsplit(x = as.character(x), split = '_')[[1]][2]))
+        metrics.for.cont.var.table <- metrics.for.cont.var[,c(1,3,5,4,6)]
         metrics.for.cont.var.list <- paste0(
             metrics.for.cont.var$Variables,
             '_',
@@ -99,31 +113,38 @@ getAssessmentMetrics <- function(
     # possible metrics for categorica variables #####
     if(length(categorical.var) > 0){
         metrics.for.cat.var <- c(
-            'rle||coloredRLEplot||RLE',
-            'rleMedians||boxPlot||RLE',
-            'rleIqr||boxPlot||RLE',
-            'pcs||boxPlot||PCA',
-            'pcs||scatterPlot||PCA',
-            'pcs||lineDotPlot||VCA',
-            'ariCoeff||barPlot||ARI',
-            'silhouetteCoeff||barPlot||Silhouette',
-            'geneAnova||boxPlot||ANOVA',
-            'pvalue||pvalHist||DGE')
+            'rle||coloredRLEplot||RLE_DA',
+            'rleMedians||boxPlot||RLE_rleMed',
+            'rleIqr||boxPlot||RLE_rleIqr',
+            'pcs||boxPlot||PCA_DA',
+            'pcs||scatterPlot||PCA_DA',
+            'pcs||lineDotPlot||VCA_AverageCorr',
+            'ariCoeff||barPlot||ARI_ARI',
+            'silhouetteCoeff||barPlot||Silhouette_Silhouette',
+            'geneAnova||boxPlot||ANOVA_Fstat||Pval||qVal',
+            'pvalue||pvalHist||DGE_PvalDis||qVal')
         metrics.for.cat.var <- expand.grid(
             categorical.var,
             metrics.for.cat.var)
-        colnames(metrics.for.cat.var) <- c('Variables', 'MetricsPlots')
+        colnames(metrics.for.cat.var) <- c('Variables', 'MetricsPlotsAssessments')
         metrics.for.cat.var <- metrics.for.cat.var[order(metrics.for.cat.var$Variables), ]
         metrics.for.cat.var$Metrics <- unlist(lapply(
-            metrics.for.cat.var$MetricsPlots,
-            function(x) strsplit(x = as.character(x), split = '\\|\\|')[[1]][3]))
+            metrics.for.cont.var$MetricsPlotsAssessment,
+            function(x){
+                d <- strsplit(x = as.character(x), split = '\\|\\|')[[1]][3]
+                strsplit(x = d, split = '_')[[1]][1]
+            }
+        ))
         metrics.for.cat.var$PlotTypes <- unlist(lapply(
-            metrics.for.cat.var$MetricsPlots,
+            metrics.for.cat.var$MetricsPlotsAssessments,
             function(x) strsplit(x = as.character(x), split = '\\|\\|')[[1]][2]))
         metrics.for.cat.var$Factors <- unlist(lapply(
-            metrics.for.cat.var$MetricsPlots,
+            metrics.for.cat.var$MetricsPlotsAssessments,
             function(x) strsplit(x = as.character(x), split = '\\|\\|')[[1]][1]))
-        metrics.for.cat.var.table <- metrics.for.cat.var[,c(1,3,5,4)]
+        metrics.for.cat.var$Assessments <- unlist(lapply(
+            metrics.for.cat.var$MetricsPlotsAssessment,
+            function(x) strsplit(x = as.character(x), split = '_')[[1]][2]))
+        metrics.for.cat.var.table <- metrics.for.cat.var[,c(1,3,5,4,6)]
         metrics.for.cat.var.list <- paste0(
             metrics.for.cat.var$Variables,
             '_',
@@ -160,6 +181,8 @@ getAssessmentMetrics <- function(
             metrics.for.two.cat.var$MetricsPlots,
             function(x) strsplit(x = as.character(x), split = '\\|\\|')[[1]][1]))
         metrics.for.two.cat.var.table <- metrics.for.two.cat.var[,c(1,5,4,3)]
+        metrics.for.two.cat.var.table$Assessments <- 'DA'
+        metrics.for.two.cat.var.table <- metrics.for.two.cat.var.table[,c(1,4,2,3,5)]
         metrics.for.two.cat.var.list <- paste0(
             metrics.for.two.cat.var$Variables,
             '_',
@@ -181,7 +204,6 @@ getAssessmentMetrics <- function(
         metrics.for.two.cat.var.table))
     final.metrics.table$Variables <- as.character(final.metrics.table$Variables)
     rownames(final.metrics.table) <- c(1:nrow(final.metrics.table))
-    all.var.char
     for(i in names(all.var.char)){
         if(all.var.char[[i]][1] != -1){
             cur.name <- names(all.var.char[i])
@@ -197,45 +219,7 @@ getAssessmentMetrics <- function(
         }
     }
     final.metrics.table.toplot <- final.metrics.table
-    final.metrics.table <- rbind(final.metrics.table , general.plot)
-    final.metrics.table$Assessments <- paste(
-        final.metrics.table$Variables,
-        final.metrics.table$Factors,
-        final.metrics.table$PlotTypes,
-        sep = '||')
-    index <- final.metrics.table$PlotTypes == 'scatterPlot'
-    final.metrics.table$Assessments[index] <- 'CorrCoeff'
-    index <- final.metrics.table$Metrics == 'LRA'
-    final.metrics.table$Assessments[index] <- 'AverageRseq'
-    index <- final.metrics.table$Metrics == 'VCA'
-    final.metrics.table$Assessments[index] <- 'AverageCorr'
-    index <- final.metrics.table$Factors == 'General'
-    final.metrics.table$Assessments[index] <- 'rleMed||rleIqr'
-    index <- final.metrics.table$Factors == 'geneCorr'
-    final.metrics.table$Assessments[index] <- 'CorrCoeff||PvalDis||qVal'
-    index <- final.metrics.table$Factors == 'geneAnova'
-    final.metrics.table$Assessments[index] <- 'Fstat||Pval||qVal'
-    index <- final.metrics.table$Metrics == 'DGE'
-    final.metrics.table$Assessments[index] <- 'PvalDis||qVal'
-    index <- final.metrics.table$PlotTypes == 'coloredRLEplot'
-    final.metrics.table$Assessments[index] <- 'rleMed||rleIqr'
-    index <- final.metrics.table$Metrics == 'ARI'
-    final.metrics.table$Assessments[index] <- 'ARI'
-    index <- final.metrics.table$Metrics == 'Silhouette'
-    final.metrics.table$Assessments[index] <- 'Silhouette'
-    index <- final.metrics.table$Metrics == 'RLE' & final.metrics.table$PlotTypes == 'boxPlot'
-    final.metrics.table$Assessments[index] <- 'rleMed'
-    index <- final.metrics.table$Metrics == 'PCA' & final.metrics.table$PlotTypes == 'boxPlot'
-    final.metrics.table$Assessments[index] <- 'Uni'
-    index <- final.metrics.table$PlotTypes == 'combinedPlot'
-    final.metrics.table$Assessments[index] <- 'DA'
-    index <- final.metrics.table$Metrics == 'PCA' & final.metrics.table$PlotTypes == 'boxPlot'
-    final.metrics.table$Assessments[index] <- 'DA'
-    index <- final.metrics.table$Metrics == 'PCA' & final.metrics.table$PlotTypes == 'scatterPlot'
-    final.metrics.table$Assessments[index] <- 'DA'
-    index <- final.metrics.table$PlotTypes == 'coloredRLEplot'
-    final.metrics.table$Assessments[index] <- 'DA'
-    final.metrics.table <- final.metrics.table[ , c(1,4,2,3,5)]
+    final.metrics.table <- rbind(final.metrics.table , general.plot, bio.genes)
     final.metrics.table$Code <- paste0('PA', 1:nrow(final.metrics.table))
     # plot ####
     steps <- y <- label <- xmin <- xmax <- type <- s_e <- ymin <- ymax <- id <- NULL
