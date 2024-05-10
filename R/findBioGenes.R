@@ -1,6 +1,31 @@
-#' Perform several normalization methods for RNA-seq data.
+#' Find biological genes.
 
 #' @author Ramyar Molania
+
+#' @description
+#' This function uses different approaches to find genes that highly affected by biological variables or highly
+#' variable genes. Refer to the details for
+
+#' @details
+#' Additional details...
+#' - TwoWayAnov: In this process, all the biological and unwanted variables will be grouped into two categorical variables
+#' separately using the createHomogeneousBioGroups() and createHomogeneousUVGroups() functions. Then, a two-way ANOVA is
+#' applied to the expression levels of individual genes, considering the summarized biological and unwanted variables as
+#' two factors. A set of genes with the highest F-statistic the biological variables will be selected as biological genes.
+#'
+#'- AnovaCorr.AcrossAllSamples: computes gene-level correlation and ANOVA to find genes that are highly affected by continuous
+#' and categorical sources biological variables across all samples, respectively.
+#' Then, a set of genes with highest absolute correlation coefficients and F-statistics will be selected as biological.
+#'
+#' - AnovaCorr.PerBatchPerBio: computes gene-level correlation and ANOVA within groups of samples that are homogeneous
+#' with respect to biological or unwanted variation. This is useful in situations where the biological and unwanted variation
+#' are highly correlated.
+#'
+#' - mad.unsupervised: If sources of unwanted variation are unknown, the identifyUnknownUV must be applied to
+#' estimate them. Subsequently, the functions conducts a Median Absolute Deviation (MAD) analysis on each gene within
+#' sample groups homogeneous with respect to unwanted variables, to pinpoint genes highly
+#' variable due to biological factors. The higher the MAD, the more likely the genes are to be biologically variable.
+
 
 #' @param se.obj A SummarizedExperiment object.
 #' @param assay.name Symbol. A symbol that indicates the name of the assay in the SummarizedExperiment object.
@@ -959,7 +984,7 @@ findBioGenes <- function(
             })))
         selected.bio.genes <- row.names(se.obj) %in% selected.bio.genes
     }
-    ## Unsupervised approach ####
+    # Unsupervised approach ####
     if(approach == 'mad.unsupervised'){
         ## Finding negative control genes ####
         if(isFALSE(use.imf)){
