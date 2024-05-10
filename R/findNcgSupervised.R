@@ -196,7 +196,7 @@ findNcgSupervised <- function(
                         verbose = verbose)
     # check inputs ####
     if(!approach %in% c('AnovaCorr.PerBatchPerBio', 'AnovaCorr.AcrossAllSamples', 'TwoWayAnova')){
-        stop('The approach must be one of the "AnovaCorr.PerBatchPerBio", "AnovaCorr.AcrossAllSamples" or "TwoWayAnova".')
+        stop('The approach must be one of the "AnovaCorr.PerBatchPerBiology", "AnovaCorr.AcrossAllSamples" or "TwoWayAnova".')
     }
 
     # find NCGs ####
