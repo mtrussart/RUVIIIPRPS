@@ -301,7 +301,7 @@ RUVIII.PRPS <- function(
             if(!'supervised' %in% names(se.obj@metadata$NCG)){
                 stop('"supervised" NCGs  canot be found in the metadata of the SummarizedExperiment object.')
             }
-            if(sum(ncg.set.names %in% se.obj@metadata$NCG$supervised) != length(se.obj@metadata$NCG$supervised)){
+            if(sum(ncg.set.names %in% names(se.obj@metadata$NCG$supervised)) != length(ncg.set.names)){
                 stop('All or some of "ncg.set.names" cannot be found in the SummarizedExperiment object.')
             }
         }
@@ -309,7 +309,7 @@ RUVIII.PRPS <- function(
             if(!'un.supervised' %in% names(se.obj@metadata$NCG)){
                 stop('"un.supervised" NCGs canot be found in the metadata of the SummarizedExperiment object.')
             }
-            if(sum(ncg.set.names %in% se.obj@metadata$NCG$un.supervised) != length(se.obj@metadata$NCG$un.supervised)){
+            if(sum(ncg.set.names %in% names(se.obj@metadata$NCG$un.supervised)) != length(ncg.set.names)){
                 stop('All or some of "ncg.set.names" cannot be found in the SummarizedExperiment object.')
             }
         }
