@@ -264,7 +264,7 @@ findNcgAcrossSamples <- function(
     if(isTRUE(ncg.selection.method == 'auto')){
         if(isFALSE(is.numeric(grid.nb))){
             stop('The "grid.nb" must be a postive integer value.')
-        } else if(grid.nb < 0 | length(grid.nb) > 0 ){
+        } else if(grid.nb < 0 | length(grid.nb) > 1 ){
             stop('The "grid.nb" must be a postive integer value.')
         } else if(isTRUE(is.logical(grid.group))){
             stop('The "grid.group" must be on of the "both", "uv" or "bio".')
