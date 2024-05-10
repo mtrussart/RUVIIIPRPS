@@ -4,25 +4,34 @@
 
 #' @description
 #' This function finds mutual nearest neighbors between all pairs of batches in RNA-seq data. The mutual nearest neighbors
-#' will be used to find and create pseudo samples and eventually pseudo-replicates.
+#' will be used to find and create pseudo samples and eventually pseudo-replicates for RUV-III normalization.
+
+#' @details
+#' Additional details...
+#'
+
 
 #' @param se.obj A summarized experiment object.
-#' @param assay.name Symbol. A symbol for the selection of the name of the assay in the SummarizedExperiment object to be
-#' used to find mutual nearest neighbors.
-#' @param uv.variable Symbol. Indicates the name of a column in the sample annotation of the SummarizedExperiment object.
-#' The 'uv.variable' can be either categorical and continuous. If 'uv.variable' is a continuous variable, this will be
-#' divided into 'nb.clusters' groups using the 'clustering.method'.
-#' @param hvg Vector. A vector of the names of the highly variable genes. These genes will be used to find the anchors
-#' samples across the batches. The default is NULL.
-#' @param clustering.method Symbol.A symbol indicating the choice of clustering method for grouping the 'uv.variable'
+#' @param assay.name Symbol. A symbol that indicates the name of the assay in the SummarizedExperiment object. This data
+#' should be the one that will be used as input for RUV-III normalization.
+
+#' @param uv.variable Symbol. A symbol that indicates the name of the column in the SummarizedExperiment object. The
+#' 'uv.variable' can be either categorical and continuous. If 'uv.variable' is a continuous variable, this will be
+#' divided into 'nb.clusters' groups using the 'clustering.method' methdo.
+#' @param hvg Vector. A vector of the names of the highly variable genes. These genes will be used to find mutual nearest
+#' neighbors samples across the batches. The default is set to 'NULL'. The 'findBioGenes' function can be used for specify
+#' a set of genes.
+
+#' @param clustering.method Symbol. A symbol that indicates the choice of clustering method for grouping the 'uv.variable'
 #' if a continuous variable is provided. Options include 'kmeans', 'cut', and 'quantile'. The default is set to 'kmeans'.
 #' @param nb.clusters Numeric. A numeric value indicating how many clusters should be found if the 'uv.variable' is a
 #' continuous variable. The default is 3.
-#' @param normalization Symbol. Indicates which normalization methods should be applied before finding the knn. The default
-#' is 'cpm'. If is set to NULL, no normalization will be applied.
-#' @param regress.out.bio.variables Symbols. Indicates the columns names that contain biological variables in the
-#' SummarizedExperiment object. These variables will be regressed out from the data before finding genes that are highly
-#' affected by unwanted variation variable. The default is NULL, indicates the regression will not be applied.
+#' @param normalization Symbol. A Symbol that indicates which normalization methods should be applied before finding the
+#' knn. The option are 'CPM', 'TMM', 'VST'. The default is 'CPM'. Refer to the 'applyOtherNormalization' for more details.
+#' @param regress.out.bio.variables Symbol. A symbol or vector of symbols indicating the column name(s) that contain
+#' biological variable(s) in the SummarizedExperiment object. These variables will be regressed out from the data before
+#' finding genes that are highly affected by unwanted variation variable. The default is set to 'NULL', indicates the
+#' regression will not be applied.
 #' @param apply.log Logical. Indicates whether to apply a log-transformation to the data or not. The default is TRUE.
 #' Please, note, any RNA-seq data (assays) must be in log scale before computing RLE.
 #' @param pseudo.count Numeric. A value as a pseudo count to be added to all measurements of the assay(s) before applying
@@ -53,7 +62,7 @@ findMnn <- function(
         nb.clusters = 3,
         normalization = 'CPM',
         regress.out.bio.variables = NULL,
-        apply.log = FALSE,
+        apply.log = TRUE,
         pseudo.count = 1,
         mnn.bpparam = SerialParam(),
         assess.se.obj = TRUE,
@@ -64,7 +73,7 @@ findMnn <- function(
     printColoredMessage(message = '------------The findMnn function starts:',
                         color = 'white',
                         verbose = verbose)
-    # check input #####
+    # Check input #####
     if (is.list(assay.name)) {
         stop('The "assay.name" cannot be a list.')
     } else if (length(assay.name) > 1) {
@@ -81,21 +90,20 @@ findMnn <- function(
             stop('All the hvg genes are not found in the SummarizedExperiment object.')
     }
 
-    # assess.se.obj #####
+    # Assess.se.obj #####
     if (assess.se.obj) {
         se.obj <- checkSeObj(
             se.obj = se.obj,
             assay.names = assay.name,
             variables = uv.variable,
             remove.na = remove.na,
-            verbose = verbose
-        )
+            verbose = verbose)
     }
 
     all.samples.index <- c(1:ncol(se.obj))
     ini.variable <- se.obj[[uv.variable]]
 
-    # check the uv variable ####
+    # Assess the unwanted variable ####
     if (class(se.obj[[uv.variable]]) %in% c('integer', 'numeric')) {
         printColoredMessage(
             message = paste0(
@@ -131,11 +139,11 @@ findMnn <- function(
                 include.lowest = TRUE))
             se.obj[[uv.variable]] <- factor(x = paste0(uv.variable, '_uv.variable', uv.cont.clusters))
         }
-    } else if(is.factor(se.obj[[uv.variable]])){
+    } else if(is.factor(se.obj[[uv.variable]]) | is.character(se.obj[[uv.variable]])){
         se.obj[[uv.variable]] <- factor(x = se.obj[[uv.variable]])
     }
 
-    # data transformation #####
+    # Data transformation and regression #####
     printColoredMessage(message = '-- Data normalization, transformation and regression:',
                         color = 'magenta',
                         verbose = verbose)
@@ -144,8 +152,7 @@ findMnn <- function(
         groups,
         function(x) {
             selected.samples <- colData(se.obj)[[uv.variable]] == x
-            if (!is.null(normalization) &
-                is.null(regress.out.bio.variables)) {
+            if (!is.null(normalization) & is.null(regress.out.bio.variables)) {
                 printColoredMessage(
                     message = paste0('Applying the ', normalization, ' within samples from ', x),
                     color = 'blue',
@@ -169,7 +176,7 @@ findMnn <- function(
                     color = 'blue',
                     verbose = verbose
                 )
-                # normalization
+                ## normalization ####
                 norm.data <- applyOtherNormalizations(
                         se.obj = se.obj[, selected.samples],
                         assay.name = assay.name,
@@ -182,7 +189,7 @@ findMnn <- function(
                         verbose = FALSE
                     )
                 sample.info <- as.data.frame(colData(se.obj[, selected.samples]))
-                # regression
+                # regression ####
                 norm.data <- t(norm.data)
                 lm.formua <- paste('sample.info', regress.out.bio.variables, sep = '$')
                 y <- lm(as.formula(paste(
@@ -201,8 +208,7 @@ findMnn <- function(
                         'within samples from ',
                         unique(colData(se.obj)[[uv.variable]][x]),
                         ', and then finding ',
-                        ' nearest neighbours for individual samples.'
-                    ),
+                        ' nearest neighbours for individual samples.'),
                     color = 'blue',
                     verbose = verbose
                 )
@@ -225,9 +231,8 @@ findMnn <- function(
         })
     names(all.norm.data) <- groups
 
-    # MNN between batches
-    pairs.batch <- combn(x = groups,
-                         m = 2)
+    # Find MNN between batches ####
+    pairs.batch <- combn(x = groups, m = 2)
     printColoredMessage(
         message = paste0('-- Finding mnn between all possible pairs of sub-groups: "',
                          uv.variable, '".', 'This may take few minuets.'),
@@ -277,19 +282,23 @@ findMnn <- function(
             return(df)
         })
     all.mnn <- do.call(rbind, all.mnn)
-    # return data ####
-    # saving the output ####
-    if (save.se.obj) {
+
+    # Save the results ####
+    ## saving the output ####
+    if (isTRUE(save.se.obj)) {
         output.name <- paste0(uv.variable, '||' , assay.name)
         se.obj@metadata[['PRPS']][['unsupervised']][['KnnMnn']][['mnn']][[output.name]] <- all.mnn
         printColoredMessage(message = '------------The findMnn function finished.',
                             color = 'white',
                             verbose = verbose)
         return(se.obj)
-    } else{
+    }
+    ## saving the output ####
+    if(isFALSE(save.se.obj)){
         printColoredMessage(message = '------------The findMnn function finished.',
                             color = 'white',
                             verbose = verbose)
         return(all.mnn)
     }
 }
+
