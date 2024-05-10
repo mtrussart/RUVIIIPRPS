@@ -54,12 +54,13 @@
 #' @param prps.set.name TTTTT
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
+#' @importFrom Seurat VariableFeatures FindIntegrationAnchors
 #' @importFrom SummarizedExperiment assay colData
 #' @importFrom SeuratObject CreateSeuratObject
-#' @importFrom Seurat VariableFeatures FindIntegrationAnchors
 #' @importFrom stats setNames
 #' @importFrom purrr map_df
 #' @export
+
 
 createPrPsByMnn <- function(
         se.obj,
@@ -87,7 +88,7 @@ createPrPsByMnn <- function(
     printColoredMessage(message = '------------The unsupervisedPRPSmnn function starts:',
                         color = 'white',
                         verbose = verbose)
-    # assess.se.obj #####
+    # Assess.se.obj #####
     if(assess.se.obj){
         se.obj <- checkSeObj(
             se.obj = se.obj,
@@ -96,9 +97,10 @@ createPrPsByMnn <- function(
             remove.na = remove.na,
             verbose = verbose)
     }
-    # finding knn ####
+
+    # Finding k nearest neighbor ####
     printColoredMessage(message = paste(
-            'Applying the find_knn function.',
+            '-- Apply the find_knn function.',
             'For individual samples per each group variable, ',
             k.nn,
             ' knn will be found.'),
@@ -129,7 +131,7 @@ createPrPsByMnn <- function(
     if(isTRUE(save.se.obj))
         all.knn <- all.knn@metadata$PRPS$unsupervised$KnnMnn$knn[[1]]
 
-    # finding mnn ####
+    # Find mutual nearest neighbor ####
     all.mnn <- findMnn(
         se.obj = se.obj,
         assay.name = assay.name,
@@ -149,7 +151,7 @@ createPrPsByMnn <- function(
     if(isTRUE(save.se.obj))
         all.mnn <- all.mnn@metadata$PRPS$unsupervised$KnnMnn$mnn[[1]]
 
-    # find PRPS sets ####
+    # Find PRPS sets ####
     all.prps.sets <- lapply(
         1:nrow(all.mnn),
         function(x){
@@ -188,7 +190,7 @@ createPrPsByMnn <- function(
         function(x) rep(mean(all.prps.sets$aver.dist[x:(x+1)]), 2)))
     all.prps.sets$rank.aver.mnn.sets <- rank(all.prps.sets$aver.mnn.sets)
 
-    # filter PRPS sets ####
+    ## filter PRPS sets ####
     all.prps.sets <- lapply(
         unique(all.prps.sets$mnn.sets.data),
         function(x){
@@ -202,7 +204,7 @@ createPrPsByMnn <- function(
         })
     all.prps.sets <- do.call(rbind, all.prps.sets)
 
-    # check coverage ####
+    ## check coverage ####
     groups <- sort(unique(unlist(strsplit(all.prps.sets$mnn.sets.data, '_'))))
     prps.coverage <- matrix('', nrow = nrow(all.prps.sets), ncol = length(groups))
     colnames(prps.coverage) <- groups
@@ -258,16 +260,15 @@ createPrPsByMnn <- function(
             verbose = verbose
         )
     }
-    # create PRPS data ####
+    # Create PRPS data ####
     printColoredMessage(message = '-- Create PRPS data:',
         color = 'magenta',
         verbose = verbose)
-    ## data transformation ####
+    ## apply log ####
     printColoredMessage(
         message = '- Apply log on the data before creating PRPS:',
         color = 'blue',
         verbose = verbose)
-    ## apply log ####
     if (isTRUE(apply.log) & !is.null(pseudo.count)){
         printColoredMessage(
             message = paste0('Applying log2 + ', pseudo.count, ' (pseudo.count) on the ', assay.name, ' data.'),
@@ -303,12 +304,12 @@ createPrPsByMnn <- function(
             prps
         })
     prps.data <- do.call(cbind, prps.data)
-    #sanity check ####
+    ## sanity check ####
     if(!sum(table(colnames(prps.data)) == 2) == ncol(prps.data)/2){
         stop('There someting wrong with PRPS sets.')
     }
 
-    # saving the outputs ####
+    # Save the outputs ####
     output.name <- paste0(uv.variable, '||' , assay.name)
     if(is.null(prps.set.name)){
         prps.set.name <- 'PRPS_Set1'
@@ -316,7 +317,8 @@ createPrPsByMnn <- function(
     printColoredMessage(message = '-- Save the PRPS data',
                         color = 'magenta',
                         verbose = verbose)
-    if (save.se.obj) {
+    ## save the PRPS data in the SummarizedExperiment object ####
+    if (isTRUE(save.se.obj)) {
         printColoredMessage(
             message = 'Save all the PRPS data into the metadata of the SummarizedExperiment object.',
             color = 'blue',
@@ -341,7 +343,9 @@ createPrPsByMnn <- function(
                             color = 'white',
                             verbose = verbose)
         return(se.obj)
-    } else{
+    }
+    ## Output the PRPS data as matrix ####
+    if(isFALSE(prps.set.name)){
         printColoredMessage(message = '------------The unsupervisedPRPSmnn function finished.',
                             color = 'white',
                             verbose = verbose)
