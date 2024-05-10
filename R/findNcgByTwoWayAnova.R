@@ -67,8 +67,9 @@
 #' Nature Biotechnology, 2023
 
 #' @param se.obj A SummarizedExperiment object.
-#' @param assay.name Symbol. Indicating the name of the assay in the SummarizedExperiment object. This assay should
-#' be the one that will be used for RUV-III-PRPS normalization. We recommend to use raw data.
+#' @param assay.name Symbol. A symbol that indicates the name of the assay in the SummarizedExperiment object. This assay
+#' should be the one that will be used as an input data for the RUV-III-PRPS normalization. We recommend to use raw data,
+#' if available.
 #' @param bio.variables Symbols. Indicating the column names that contain known biological variable(s) in the
 #' SummarizedExperiment object. These biological variables can be categorical or continuous. Continuous variables will be
 #' divided into 'nb.bio.clusters' groups based on a clustering method selected in the 'bio.clustering.method' argument.
