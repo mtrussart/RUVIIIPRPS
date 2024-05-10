@@ -2,7 +2,7 @@
 % Please edit documentation in R/computeDGE.R
 \name{computeDGE}
 \alias{computeDGE}
-\title{perform differential gene expression analysis using the Wilcoxon test.}
+\title{Perform differential gene expression analysis using the Wilcoxon test.}
 \usage{
 computeDGE(
   se.obj,
@@ -11,7 +11,7 @@ computeDGE(
   apply.log = TRUE,
   pseudo.count = 1,
   assess.se.obj = TRUE,
-  remove.na = "both",
+  remove.na = "none",
   save.se.obj = TRUE,
   verbose = TRUE
 )
@@ -19,12 +19,13 @@ computeDGE(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. Symbol or a vector of symbols for the selection of the name(s) of the assay(s) of the
+\item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) of the
 SummarizedExperiment object to compute the differential gene expression analysis. By default all the assays of the
 SummarizedExperiment object will be selected.}
 
-\item{variable}{Symbol. Indicates a column name of the SummarizedExperiment object that contains a categorical variable
-such as batches. If the variable has more than two levels, the function perform DEG between all possible pariwise groups.}
+\item{variable}{Symbol. A symbol that indicates a column name of the SummarizedExperiment object that contains a
+categorical variable such as batches. If the variable has more than two levels, the function perform DEG between all
+possible pariwise groups.}
 
 \item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data before compuritn DGE. The
 default is 'TRUE'.}
