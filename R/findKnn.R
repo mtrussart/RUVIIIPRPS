@@ -8,32 +8,32 @@
 
 #' @param se.obj A summarized experiment object.
 #' @param assay.name Symbol. A symbol for the selection of the name of the assay in the SummarizedExperiment object to be
-#' used to find k nearest neighbors data.
-#' @param uv.variable Symbol. Indicates the name of a column in the sample annotation of the SummarizedExperiment object.
-#' The 'uv.variable' can be either categorical and continuous. If 'uv.variable' is a continuous variable, this will be
-#' divided into 'nb.clusters' groups using the 'clustering.method'.
-#' @param data.input Symbol. Indicates which data should be used an input for finding the k nearest neighbors data. Options
-#' include: 'expr' and 'pcs'. If 'pcs' is selected, the first PCs of the data will be used as input. If 'expr' is selected,
-#' the data will be selected as input.
-#' @param nb.pcs Numeric. Indicates the number PCs should be used as data input for finding the k nearest neighbors. The
-#' 'nb.pcs' must be set when the "data.input = PCs". The default is 2.
-#' @param center.pca Logical. Indicates whether to scale the data or not. If center is TRUE, then centering is done by
+#' used to find k nearest neighbors.
+#' @param uv.variable Symbol. A symbol that indicates the name of the column in the sample annotation of the
+#' SummarizedExperiment object. The 'uv.variable' can be either categorical and continuous. If 'uv.variable' is a continuous
+#' variable, this will be divided into 'nb.clusters' groups using the 'clustering.method'.
+#' @param data.input Symbol. A symbol that indicates which data format should be used as input for finding the k nearest
+#' neighbors data. Options include: 'expr' and 'pcs'. If 'pcs' is selected, the first 'nb.pcs' of PCs of the data will be
+#' used as input. If 'expr' is selected, the expression data will be used as input. The default is set to 'expr'.
+#' @param nb.pcs Numeric. A numeric valuse that indicates the number PCs should be used as data input for finding the k
+#' nearest neighbors. The nb.pcs' must be set when the "data.input = PCs". The default is set to 2.
+#' @param center Logical. Indicates whether to scale the data or not. If center is TRUE, then centering is done by
 #' subtracting the column means of the assay from their corresponding columns. The default is TRUE.
-#' @param scale.pca Logical. Indicates whether to scale the data or not before applying SVD.  If scale is TRUE, then scaling
+#' @param scale Logical. Indicates whether to scale the data or not before applying SVD.  If scale is TRUE, then scaling
 #' is done by dividing the (centered) columns of the assays by their standard deviations if center is TRUE, and the root
 #' mean square otherwise. The default is FALSE
 #' @param svd.bsparam Symbol. A BiocParallelParam object specifying how parallelization should be performed. The default is bsparam().
 #' We refer to the 'runSVD' function from the BiocSingular R package.
-#' @param clustering.method Symbol.A symbol indicating the choice of clustering method for grouping the 'uv.variable'
+#' @param clustering.method Symbol. A symbol indicating the choice of clustering method for grouping the 'uv.variable'
 #' if a continuous variable is provided. Options include 'kmeans', 'cut', and 'quantile'. The default is set to 'kmeans'.
 #' @param nb.clusters Numeric. A numeric value indicating how many clusters should be found if the 'uv.variable' is a
 #' continuous variable. The default is 3.
 #' @param k.nn Numeric.The maximum number of nearest neighbors to compute. The default is set 3.
-#' @param hvg Vector. A vector of the names of the highly variable genes. These genes will be used to find the anchors
-#' samples across the batches. The default is NULL.
+#' @param hvg Vector. A vector of the names of the highly variable genes. These genes will be used to select the input
+#' data. The default is NULL.
 #' @param normalization Symbol. Indicates which normalization methods should be applied before finding the knn. The default
 #' is 'cpm'. If is set to NULL, no normalization will be applied.
-#' @param regress.out.bio.variables Symbols. Indicates the columns names that contain biological variables in the
+#' @param regress.out.bio.variables Symbol. Indicates the columns names that contain biological variables in the
 #' SummarizedExperiment object. These variables will be regressed out from the data before finding genes that are highly
 #' affected by unwanted variation variable. The default is NULL, indicates the regression will not be applied.
 #' @param apply.log Logical. Indicates whether to apply a log-transformation to the data or not. The default is TRUE.
@@ -51,9 +51,9 @@
 
 
 #' @importFrom SummarizedExperiment assay colData
-#' @importFrom RANN nn2
-#' @importFrom stats dist
 #' @importFrom utils txtProgressBar
+#' @importFrom stats dist
+#' @importFrom RANN nn2
 #' @export
 
 findKnn <- function(
@@ -62,8 +62,8 @@ findKnn <- function(
         uv.variable,
         data.input = 'expr',
         nb.pcs = 2,
-        center.pca = TRUE,
-        scale.pca = FALSE,
+        center = TRUE,
+        scale = FALSE,
         svd.bsparam = bsparam(),
         clustering.method = 'kmeans',
         nb.clusters = 3,
@@ -77,11 +77,11 @@ findKnn <- function(
         remove.na = 'both',
         save.se.obj = TRUE,
         verbose = TRUE
-) {
+        ){
     printColoredMessage(message = '------------The findKnn function starts:',
                         color = 'white',
                         verbose = verbose)
-    # check input #####
+    # Check input #####
     if (is.list(assay.name)) {
         stop('The "assay.name" cannot be a list.')
     } else if (length(assay.name) > 1) {
@@ -104,7 +104,7 @@ findKnn <- function(
             stop('All the hvg genes are not found in the SummarizedExperiment object.')
     }
 
-    # assess summarized experiment ####
+    # Assess SummarizedExperiment object ####
     if (assess.se.obj) {
         se.obj <- checkSeObj(
             se.obj = se.obj,
@@ -116,7 +116,7 @@ findKnn <- function(
     all.samples.index <- c(1:ncol(se.obj))
     ini.variable <- se.obj[[uv.variable]]
 
-    # check the uv variable ####
+    # Assess the unwanted variable ####
     if (class(se.obj[[uv.variable]]) %in% c('integer', 'numeric')) {
         printColoredMessage(
             message = paste0(
@@ -133,8 +133,7 @@ findKnn <- function(
             uv.cont.clusters <- kmeans(
                 x = colData(se.obj)[[uv.variable]],
                 centers = nb.clusters,
-                iter.max = 1000
-            )
+                iter.max = 1000)
             se.obj[[uv.variable]] <- factor(x = paste0(uv.variable, '_uv.variable', uv.cont.clusters$cluster))
         } else if (clustering.method == 'cut') {
             uv.cont.clusters <- as.numeric(cut(
@@ -159,7 +158,7 @@ findKnn <- function(
         stop(paste0('Some sub-groups of the variable ', uv.variable, ' have less than ', k.nn, ' samples. '))
 
 
-    # data normalization and transformation and regression ####
+    # Data normalization and transformation and regression ####
     printColoredMessage(message = '-- Data normalization, transformation and regression:',
                         color = 'magenta',
                         verbose = verbose)
@@ -168,7 +167,7 @@ findKnn <- function(
         groups,
         function(x) {
             selected.samples <- colData(se.obj)[[uv.variable]] == x
-            if (!is.null(normalization) &is.null(regress.out.bio.variables)) {
+            if (!is.null(normalization) & is.null(regress.out.bio.variables)) {
                 printColoredMessage(
                     message = paste0('Applying the ', normalization,' within samples from the ', x, ' group.'),
                     color = 'blue',
@@ -288,8 +287,8 @@ findKnn <- function(
                     x = t(norm.data[hvg, ]),
                     k = nb.pcs,
                     BSPARAM = svd.bsparam,
-                    center = center.pca,
-                    scale = scale.pca
+                    center = center,
+                    scale = scale
                 )
                 norm.data <- sv.dec$u
             } else if (data.input == 'pcs' & is.null(hvg)) {
@@ -304,8 +303,8 @@ findKnn <- function(
                     x = t(norm.data),
                     k = nb.pcs,
                     BSPARAM = svd.bsparam,
-                    center = center.pca,
-                    scale = scale.pca
+                    center = center,
+                    scale = scale
                 )
                 norm.data <- sv.dec$u
             }
@@ -353,22 +352,26 @@ findKnn <- function(
         })
     all.knn <- do.call(rbind, all.knn)
 
-    # saving the output ####
+    se.obj[[uv.variable]] <- ini.variable
+    # Save the results ####
+    ## save the results in the SummarizedExperiment object ####
     message(' ')
     printColoredMessage(message = '-- Save the results.',
                         color = 'magenta',
                         verbose = verbose)
-    if (save.se.obj) {
+    if (isTRUE(save.se.obj)) {
         printColoredMessage(
-            message = 'Save all the knn resulst into the metadata of the SummarizedExperiment object.',
+            message = '- Save all the knn resulst into the metadata of the SummarizedExperiment object.',
             color = 'blue',
             verbose = verbose)
         output.name <- paste0(uv.variable, '||' , assay.name)
         se.obj@metadata[['PRPS']][['unsupervised']][['KnnMnn']][['knn']][[output.name]] <- all.knn
         return(se.obj)
-    } else{
+    }
+    ## output the results as matrix  ####
+    if(isFALSE(save.se.obj)){
         printColoredMessage(
-            message = 'All the knn results are outputed as list.',
+            message = '- All the knn results are outputed as matrix.',
             color = 'blue',
             verbose = verbose)
         return(all.knn)
