@@ -134,8 +134,8 @@ plotARI <- function(
                         plot.title = element_text(size = 16),
                         axis.text.x = element_text(size = 0),
                         axis.text.y = element_text(size = 12))
-                if(isTRUE(plot.output) & length(assay.names) == 1)
-                    print(ari.plot)
+                if(isTRUE(plot.output) & length(assay.names) == 1) print(ari.plot)
+                return(ari.plot)
             })
         names(all.single.ari.plots) <- levels(assay.names)
         ## overall plots ####
@@ -171,7 +171,7 @@ plotARI <- function(
                         hjust = 1),
                     axis.text.y = element_text(size = 12))
             if(isTRUE(plot.output))
-                print(overall.single.ari.plot)
+                suppressMessages(print(overall.single.ari.plot))
         }
     } else if (plot.type == 'combined.plot') {
         # combine plots ####
