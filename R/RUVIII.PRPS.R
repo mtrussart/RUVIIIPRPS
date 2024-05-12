@@ -317,7 +317,7 @@ RUVIII.PRPS <- function(
             if(!'pre.selected' %in% names(se.obj@metadata$NCG)){
                 stop('"pre.selected" NCG data canot be found in the metadata of the SummarizedExperiment object.')
             }
-            if(sum(ncg.set.names %in% se.obj@metadata$NCG$pre.selected) != length(se.obj@metadata$NCG$pre.selected)){
+            if(sum(ncg.set.names %in% names(se.obj@metadata$NCG$pre.selected)) != length(ncg.set.names)){
                 stop('All or some of "ncg.set.names" cannot be found in the SummarizedExperiment object.')
             }
         }
