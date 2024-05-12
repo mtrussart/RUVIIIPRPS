@@ -97,6 +97,46 @@ createPrPsByMnn <- function(
             remove.na = remove.na,
             verbose = verbose)
     }
+    # Assess the unwanted variable ####
+    if (class(se.obj[[uv.variable]]) %in% c('integer', 'numeric')) {
+        printColoredMessage(
+            message = paste0(
+                'The "uv.variable" is a continouse variable, then this will be divided into ',
+                nb.clusters,
+                ' groups using ',
+                clustering.method,
+                ' clustering.'),
+            color = 'blue',
+            verbose = verbose
+        )
+        if (clustering.method == 'kmeans') {
+            set.seed(3456)
+            uv.cont.clusters <- kmeans(
+                x = colData(se.obj)[[uv.variable]],
+                centers = nb.clusters,
+                iter.max = 1000)
+            se.obj[[uv.variable]] <- factor(x = paste0(uv.variable, '_uv.variable', uv.cont.clusters$cluster))
+        } else if (clustering.method == 'cut') {
+            uv.cont.clusters <- as.numeric(cut(
+                x = colData(se.obj)[[uv.variable]],
+                breaks = nb.clusters,
+                include.lowest = TRUE))
+            se.obj[[uv.variable]] <- factor(x = paste0(uv.variable, '_group', uv.cont.clusters))
+        } else if (clustering.method == 'quantile') {
+            quantiles <- quantile(
+                x = colData(se.obj)[[uv.variable]],
+                probs = seq(0, 1, 1 / nb.clusters))
+            uv.cont.clusters <- as.numeric(cut(
+                x = colData(se.obj)[[uv.variable]],
+                breaks = quantiles,
+                include.lowest = TRUE))
+            se.obj[[uv.variable]] <- factor(x = paste0(uv.variable, '_uv.variable', uv.cont.clusters))
+        }
+    } else if(!class(se.obj[[uv.variable]]) %in% c('integer', 'numeric')){
+        se.obj[[uv.variable]] <- factor(x = se.obj[[uv.variable]])
+    }
+    if (length(findRepeatingPatterns(vec = se.obj[[uv.variable]], n.repeat = k.nn)) != length(unique(se.obj[[uv.variable]])))
+        stop(paste0('Some sub-groups of the variable ', uv.variable, ' have less than ', k.nn, ' samples. '))
 
     # Finding k nearest neighbor ####
     printColoredMessage(message = paste(
