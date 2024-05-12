@@ -125,7 +125,7 @@ plotGenesVariableAnova <- function(
                 axis.text.x = element_text(size = 12, angle = 25, hjust = 1),
                 axis.text.y = element_text(size = 12))
     }
-    if(isTRUE(plot.output)) print(overall.aov.fvals.plot)
+    if(isTRUE(plot.output)) suppressMessages(print(overall.aov.fvals.plot))
 
     # save the results ####
     printColoredMessage(
