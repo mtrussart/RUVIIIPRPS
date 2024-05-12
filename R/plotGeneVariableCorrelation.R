@@ -156,7 +156,7 @@ plotGenesVariableCorrelation <- function(
                 plot.title = element_text(size = 15),
                 axis.text.x = element_text(size = 12, angle = 25, hjust = 1),
                 axis.text.y = element_text(size = 12))
-        if(isTRUE(plot.output)) print(overall.corr.coeff.plot)
+        if(isTRUE(plot.output)) suppressMessages(print(overall.corr.coeff.plot))
     }
     # save the results ####
     printColoredMessage(
