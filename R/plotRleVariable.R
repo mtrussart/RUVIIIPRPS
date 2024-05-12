@@ -169,7 +169,7 @@ plotRleVariable <- function(
                     color = 'blue',
                     verbose = verbose)
                 p.rle <- ggplot(rle.med.data, aes(x = var, y = rle.medians)) +
-                    geom_point(size = points.size, color = 'gray40', stroke = .2, pch = 21, alpha = .6, size = 1.5) +
+                    geom_point(size = points.size, color = 'gray40', stroke = .2, pch = 21, alpha = .6) +
                     ggtitle(x) +
                     xlab(variable) +
                     ylab('RLE medians') +
@@ -209,9 +209,7 @@ plotRleVariable <- function(
                           axis.text.y = element_text(size = 9),
                           legend.position = 'bottom')
             }
-            if (isTRUE(plot.output) & length(assay.names) == 1){
-                print(p.rle)
-            }
+            if (isTRUE(plot.output) & length(assay.names) == 1) print(p.rle)
             p.rle
         })
     names(all.rle.med.var.plots) <- levels(assay.names)
@@ -253,7 +251,7 @@ plotRleVariable <- function(
                     color = 'blue',
                     verbose = verbose)
                 p.rle <- ggplot(rle.iqr.data, aes(x = var, y = rle.iqr)) +
-                    geom_point(size = points.size, color = 'gray40', stroke = .2, pch = 21, alpha = .6, size = 1.5) +
+                    geom_point(size = points.size, color = 'gray40', stroke = .2, pch = 21, alpha = .6) +
                     ggtitle(x) +
                     xlab(variable) +
                     ylab('RLE IQRs') +
@@ -332,7 +330,7 @@ plotRleVariable <- function(
             if (!'rle.var.plot' %in% names(se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']])){
                 se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']] <- list()
             }
-            if (!variable %in% names(se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']])){
+            if (!variable %in% names(se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']])){
                 se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']][[variable]] <- list()
             }
             if(rle.data.type == 'both'){
@@ -345,7 +343,7 @@ plotRleVariable <- function(
                 }
                 se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']][[variable]][['rle.iqr.var.plot']] <- all.rle.iqr.var.plots[[x]]
 
-            }else if (rle.data.type == 'rle.medians') {
+            } else if (rle.data.type == 'rle.medians') {
                 if (!'rle.med.var.plot' %in% names(se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']][[variable]])){
                     se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']][[variable]][['rle.med.var.plot']] <- list()
                 }
