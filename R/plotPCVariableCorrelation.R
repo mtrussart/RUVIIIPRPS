@@ -203,7 +203,7 @@ plotPCVariableCorrelation <- function(
                 axis.text.y = element_text(size = 12),
                 legend.text = element_text(size = 12),
                 legend.title = element_text(size = 14))
-        if(isTRUE(plot.output)) print(overall.vect.corr.plot)
+        if(isTRUE(plot.output)) suppressMessages(print(overall.vect.corr.plot))
     }
 
     # save the plots ####
