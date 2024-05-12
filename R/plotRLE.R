@@ -75,7 +75,7 @@ plotRLE <- function(
     printColoredMessage(message = '------------The plotRLE function starts:',
                         color = 'white',
                         verbose = verbose)
-    # check inputs ####
+    # Check inputs ####
     if (is.null(assay.names)) {
         stop('The "assay.names" cannot be empty.')
     }
@@ -96,7 +96,7 @@ plotRLE <- function(
         stop('Please specify the approprate "ylim.rle.plot" argument.')
     }
 
-    # assays ####
+    # Assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else  assay.names <- factor(x = assay.names , levels = assay.names)
@@ -104,7 +104,7 @@ plotRLE <- function(
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
-    # select colors ####
+    # Select colors ####
     if(!is.null(variable) & is.null(variable.colors)){
         currentCols <- c(
             RColorBrewer::brewer.pal(8, "Dark2")[-5],
@@ -125,7 +125,7 @@ plotRLE <- function(
     } else if (!is.null(variable) & !is.null(variable.colors)){
         rle.plot.colors <- variable.colors
     }
-    # obtain rle data ####
+    # Obtain rle data ####
     printColoredMessage(
         message = paste0('-- Obtain the RLE data from the SummarizedExperiment object:'),
         color = 'magenta',
@@ -149,12 +149,29 @@ plotRLE <- function(
                         'The "rle.data" cannot be found for the ', x,
                         ' data. Please run the computeRLE function with the "outputs.to.return" equal to "all" or "rle.data".'))
             }
+            printColoredMessage(
+                message = paste0('- the RLE data of the', x , ' data:'),
+                color = 'blue',
+                verbose = verbose)
+
             se.obj@metadata[['metric']][[x]][['RLE']][['rle.data']]$rle.data
         })
     names(all.rle.data) <- levels(assay.names)
 
-    # specify ylim for the RLE plots ####
+    # generate the RLE plots ####
+    printColoredMessage(
+        message = '-- Generate the RLE plots:',
+        color = 'magenta',
+        verbose = verbose
+    )
+
+    # Specify ylim for the RLE plots ####
     if(is.null(ylim.rle.plot)){
+        printColoredMessage(
+            message = '-- Specify ylim for the RLE plots:',
+            color = 'blue',
+            verbose = verbose
+        )
         ylim.rle.plot <- abs(unlist(lapply(
             levels(assay.names),
             function(x){
@@ -166,16 +183,16 @@ plotRLE <- function(
         ylim.rle.plot <- c(-max(ylim.rle.plot), max(ylim.rle.plot))
     }
 
-    # generate the RLE plots ####
-    printColoredMessage(
-        message = '-- Generate the RLE plots:',
-        color = 'magenta',
-        verbose = verbose
-    )
     rle <- sample <- NULL
     all.rle.plots <- lapply(
         levels(assay.names),
         function(x) {
+            printColoredMessage(
+                message = paste0('-- Generate the RLE plot for the ', x , 'data.'),
+                color = 'blue',
+                verbose = verbose
+            )
+
             rle.data <- all.rle.data[[x]]
             rle.med.var <- round(x = stats::mad(matrixStats::colMedians(rle.data)) , digits = 2)
             rle.iqr.var <- round(x = stats::mad(matrixStats::colIQRs(rle.data)), digits = 2)
@@ -246,25 +263,28 @@ plotRLE <- function(
                         axis.text.y = element_text(size = 9),
                         axis.ticks.x = element_blank())
             }
-            if (isTRUE(plot.output) & length(assay.names) == 1) {
-                print(p.rle)
-            }
+            if (isTRUE(plot.output) & length(assay.names) == 1) print(p.rle)
             p.rle
         })
     names(all.rle.plots) <- levels(assay.names)
 
     # generate the overall RLE plots ####
     if(length(assay.names) > 1){
+        printColoredMessage(
+            message = '-- Put all the RLE plots together.',
+            color = 'blue',
+            verbose = verbose
+        )
         overall.rle.plot <- ggpubr::ggarrange(
             plotlist = all.rle.plots,
             ncol = plot.ncol,
             nrow = plot.nrow,
             legend = "bottom",
             common.legend = TRUE)
-        if (plot.output) print(overall.rle.plot)
+    if (isTRUE(plot.output)) print(overall.rle.plot)
     }
 
-    # save the plots ####
+    # Save the plots ####
     printColoredMessage(
         message = '-- Save all the RLE plots:',
         color = 'magenta',
@@ -320,7 +340,7 @@ plotRLE <- function(
                     se.obj@metadata[['plot']][['RLE']][['colored.rle.plot']][[variable]] <- list()
                 }
                 se.obj@metadata[['plot']][['RLE']][['colored.rle.plot']][[variable]] <- overall.rle.plot
-            } else {
+            } else if (is.null(variable)) {
                 if(!'uncolored.rle.plot' %in% names(se.obj@metadata[['plot']][['RLE']])){
                     se.obj@metadata[['plot']][['RLE']][['uncolored.rle.plot']] <- list()
                 }
