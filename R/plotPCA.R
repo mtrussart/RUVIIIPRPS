@@ -57,9 +57,9 @@ plotPCA <- function(
         variable.colors = NULL,
         points.size = 1,
         stroke.color = 'gray30',
-        stroke.size = .2,
-        points.alpha = .5,
-        densities.alpha = .5,
+        stroke.size = 0.2,
+        points.alpha = 0.5,
+        densities.alpha = 0.5,
         plot.ncol = c(3,3),
         plot.nrow = c(3,3),
         plot.output = TRUE,
@@ -69,8 +69,7 @@ plotPCA <- function(
     printColoredMessage(message = '------------The plotPCA function starts:',
                         color = 'white',
                         verbose = verbose)
-
-    # check the inputs ####
+    # Check the inputs ####
     if (is.null(assay.names)){
         stop('The "assay.names" cannot be empty.')
     } else if (is.null(variable)) {
@@ -85,7 +84,7 @@ plotPCA <- function(
         stop('The "plot.type" must be one of "scatter" or "boxplot".')
     }
 
-    # assays ####
+    # Assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else  assay.names <- factor(x = assay.names , levels = assay.names)
@@ -93,7 +92,7 @@ plotPCA <- function(
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
-    # select colors ####
+    # Select colors ####
     if(is.null(variable.colors)){
         selected.colores <-  c(
             RColorBrewer::brewer.pal(8, "Dark2")[-5],
@@ -115,7 +114,7 @@ plotPCA <- function(
         pca.plot.colors <- variable.colors
     }
 
-    # obtain PCs from the SummarizedExperiment object ####
+    # Obtain PCs from the SummarizedExperiment object ####
     printColoredMessage(
         message = paste0('-- Obtain the first ', nb.pcs, ' PCs from the SummarizedExperiment object.'),
         color = 'magenta',
@@ -155,7 +154,7 @@ plotPCA <- function(
         })
     names(all.pca.data) <- levels(assay.names)
 
-    # plot PCs ####
+    # Plot PCs ####
     ## categorical variable ####
     if(class(colData(se.obj)[[variable]]) %in% c('character','factor')){
         ### scatter plots for individual assays  ####
@@ -317,8 +316,8 @@ plotPCA <- function(
                             axis.text.y = element_text(size = 10),
                             strip.text.x = element_text(size = 12),
                             legend.position = 'none')
-                    if(isTRUE(plot.output) & length(assay.names) == 1)
-                        print(plot.p)
+                    if(isTRUE(plot.output) & length(assay.names) == 1) print(plot.p)
+                    return(plot.p)
                 })
             names(all.boxplot.pca.plots) <- levels(assay.names)
             if(length(assay.names) > 1){
@@ -330,8 +329,9 @@ plotPCA <- function(
                     suppressMessages(print(overall.boxplot.pca.plot))
             }
         }
-        ### continuous variable ####
-    } else{
+    }
+    ### categorical variable ####
+    if(class(colData(se.obj)[[variable]]) %in% c('numeric','integer')){
         #### scatter plots for individual assays ####
         all.scat.var.pca.plots <- lapply(
             levels(assay.names),
@@ -394,32 +394,33 @@ plotPCA <- function(
         }
     }
 
-    # save the results ####
+    # Save the results ####
     printColoredMessage(
         message = '-- Save the PCA plots:',
         color = 'magenta',
         verbose = verbose)
     ## add the pca plots to the SummarizedExperiment object ####
-    if (save.se.obj == TRUE) {
+    if (isTRUE(save.se.obj)) {
         printColoredMessage(
-            message = 'The PCA plots of individual assays are saved to metadata@metric',
+            message = '- The PCA plots of individual assays are saved to metadata@metric',
             color = 'blue',
             verbose = verbose)
         if(class(colData(se.obj)[[variable]]) %in% c('character', 'factor')){
             if(plot.type == 'scatter'){
                 for (x in levels(assay.names)) {
-                    if (fast.pca) {
+                    if (isTRUE(fast.pca)) {
                         se.obj@metadata[['metric']][[x]][['PCA']][['fast.pca']][['pca.plot']][[variable]][['pca.scat.plot']] <- all.scat.pca.plots.assay[[x]]
                     } else se.obj@metadata[['metric']][[x]][['PCA']][['pca']][['pca.plot']][[variable]][['pca.scat.plot']] <- all.scat.pca.plots.assay[[x]]
                 }
-            } else{
+            } else if (plot.type == 'boxplot'){
                 for (x in levels(assay.names)) {
-                    if (fast.pca) {
+                    if (isTRUE(fast.pca)) {
                         se.obj@metadata[['metric']][[x]][['PCA']][['fast.pca']][['pca.plot']][[variable]][['pca.box.plot']] <- all.boxplot.pca.plots[[x]]
                     } else se.obj@metadata[['metric']][[x]][['PCA']][['pca']][['pca.plot']][[variable]][['pca.box.plot']] <- all.boxplot.pca.plots[[x]]
                 }
             }
-        } else{
+        }
+        if(class(colData(se.obj)[[variable]]) %in% c('integer', 'numeric')){
             for (x in levels(assay.names)) {
                 if (fast.pca) {
                     se.obj@metadata[['metric']][[x]][['PCA']][['fast.pca']][['pca.plot']][[variable]][['pca.var.scat.plot']] <- all.scat.var.pca.plots[[x]]
