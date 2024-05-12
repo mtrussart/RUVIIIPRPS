@@ -10,8 +10,8 @@ findKnn(
   uv.variable,
   data.input = "expr",
   nb.pcs = 2,
-  center.pca = TRUE,
-  scale.pca = FALSE,
+  center = TRUE,
+  scale = FALSE,
   svd.bsparam = bsparam(),
   clustering.method = "kmeans",
   nb.clusters = 3,
@@ -31,30 +31,30 @@ findKnn(
 \item{se.obj}{A summarized experiment object.}
 
 \item{assay.name}{Symbol. A symbol for the selection of the name of the assay in the SummarizedExperiment object to be
-used to find k nearest neighbors data.}
+used to find k nearest neighbors.}
 
-\item{uv.variable}{Symbol. Indicates the name of a column in the sample annotation of the SummarizedExperiment object.
-The 'uv.variable' can be either categorical and continuous. If 'uv.variable' is a continuous variable, this will be
-divided into 'nb.clusters' groups using the 'clustering.method'.}
+\item{uv.variable}{Symbol. A symbol that indicates the name of the column in the sample annotation of the
+SummarizedExperiment object. The 'uv.variable' can be either categorical and continuous. If 'uv.variable' is a continuous
+variable, this will be divided into 'nb.clusters' groups using the 'clustering.method'.}
 
-\item{data.input}{Symbol. Indicates which data should be used an input for finding the k nearest neighbors data. Options
-include: 'expr' and 'pcs'. If 'pcs' is selected, the first PCs of the data will be used as input. If 'expr' is selected,
-the data will be selected as input.}
+\item{data.input}{Symbol. A symbol that indicates which data format should be used as input for finding the k nearest
+neighbors data. Options include: 'expr' and 'pcs'. If 'pcs' is selected, the first 'nb.pcs' of PCs of the data will be
+used as input. If 'expr' is selected, the expression data will be used as input. The default is set to 'expr'.}
 
-\item{nb.pcs}{Numeric. Indicates the number PCs should be used as data input for finding the k nearest neighbors. The
-'nb.pcs' must be set when the "data.input = PCs". The default is 2.}
+\item{nb.pcs}{Numeric. A numeric valuse that indicates the number PCs should be used as data input for finding the k
+nearest neighbors. The nb.pcs' must be set when the "data.input = PCs". The default is set to 2.}
 
-\item{center.pca}{Logical. Indicates whether to scale the data or not. If center is TRUE, then centering is done by
+\item{center}{Logical. Indicates whether to scale the data or not. If center is TRUE, then centering is done by
 subtracting the column means of the assay from their corresponding columns. The default is TRUE.}
 
-\item{scale.pca}{Logical. Indicates whether to scale the data or not before applying SVD.  If scale is TRUE, then scaling
+\item{scale}{Logical. Indicates whether to scale the data or not before applying SVD.  If scale is TRUE, then scaling
 is done by dividing the (centered) columns of the assays by their standard deviations if center is TRUE, and the root
 mean square otherwise. The default is FALSE}
 
 \item{svd.bsparam}{Symbol. A BiocParallelParam object specifying how parallelization should be performed. The default is bsparam().
 We refer to the 'runSVD' function from the BiocSingular R package.}
 
-\item{clustering.method}{Symbol.A symbol indicating the choice of clustering method for grouping the 'uv.variable'
+\item{clustering.method}{Symbol. A symbol indicating the choice of clustering method for grouping the 'uv.variable'
 if a continuous variable is provided. Options include 'kmeans', 'cut', and 'quantile'. The default is set to 'kmeans'.}
 
 \item{nb.clusters}{Numeric. A numeric value indicating how many clusters should be found if the 'uv.variable' is a
@@ -62,13 +62,13 @@ continuous variable. The default is 3.}
 
 \item{k.nn}{Numeric.The maximum number of nearest neighbors to compute. The default is set 3.}
 
-\item{hvg}{Vector. A vector of the names of the highly variable genes. These genes will be used to find the anchors
-samples across the batches. The default is NULL.}
+\item{hvg}{Vector. A vector of the names of the highly variable genes. These genes will be used to select the input
+data. The default is NULL.}
 
 \item{normalization}{Symbol. Indicates which normalization methods should be applied before finding the knn. The default
 is 'cpm'. If is set to NULL, no normalization will be applied.}
 
-\item{regress.out.bio.variables}{Symbols. Indicates the columns names that contain biological variables in the
+\item{regress.out.bio.variables}{Symbol. Indicates the columns names that contain biological variables in the
 SummarizedExperiment object. These variables will be regressed out from the data before finding genes that are highly
 affected by unwanted variation variable. The default is NULL, indicates the regression will not be applied.}
 
