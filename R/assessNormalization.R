@@ -509,6 +509,8 @@ assessNormalization <- function(
         dge.pvalue.scores <- NULL
     }
 
+    ## bio genes ####
+
     # Final performance assessments ####
     test <- data <- NULL
     cols.names <- c('data', 'variable', 'test', 'measurements')
