@@ -1132,22 +1132,11 @@ findBioGenes <- function(
     # Performance assessment of selected NCG  ####
     if(isTRUE(assess.bio.genes)){
         printColoredMessage(
-            message = '-- Assess the performance of the selected NCG set:',
+            message = '-- Assess the performance of the selected bio genes set:',
             color = 'magenta',
             verbose = verbose)
         printColoredMessage(
-            message = paste0('- Perform PCA on only selected genes as NCG.'),
-            color = 'blue',
-            verbose = verbose)
-        if(is.null(variables.to.assess.bio.genes))
-            variables.to.assess.bio.genes <- c(bio.variables, uv.variables)
-        printColoredMessage(
-            message = paste0(
-                '- Explore the association of the first ',
-                nb.pcs,
-                '  PCs with the ',
-                paste0(variables.to.assess.bio.genes, collapse = ' & '),
-                ' variables.'),
+            message = paste0('- Perform PCA on only selected genes as bio genes.'),
             color = 'blue',
             verbose = verbose)
         ### pca ####
@@ -1157,8 +1146,19 @@ findBioGenes <- function(
             BSPARAM = bsparam(),
             center = center,
             scale = scale)$u
-
+        dim(pca.data)
         ## regression and vector correlations ####
+        if(is.null(variables.to.assess.bio.genes))
+            variables.to.assess.bio.genes <- c(bio.variables, uv.variables)
+        printColoredMessage(
+            message = paste0(
+                '- Explore the association between the first ',
+                nb.pcs,
+                '  PCs and the ',
+                paste0(variables.to.assess.bio.genes, collapse = ' & '),
+                ' variables.'),
+            color = 'blue',
+            verbose = verbose)
         all.corr <- lapply(
             variables.to.assess.bio.genes,
             function(x){
@@ -1179,20 +1179,20 @@ findBioGenes <- function(
                 }
             })
         names(all.corr) <- variables.to.assess.bio.genes
-        pca.ncg <- as.data.frame(do.call(cbind, all.corr))
+        plot.assess.bio.genes <- as.data.frame(do.call(cbind, all.corr))
         pcs <- Groups <- NULL
-        pca.ncg['pcs'] <- c(1:nb.pcs)
-        pca.ncg <- tidyr::pivot_longer(
-            data = pca.ncg,
+        plot.assess.bio.genes['pcs'] <- c(1:nb.pcs)
+        plot.assess.bio.genes <- tidyr::pivot_longer(
+            data = plot.assess.bio.genes,
             -pcs,
             names_to = 'Groups',
             values_to = 'ls')
-        pca.ncg <- ggplot(pca.ncg, aes(x = pcs, y = ls, group = Groups)) +
+        plot.assess.bio.genes <- ggplot(plot.assess.bio.genes, aes(x = pcs, y = ls, group = Groups)) +
             geom_line(aes(color = Groups), linewidth = 1) +
             geom_point(aes(color = Groups), size = 2) +
             xlab('PCs') +
             ylab (expression("Correlations")) +
-            ggtitle('Assessment of the NCGs') +
+            ggtitle('Assessment of the selected bio genes') +
             scale_x_continuous(breaks = (1:nb.pcs),labels = c('PC1', paste0('PC1:', 2:nb.pcs)) ) +
             scale_y_continuous(breaks = scales::pretty_breaks(n = nb.pcs), limits = c(0,1)) +
             theme(
@@ -1206,7 +1206,7 @@ findBioGenes <- function(
                 legend.title = element_text(size = 14),
                 plot.title = element_text(size = 16)
             )
-        print(pca.ncg)
+        print(plot.assess.bio.genes)
     }
     # Save results ####
     ### add results to the SummarizedExperiment object ####
@@ -1217,32 +1217,46 @@ findBioGenes <- function(
             paste0(bio.variables, collapse = '&'),
             '|',
             paste0(uv.variables, collapse = '&'),
-            '|TWAnova:',
+            '|',
+            approach,
             '|',
             assay.name)}
 
     if(isTRUE(save.se.obj)){
         printColoredMessage(
-            message = '-- Saving the selected NCG to the metadata of the SummarizedExperiment object.',
+            message = '-- Save the selected bio genes to the metadata of the SummarizedExperiment object.',
             color = 'magenta',
             verbose = verbose)
-        ## Check if metadata NCG already exists
-        if(length(se.obj@metadata$BioGenes) == 0 ) {
-            se.obj@metadata[['BioGenes']] <- list()
+        ## check if metadata metric already exist
+        if (!'metric' %in% names(se.obj@metadata)) {
+            se.obj@metadata[['metric']] <- list()
         }
-        if(!'supervised' %in% names(se.obj@metadata[['BioGenes']])){
-            se.obj@metadata[['BioGenes']][['supervised']] <- list()
+        ## check if metadata metric already exist for this assay
+        if (!assay.name %in% names(se.obj@metadata[['metric']])) {
+            se.obj@metadata[['metric']][[assay.name]] <- list()
         }
-        if(!output.name %in% names(se.obj@metadata[['BioGenes']][['supervised']])){
-            se.obj@metadata[['BioGenes']][['supervised']][[output.name]] <- list()
+        ## check if metadata metric already exist for this assay and this metric
+        if (!'BioGenes' %in% names(se.obj@metadata[['metric']][[assay.name]])) {
+            se.obj@metadata[['metric']][[assay.name]][['BioGenes']] <- list()
         }
-        se.obj@metadata[['BioGenes']][['supervised']][[output.name]] <- selected.bio.genes
+        ## check if metadata metric already exist for this assay and this metric
+        if (!'genes' %in% names(se.obj@metadata[['metric']][[assay.name]][['BioGenes']])) {
+            se.obj@metadata[['metric']][[assay.name]][['BioGenes']][['genes']] <- list()
+        }
+        if(isTRUE(assess.bio.genes)){
+            if (!'assessment' %in% names(se.obj@metadata[['metric']][[assay.name]][['BioGenes']])) {
+                se.obj@metadata[['metric']][[assay.name]][['BioGenes']][['assessment']] <- list()
+            }
+            se.obj@metadata[['metric']][[assay.name]][['BioGenes']][['assessment']] <- plot.assess.bio.genes
+        }
+        se.obj@metadata[['metric']][[assay.name]][['BioGenes']][['genes']] <- selected.bio.genes
+
         printColoredMessage(
-            message = '- The NCGs are saved to metadata of the SummarizedExperiment object.',
+            message = '- The bio genes are saved to metadata of the SummarizedExperiment object.',
             color = 'blue',
             verbose = verbose)
         printColoredMessage(
-            message = '------------The findNcgByTwoWayAnova function finished.',
+            message = '------------The findBioGenes function finished.',
             color = 'white',
             verbose = verbose)
         return(se.obj)
@@ -1250,15 +1264,14 @@ findBioGenes <- function(
     ### export results as logical vector ####
     if(isFALSE(save.se.obj)){
         printColoredMessage(
-            message = '-- The set of NCGs is outpputed as a logical vector.',
+            message = '-- The set of bio genes is outpputed as a logical vector.',
             color = 'magenta',
             verbose = verbose)
         printColoredMessage(
-            message = '------------The findNcgByTwoWayAnova function finished.',
+            message = '------------The findBioGenes function finished.',
             color = 'white',
             verbose = verbose)
-        return(selected.bio.genes)
+        return(list(selected.bio.genes = selected.bio.genes, assessment = assess.bio.genes))
     }
-
 }
 
