@@ -73,7 +73,7 @@ findMnn <- function(
     printColoredMessage(message = '------------The findMnn function starts:',
                         color = 'white',
                         verbose = verbose)
-    # Check input #####
+    # Check inputs #####
     if (is.list(assay.name)) {
         stop('The "assay.name" cannot be a list.')
     } else if (length(assay.name) > 1) {
@@ -105,6 +105,7 @@ findMnn <- function(
 
     # Assess the unwanted variable ####
     if (class(se.obj[[uv.variable]]) %in% c('integer', 'numeric')) {
+        ## cluster the continouse variable ####
         printColoredMessage(
             message = paste0(
                 'The "uv.variable" is a continouse variable, then this will be divided into ',
@@ -115,22 +116,26 @@ findMnn <- function(
             color = 'blue',
             verbose = verbose
         )
+        ## kmeans ####
         if (clustering.method == 'kmeans') {
             set.seed(3456)
-            uv.cont.clusters <- kmeans(
+            uv.cont.clusters <- stats::kmeans(
                 x = colData(se.obj)[[uv.variable]],
                 centers = nb.clusters,
-                iter.max = 1000
-            )
+                iter.max = 1000)
             se.obj[[uv.variable]] <- factor(x = paste0(uv.variable, '_uv.variable', uv.cont.clusters$cluster))
-        } else if (clustering.method == 'cut') {
+        }
+        ## cut ####
+        if (clustering.method == 'cut') {
             uv.cont.clusters <- as.numeric(cut(
                 x = colData(se.obj)[[uv.variable]],
                 breaks = nb.clusters,
                 include.lowest = TRUE))
             se.obj[[uv.variable]] <- factor(x = paste0(uv.variable, '_group', uv.cont.clusters))
-        } else if (clustering.method == 'quantile') {
-            quantiles <- quantile(
+        }
+        ## quantile ####
+        if (clustering.method == 'quantile') {
+            quantiles <- stats::quantile(
                 x = colData(se.obj)[[uv.variable]],
                 probs = seq(0, 1, 1 / nb.clusters))
             uv.cont.clusters <- as.numeric(cut(
@@ -166,8 +171,7 @@ findMnn <- function(
                         assess.se.obj = FALSE,
                         save.se.obj = FALSE,
                         remove.na = 'none',
-                        verbose = FALSE
-                    )
+                        verbose = FALSE)
                 norm.data
             } else if (!is.null(normalization) & !is.null(regress.out.bio.variables)) {
                 printColoredMessage(
@@ -240,19 +244,18 @@ findMnn <- function(
         verbose = verbose
     )
     total <- ncol(pairs.batch)
-    pb <- txtProgressBar(min = 0, max = total, style = 3)
+    pb <- utils::txtProgressBar(min = 0, max = total, style = 3)
     all.mnn <- lapply(
         1:ncol(pairs.batch),
         function(x) {
             message(' ')
             printColoredMessage(
                 message = paste0(
-                    'Finding mutual nearest neighbors between ',
+                    '- Finding mutual nearest neighbors between ',
                     pairs.batch[1, x],
                     ' and ',
                     pairs.batch[2, x],
-                    ' groups.'
-                ),
+                    ' groups.'),
                 color = 'blue',
                 verbose = verbose
             )
@@ -261,8 +264,7 @@ findMnn <- function(
                     data1 = t(all.norm.data[[pairs.batch[1, x]]]),
                     data2 = t(all.norm.data[[pairs.batch[2, x]]]),
                     k1 = 1,
-                    BPPARAM = mnn.bpparam
-                )
+                    BPPARAM = mnn.bpparam)
             } else{
                 mnn.samples <- findMutualNN(
                     data1 = t(all.norm.data[[pairs.batch[1, x]]][hvg ,]),
@@ -282,9 +284,9 @@ findMnn <- function(
             return(df)
         })
     all.mnn <- do.call(rbind, all.mnn)
-
+    se.obj[[uv.variable]] <- ini.variable
     # Save the results ####
-    ## saving the output ####
+    ## saving the results in the metadata of the SummarizedExperiment ####
     if (isTRUE(save.se.obj)) {
         output.name <- paste0(uv.variable, '||' , assay.name)
         se.obj@metadata[['PRPS']][['unsupervised']][['KnnMnn']][['mnn']][[output.name]] <- all.mnn
