@@ -123,6 +123,50 @@
 #' @importFrom graphics plot.new text
 #' @export
 
+
+se.obj = brca.se.obj
+# assay.names = 'all'
+# variables = c('PAM50', 'library.size')
+# metrics.to.exclude = NULL
+# plots.to.exclude = NULL
+# apply.log = TRUE
+# pseudo.count = 1
+# general.points.size = 1
+# rle.iqr.width = 2
+# rle.median.points.size = 1
+# rle.median.points.color = 'red'
+# rle.geom.hline.color = "cyan"
+# rle.plot.ncol = 1
+# rle.plot.nrow = 3
+# rle.variables.colors = NULL
+# fast.pca = TRUE
+# compute.nb.pcs = 5
+# nb.pcs.toplot.pca = 3
+# center = TRUE
+# scale = FALSE
+# svd.bsparam = bsparam()
+# pca.variables.colors = NULL
+# sil.dist.measure = 'euclidian'
+# sli.nb.pcs = 3
+# ari.clustering.method = "hclust"
+# ari.hclust.method = "complete"
+# ari.hclust.dist.measure = "euclidian"
+# ari.nb.pcs = 3
+# vca.nb.pcs = 3
+# lra.nb.pcs = 3
+# corr.method = 'spearman'
+# a = 0.05
+# rho = 0
+# anova.method = 'aov'
+# deg.plot.ncol = 1
+# deg.plot.nrow = 3
+# assess.se.obj = TRUE
+# remove.na = 'none'
+# output.file.name = NULL
+# verbose = TRUE
+
+
+
 assessVariation <- function(
         se.obj,
         assay.names = 'all',
@@ -442,7 +486,7 @@ assessVariation <- function(
                 densities.alpha = 0.5,
                 plot.ncol = c(3,1),
                 plot.nrow = c(3,2),
-                plot.output = FALSE,
+                plot.output = F,
                 save.se.obj = TRUE,
                 verbose = TRUE)
         }
@@ -551,7 +595,7 @@ assessVariation <- function(
                 variables = i,
                 plot.type = 'single.plot',
                 silhouette.method = 'sil.euclidian',
-                plot.output = FALSE,
+                plot.output = F,
                 save.se.obj = TRUE,
                 verbose = verbose)
         }
@@ -747,7 +791,6 @@ assessVariation <- function(
                 verbose = verbose)
         }
     }
-
     # Plot all the metrics ####
     mytheme <- gridExtra::ttheme_default(
         core = list(fg_params = list(cex = 1)),
@@ -779,19 +822,29 @@ assessVariation <- function(
         metrics.table.var <- plots.table[plots.table$Variables == i, ]
         for(j in 1:nrow(metrics.table.var)){
             if(metrics.table.var$Factors[j] == 'rleMedians'){
-                print(se.obj@metadata$plot$RLE$rle.var.plot[[i]]$rle.med.var.plot)
+                if(length(assay.names) > 1){
+                    print(se.obj@metadata$plot$RLE$rle.var.plot[[i]]$rle.med.var.plot)
+                } else print(se.obj@metadata$metric[[assay.names]]$RLE$rle.plot$rle.var.plot[[j]]$rle.med.var.plot)
             }
             if(metrics.table.var$Factors[j] == 'rleIqr'){
-                print(se.obj@metadata$plot$RLE$rle.var.plot[[i]]$rle.iqr.var.plot)
+                if(length(assay.names) > 1){
+                    print(se.obj@metadata$plot$RLE$rle.var.plot[[i]]$rle.iqr.var.plot)
+                } else print(se.obj@metadata$metric[[assay.names]]$RLE$rle.plot$rle.var.plot[[j]]$rle.iqr.var.plot)
             }
             if(metrics.table.var$Factors[j] == 'pcs' & metrics.table.var$Metrics[j] == 'PCA'){
-                print(se.obj@metadata$plot$PCA$fast.pca[[i]]$pca.var.scat.plot)
+                if(length(assay.names) > 1){
+                    print(se.obj@metadata$plot$PCA$fast.pca[[i]]$pca.var.scat.plot)
+                } else print(se.obj@metadata$metric[[assay.names]]$PCA$fast.pca$pca.plot[[j]]$pca.var.scat.plot)
             }
             if(metrics.table.var$Factors[j] == 'pcs' & metrics.table.var$Metrics[j] == 'LRA'){
-                print(se.obj@metadata$plot$LRA[[i]])
+                if(length(assay.names) > 1){
+                    print(se.obj@metadata$plot$LRA[[i]])
+                } else print(se.obj@metadata$metric[[assay.names]]$LRA[[j]]$lra.plot)
             }
             if(metrics.table.var$Factors[j] == 'geneCorr'){
-                print(se.obj@metadata$plot$Correlation$spearman[[i]])
+                if(length(assay.names) > 1){
+                    print(se.obj@metadata$plot$Correlation$spearman[[i]])
+                } else print(se.obj@metadata$metric[[assay.names]]$Correlation$spearman[[j]]$cor.coef.plot)
             }
         }
     }
@@ -800,42 +853,66 @@ assessVariation <- function(
         text(.5, .5, paste0("Assess variation \n in the variable: \n ", i ), font = 2, cex = 1.5)
         metrics.table.var <- plots.table[metrics.table$Variables == i, ]
         if('coloredRLEplot' %in% metrics.table.var$PlotTypes){
-            print(se.obj@metadata$plot$RLE$colored.rle.plot[[i]])
+            if(length(assay.names) > 1){
+                print(se.obj@metadata$plot$RLE$colored.rle.plot[[i]])
+            } else print(se.obj@metadata$metric[[assay.names]]$RLE$rle.plot$colored.rle.plot[[i]])
+
         }
         if('rleMedians' %in% metrics.table.var$Factors){
-            print(se.obj@metadata$plot$RLE$rle.var.plot[[i]]$rle.med.var.plot)
+            if(length(assay.names) > 1){
+                print(se.obj@metadata$plot$RLE$rle.var.plot[[i]]$rle.med.var.plot)
+            } else print(se.obj@metadata$metric[[assay.names]]$RLE$rle.plot$rle.var.plot[[i]]$rle.med.var.plot)
+
         }
         if('rleIqr' %in% metrics.table.var$Factors){
-            print(se.obj@metadata$plot$RLE$rle.var.plot[[i]]$rle.iqr.var.plot)
+            if(length(assay.names) > 1){
+                print(se.obj@metadata$plot$RLE$rle.var.plot[[i]]$rle.iqr.var.plot)
+            } else print(se.obj@metadata$metric[[assay.names]]$RLE$rle.plot$rle.var.plot[[i]]$rle.iqr.var.plot)
         }
         if('pcsboxPlot' %in% paste0(metrics.table.var$Factors, metrics.table.var$PlotTypes) ){
-            print(se.obj@metadata$plot$PCA$fast.pca[[i]]$pca.box.plot)
+            if(length(assay.names) > 1){
+                print(se.obj@metadata$plot$PCA$fast.pca[[i]]$pca.box.plot)
+            } else print(se.obj@metadata$metric[[assay.names]]$PCA$fast.pca$pca.plot[[i]]$pca.box.plot)
         }
         if('pcsscatterPlot' %in% paste0(metrics.table.var$Factors, metrics.table.var$PlotTypes)){
-            print(se.obj@metadata$plot$PCA$fast.pca[[i]]$pca.scat.plot)
+            if(length(assay.names) > 1){
+                print(se.obj@metadata$plot$PCA$fast.pca[[i]]$pca.scat.plot)
+            } else print(se.obj@metadata$metric[[assay.names]]$PCA$fast.pca$pca.plot[[i]]$pca.scat.plot)
         }
         if( 'VCA' %in% metrics.table.var$Metrics ){
-            print(se.obj@metadata$plot$VCA[[i]])
+            if(length(assay.names) > 1){
+                print(se.obj@metadata$plot$VCA[[i]])
+            } else print(se.obj@metadata$metric[[assay.names]]$VCA[[i]]$vect.corr.plot)
         }
         if('ARI' %in% metrics.table.var$Metrics ){
-            print(se.obj@metadata$plot$ARI$hclust.complete.euclidian$ari.single.plot[[i]])
+            if(length(assay.names) > 1){
+                print(se.obj@metadata$plot$ARI$hclust.complete.euclidian$ari.single.plot[[i]])
+            } else print(se.obj@metadata$metric[[assay.names]]$ARI$hclust.complete.euclidian[[i]]$ari.single.plot)
         }
         if('silhouetteCoeff' %in% metrics.table.var$Factors ){
-            print(se.obj@metadata$plot$Silhouette$sil.euclidian[[i]])
+            if(length(assay.names) > 1){
+                print(se.obj@metadata$plot$Silhouette$sil.euclidian[[i]])
+            } else print(se.obj@metadata$metric[[assay.names]]$Silhouette$sil.euclidian[[i]]$sil.coef.single.plot)
         }
         if('geneAnova' %in% metrics.table.var$Factors ){
-            print(se.obj@metadata$plot$ANOVA$aov[[i]])
+            if(length(assay.names) > 1){
+                print(se.obj@metadata$plot$ANOVA$aov[[i]])
+            } else print(se.obj@metadata$metric[[assay.names]]$ANOVA$aov[[i]]$F.values.plot)
         }
-        if('pvaluse' %in% metrics.table.var$Factors ){
-            print(se.obj@metadata$plot$DEG[[i]])
+        if('pvalue' %in% metrics.table.var$Factors ){
+            if(length(assay.names) > 1){
+                print(se.obj@metadata$plot$DEG[[i]])
+            } else print(se.obj@metadata$metric[[assay.names]]$DGE[[i]]$p.values.plot)
         }
     }
     dev.off()
-    printColoredMessage(message = '------------The normAssessment function finished.',
+    printColoredMessage(message = '------------The assessVariation function finished.',
                         color = 'white',
                         verbose = verbose)
     return(se.obj)
 }
+
+
 
 
 
