@@ -124,7 +124,7 @@
 #' @export
 
 
-se.obj = brca.se.obj
+# se.obj = brca.se.obj
 # assay.names = 'all'
 # variables = c('PAM50', 'library.size')
 # metrics.to.exclude = NULL
