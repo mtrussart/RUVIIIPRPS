@@ -51,7 +51,7 @@ plotSilhouette <- function(
     printColoredMessage(message = '------------The plotSilhouette function starts:',
                         color = 'white',
                         verbose = verbose)
-    # check the inputs ####
+    # Check the inputs ####
     if (is.null(assay.names)) {
         stop('The "assay.names" cannot be empty')
     } else if (is.list(assay.names)){
@@ -65,7 +65,7 @@ plotSilhouette <- function(
             stop('To plot combined Silhouette, two variables must be provided.')
     }
 
-    # assays ####
+    # Assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else  assay.names <- factor(x = assay.names , levels = assay.names)
@@ -73,7 +73,7 @@ plotSilhouette <- function(
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
-    # check Silhouette metric exist ####
+    # Check Silhouette metric exist ####
     m.out <- lapply(
         levels(assay.names),
         function(x) {
@@ -81,7 +81,7 @@ plotSilhouette <- function(
                 stop(paste0('Any Silhouette analysis has not been computed yet on the  ', x,' assay'))
         })
 
-    # plots ####
+    # Plots ####
     ## single plot ####
     if (plot.type == 'single.plot') {
         # obtain silhouette ####
@@ -130,8 +130,8 @@ plotSilhouette <- function(
                         axis.text.x = element_text(size = 0),
                         axis.text.y = element_text(size = 12)
                     )
-                if(plot.output & length(assay.names) == 1)
-                    print(p.silhouette)
+                if(plot.output & length(assay.names) == 1) print(p.silhouette)
+                return(p.silhouette)
             })
         names(all.single.silhouette.plots) <- levels(assay.names)
         everything <- datasets <- silhou.coff <- NULL
@@ -169,7 +169,7 @@ plotSilhouette <- function(
                         hjust = 1),
                     axis.text.y = element_text(size = 12))
             if(plot.output)
-                print(overall.single.silhouette.plot)
+                suppressMessages(print(overall.single.silhouette.plot))
         }
 
     } else if (plot.type == 'combined.plot') {
@@ -263,9 +263,9 @@ plotSilhouette <- function(
                 )
         }
     }
-    # save the results ####
+    # Save the results ####
     ## add results to the SummarizedExperiment object ####
-    if (save.se.obj == TRUE) {
+    if (isTRUE(save.se.obj)) {
         printColoredMessage(message = '-- Save the Silhouette plots to the metadata of the SummarizedExperiment object:',
                             color = 'magenta',
                             verbose = verbose)
