@@ -129,7 +129,7 @@ getAssessmentMetrics <- function(
         colnames(metrics.for.cat.var) <- c('Variables', 'MetricsPlotsAssessments')
         metrics.for.cat.var <- metrics.for.cat.var[order(metrics.for.cat.var$Variables), ]
         metrics.for.cat.var$Metrics <- unlist(lapply(
-            metrics.for.cont.var$MetricsPlotsAssessment,
+            metrics.for.cat.var$MetricsPlotsAssessment,
             function(x){
                 d <- strsplit(x = as.character(x), split = '\\|\\|')[[1]][3]
                 strsplit(x = d, split = '_')[[1]][1]
