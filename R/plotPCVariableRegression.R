@@ -176,7 +176,7 @@ plotPCVariableRegression <- function(
                 axis.text.x = element_text(size = 12, angle = 35, vjust = 1, hjust = 1),
                 axis.text.y = element_text(size = 12))
         if(isTRUE(plot.output))
-            print(overall.reg.plot)
+            suppressMessages(print(overall.reg.plot))
     }
 
     # save the plots ####
