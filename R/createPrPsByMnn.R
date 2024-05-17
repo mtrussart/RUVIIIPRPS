@@ -19,9 +19,9 @@
 #' the data will be selected as input.
 #' @param nb.pcs Numeric. Indicates the number PCs should be used as data input for finding the k nearest neighbors. The
 #' 'nb.pcs' must be set when the "data.input = PCs". The default is 2.
-#' @param center.pca Logical. Indicates whether to scale the data or not. If center is TRUE, then centering is done by
+#' @param center Logical. Indicates whether to scale the data or not. If center is TRUE, then centering is done by
 #' subtracting the column means of the assay from their corresponding columns. The default is TRUE.
-#' @param scale.pca Logical. Indicates whether to scale the data or not before applying SVD.  If scale is TRUE, then scaling
+#' @param scale Logical. Indicates whether to scale the data or not before applying SVD.  If scale is TRUE, then scaling
 #' is done by dividing the (centered) columns of the assays by their standard deviations if center is TRUE, and the root
 #' mean square otherwise. The default is FALSE
 #' @param svd.bsparam A BiocParallelParam object specifying how parallelization should be performed. The default is bsparam().
@@ -61,15 +61,14 @@
 #' @importFrom purrr map_df
 #' @export
 
-
 createPrPsByMnn <- function(
         se.obj,
         assay.name,
         uv.variable,
         data.input = 'expr',
         nb.pcs = 2,
-        center.pca = TRUE,
-        scale.pca = FALSE,
+        center = TRUE,
+        scale = FALSE,
         svd.bsparam = bsparam(),
         clustering.method = 'kmeans',
         nb.clusters = 3,
@@ -153,8 +152,8 @@ createPrPsByMnn <- function(
         uv.variable = uv.variable,
         data.input = data.input,
         nb.pcs = nb.pcs,
-        center.pca = center.pca,
-        scale.pca = scale.pca,
+        center = center,
+        scale = scale,
         svd.bsparam = svd.bsparam,
         clustering.method = clustering.method,
         nb.clusters = nb.clusters,

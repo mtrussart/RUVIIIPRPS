@@ -21,7 +21,7 @@
 #' anchor samples across different batches. The default value is set to 'NULL'
 #' @param anchor.features Numeric. A numeric value indicating the provided number of features to be used in anchor finding.
 #' The default is 2000. We refer to the FindIntegrationAnchors R function for more details.
-#' @param scale Logical. Whether or not to scale the features provided. Only set to FALSE if you have previously scaled
+#' @param anchor.scale Logical. Whether or not to scale the features provided. Only set to FALSE if you have previously scaled
 #' the features you want to use for each object in the object.list.
 #' @param min.prps.samples Numeric. The minimum number of samples to be averaged to create a pseudo-sample. The default
 #' is 3. The minimum value is 2.
@@ -53,9 +53,9 @@
 #' the data will be selected as input.
 #' @param nb.pcs Numeric. Indicates the number PCs should be used as data input for finding the k nearest neighbors. The
 #' 'nb.pcs' must be set when the "data.input = PCs". The default is 2.
-#' @param center.pca Logical. Indicates whether to scale the data or not. If center is TRUE, then centering is done by
+#' @param center Logical. Indicates whether to scale the data or not. If center is TRUE, then centering is done by
 #' subtracting the column means of the assay from their corresponding columns. The default is TRUE.
-#' @param scale.pca Logical. Indicates whether to scale the data or not before applying SVD.  If scale is TRUE, then scaling
+#' @param scale Logical. Indicates whether to scale the data or not before applying SVD.  If scale is TRUE, then scaling
 #' is done by dividing the (centered) columns of the assays by their standard deviations if center is TRUE, and the root
 #' mean square otherwise. The default is FALSE
 #' @param svd.bsparam A BiocParallelParam object specifying how parallelization should be performed. The default is bsparam().
@@ -95,7 +95,7 @@ createPrPsUnSupervised <- function(
         nb.clusters = 3,
         hvg = NULL,
         anchor.features = 2000,
-        scale = TRUE,
+        anchor.scale = TRUE,
         min.prps.samples = 3,
         max.prps.samples = 'inf',
         max.prps.sets = 10,
@@ -114,8 +114,8 @@ createPrPsUnSupervised <- function(
         eps = 0,
         data.input = 'expr',
         nb.pcs = 2,
-        center.pca = TRUE,
-        scale.pca = FALSE,
+        center = TRUE,
+        scale = FALSE,
         svd.bsparam = bsparam(),
         k.nn = 2,
         normalization = 'CPM',
@@ -141,7 +141,7 @@ createPrPsUnSupervised <- function(
                 apply.log = apply.log,
                 pseudo.count = pseudo.count,
                 anchor.features = anchor.features,
-                scale = scale,
+                scale = anchor.scale,
                 min.prps.samples = min.prps.samples,
                 max.prps.samples = max.prps.samples,
                 max.prps.sets = max.prps.sets,
@@ -174,8 +174,8 @@ createPrPsUnSupervised <- function(
                 uv.variable = i,
                 data.input = data.input,
                 nb.pcs = nb.pcs,
-                center.pca = center.pca,
-                scale.pca = scale.pca,
+                center = center,
+                scale = scale,
                 svd.bsparam = svd.bsparam,
                 clustering.method = clustering.method,
                 nb.clusters = nb.clusters,

@@ -10,8 +10,8 @@ createPrPsByMnn(
   uv.variable,
   data.input = "expr",
   nb.pcs = 2,
-  center.pca = TRUE,
-  scale.pca = FALSE,
+  center = TRUE,
+  scale = FALSE,
   svd.bsparam = bsparam(),
   clustering.method = "kmeans",
   nb.clusters = 3,
@@ -46,10 +46,10 @@ the data will be selected as input.}
 \item{nb.pcs}{Numeric. Indicates the number PCs should be used as data input for finding the k nearest neighbors. The
 'nb.pcs' must be set when the "data.input = PCs". The default is 2.}
 
-\item{center.pca}{Logical. Indicates whether to scale the data or not. If center is TRUE, then centering is done by
+\item{center}{Logical. Indicates whether to scale the data or not. If center is TRUE, then centering is done by
 subtracting the column means of the assay from their corresponding columns. The default is TRUE.}
 
-\item{scale.pca}{Logical. Indicates whether to scale the data or not before applying SVD.  If scale is TRUE, then scaling
+\item{scale}{Logical. Indicates whether to scale the data or not before applying SVD.  If scale is TRUE, then scaling
 is done by dividing the (centered) columns of the assays by their standard deviations if center is TRUE, and the root
 mean square otherwise. The default is FALSE}
 

@@ -565,3 +565,4 @@ assessVariablesAssociation <- function(
                         verbose = verbose)
     return(all.res)
 }
+
