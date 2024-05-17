@@ -84,24 +84,24 @@ library(devtools)
 library(SummarizedExperiment)
 
 devtools::install_github(
-    repo = 'RMolania/RUVIIIPRPS@Ramyar-M',
+    # repo = 'RMolania/RUVIIIPRPS@Ramyar-M',
+    repo = 'RMolania/RUVIIIPRPS',
     force = TRUE,
     build_vignettes = FALSE)
-# ERROR: dependencies ‘ggforestplot’, ‘qvalue’, ‘singscore’, ‘kunstomverse’, ‘SummarizedExperiment’, ‘BiocNeighbors’, ‘EDASeq’, ‘DESeq2’, ‘biomaRt’ are not available for package ‘RUVIIIPRPS’
+# ERROR: dependencies ‘ggforestplot’, ‘qvalue’, ‘BiocSingular’, ‘BiocNeighbors’, ‘EDASeq’, ‘DESeq2’, ‘biomaRt’ are not available for package ‘RUVIIIPRPS’
 
-# BiocManager::install(
-#   c(
-#     'ggforestplot',
-#     'qvalue',
-#     'singscore',
-#     'kunstomverse',
-#     'SummarizedExperiment',
-#     'BiocNeighbors',
-#     'EDASeq',
-#     'DESeq2',
-#     'biomaRt'
-#   )
-# )
+# BiocManager::install(c(
+#   'ggforestplot',
+#   'qvalue',
+#   'BiocSingular',
+# # 'singscore',
+# # 'kunstomverse',
+# # 'SummarizedExperiment',
+#   'BiocNeighbors',
+#   'EDASeq',
+#   'DESeq2',
+#   'biomaRt'
+# ))
 ## need to install two packages from Github: 
 # devtools::install_github("NightingaleHealth/ggforestplot")
 # devtools::install_github("jbkunst/kunstomverse")
@@ -111,8 +111,9 @@ library(RUVIIIPRPS)
 # Error: package or namespace load failed for ‘RUVIIIPRPS’ in loadNamespace(j <- i[[1L]], c(lib.loc, .libPaths()), versionCheck = vI[[j]]):
 #  namespace ‘tidyselect’ 1.2.0 is already loaded, but >= 1.2.1 is required
 
-## change this path according to your computer path:
-dataPath <- "/Users/sep/Documents/projects/RUVIIIPRPS_manual/data/"
+## change these paths according to your computer path:
+dataPath <- "/Users/sep/Documents/data/RUVIIIPRPS_manual_data/"
+figPath <- "/Users/sep/Documents/projects//RUVIIIPRPS/figures/"
 ```
 
  
@@ -158,7 +159,7 @@ The TCGA Breast cancer data can be downloaded from the `TCGAbiolinks` package. T
 # qs::qsave(x = exp.se.obj, file = 'TCGA_BrCaRNAseq_StarCounts38_TCGAbiolinks.021424.qs')
 ```
 
-We read the data, subset to protein coding genes, remove duplicated gene names, and set the row names to be gene names.
+We read the data, subset to protein coding genes, remove duplicated gene names, and set the row names to be gene names. Here you need to have `qs` package installed if your data format is in qs. 
 ```{r message=FALSE, warning=F}
 exp.se.obj <- qs::qread(
     file = paste0(dataPath, 'TCGA_BrCaRNAseq_StarCounts38_TCGAbiolinks.021424.qs')
@@ -175,7 +176,7 @@ row.names(exp.se.obj) <- rowData(x = exp.se.obj)$gene_name
 ```
 
 ## Batch information data
-We also read in the batch data from Molania et al *Nat Biotech* (2023) paper. This data has different batch information (e.g. Year, Plate, Centre, etc) for all TCGA cancer data sets. We subset the batch data to Breast cancer only, and add those info to the `SummarizedExperiment` object. 
+We also read in the batch data from Molania et al *Nat Biotech* (2023) paper. This data has different batch information (e.g. Year, Plate, Centre, etc) for all TCGA cancer data sets. We subset the batch data to Breast cancer only, and add those info to the `SummarizedExperiment` object. You need to have `readxl` package installed to rad the excel file. 
 ```{r message=FALSE, warning=F}
 batch.info <- readxl::read_excel(
     path = paste0(dataPath, '41587_2022_1440_MOESM3_ESM.xlsx'), 
@@ -211,21 +212,19 @@ gene.annot <- as.data.frame(rowData(exp.se.obj))
 colnames(gene.annot)[7] <- 'hgnc_symbol'
 ```
 
-The `createSeObj()` function generates SummarizedExperiment object from a list of TCGA BrCa data sets. We remove lowly expressed genes, and estimate library size and tumor purity. 
+The `prepareSeObj()` function prepares the data and generates SummarizedExperiment object from a list of TCGA BrCa data sets. We remove lowly expressed genes, and estimate library size and tumor purity. 
 
-**NOTE to improve the function:** 
-- Change the name of the function to something like prepareSeObj() or prepraeData() as this function not only can create SE object from a list of data sets, but has several options to add more information to the data. These includes:
-
+Data preparation step includes:
   - filter genes
   - estimate purity
   - calculate library size
   - annotate genes based on whether or not they are housekeeping or immune genes
 
-- The function also needs to have an option to accept SE objects. If the input is not SE object, then the function can convert it to SE object. 
+- **NOTE**: The function also needs to have an option to accept SE objects. If the input is not SE object, then the function can convert it to SE object. 
 
 ```{r createSeObj, message=FALSE, warning=F}
-brca.se.obj <- createSeObj(
-    data.sets = data.sets, 
+brca.se.obj <- prepareSeObj(
+    data = data.sets, 
     raw.count.assay.name = 'unstranded', 
     gene.annotation = gene.annot,
     create.sample.annotation = FALSE,
@@ -255,15 +254,15 @@ The results of all these assessments for each assay are saved under `brca.se.obj
 colnames(brca.se.obj@colData)[colnames(brca.se.obj@colData) == 'paper_BRCA_Subtype_PAM50'] <-
   'PAM50'
 
+variables <-  c('PAM50',
+                'library.size',
+                'tumour.purity.estimate',
+                'batch.FcCh')
+  
 brca.se.obj <- checkSeObj(
   se.obj = brca.se.obj,
   assay.names = 'all',
-  variables = c(
-    'PAM50',
-    'library.size',
-    'tumour.purity.estimate',
-    'batch.FcCh'
-  ),
+  variables = variables,
   remove.na = 'both',
   verbose = TRUE
 )
@@ -275,6 +274,16 @@ brca.se.obj <- RUVIIIPRPS:::getAssessmentMetrics(
     se.obj = brca.se.obj, 
     variables = variables)
 
+#--- export the plot
+png(
+  paste0(figPath, "Assessment_Matrix.png"),
+  height = 9,
+  width = 11,
+  res = 300,
+  units = "in"
+)
+RUVIIIPRPS:::getAssessmentMetrics(se.obj = brca.se.obj, variables = variables)
+dev.off()
 ```
 
 ## RLE plot
@@ -301,10 +310,10 @@ head(brca.se.obj@metadata$metric$FPKM$RLE$rle.data$rle.med)
 head(brca.se.obj@metadata$metric$FPKM$RLE$rle.data$rle.iqr)
 ```
 
-We generate boxplots of the RLE data, i.e. RLE plots, and colour them based on different sources of variation in the data; this helps to examine different sources of unwanted variation. Here, we create colored RLE plot for the `batch_FcCh` as categorical variable. These plots are also saved as part of the SE object, and can be accessed for future use.
+We generate boxplots of the RLE data, i.e. RLE plots, and colour them based on different annotations in the data; this helps to examine different sources of unwanted variation. Here, we create colored RLE plot for the `batch_FcCh` as categorical variable. These plots are also saved as part of the SE object, and can be accessed for future use.
 
 ```{r}
-brca.se.obj <- plotRLE(
+brca.se.obj <-  RUVIIIPRPS::plotRLE(
     se.obj = brca.se.obj, 
     assay.names = assay.names, 
     variable = 'batch.FcCh', 
@@ -321,6 +330,43 @@ brca.se.obj <- plotRLE(
 
 # the coloured RLE plot for batch FcCh has been saved here:
 # brca.se.obj@metadata$plot$RLE$colored.rle.plot$batch.FcCh
+##---- export RLE plots
+png(
+  paste0(figPath, "RLE_plots_batch.FcCh.png"),
+  height = 7,
+  width = 12,
+  res = 300,
+  units = "in"
+)
+brca.se.obj@metadata$plot$RLE$colored.rle.plot$batch.FcCh
+dev.off()
+
+##--- for PAM50 biological variable
+brca.se.obj <-  RUVIIIPRPS::plotRLE(
+    se.obj = brca.se.obj, 
+    assay.names = assay.names, 
+    variable = 'PAM50', 
+    ylim.rle.plot = NULL, 
+    iqr.width = 1, 
+    median.points.size = .5, 
+    median.points.color = 'grey', 
+    geom.hline.color = 'red', 
+    plot.ncol = 2, 
+    plot.nrow = 2, 
+    plot.output = TRUE, 
+    save.se.obj = TRUE, 
+    verbose = TRUE)
+
+
+png(
+  paste0(figPath, "RLE_plots_PAM50.png"),
+  height = 7,
+  width = 12,
+  res = 300,
+  units = "in"
+)
+brca.se.obj@metadata$plot$RLE$colored.rle.plot$PAM50
+dev.off()
 ```
 
 ### RLE medians and IQRs
@@ -332,12 +378,6 @@ We can also use the `plotRleVariable()` function to plot a selected variable aga
 ```{r}
 # For library size, we first log-transform them for better visualizations.
 brca.se.obj$library.size <- log2(brca.se.obj$library.size)
-
-variables <- c(
-        'PAM50', 
-        'library.size', 
-        'tumour.purity.estimate', 
-        'batch.FcCh')
 
 for(i in variables){
     brca.se.obj <- plotRleVariable(
@@ -354,6 +394,20 @@ for(i in variables){
     save.se.obj = TRUE, 
     verbose = TRUE)
 }
+
+##------ export the plots
+for (i in variables) {
+  png(
+    paste0(figPath, "RLE_Variable_plot_", i, ".png"),
+    height = 6,
+    width = 7,
+    res = 300,
+    units = "in"
+  )
+  print(brca.se.obj@metadata$plot$RLE$rle.var.plot[[i]])
+  dev.off()
+}
+
 ```
 
 ## PCA plot
@@ -385,37 +439,100 @@ brca.se.obj <- computePCA(
 ```
 
 Using the calculated PCs, we then generate scatterplots and boxplots to explore different sources of variations. 
-Indicates a name of the column in the sample annotation of the SummarizedExperiment object.
+We need to indicate a name of the column in the sample annotation of the SummarizedExperiment object.
 If the `variable` argument is a continuous variable, the function creates scatterplots of PCs1-3 vs the selected variable. If `variable` is categorical, then the function generates pairwise scatterplots of PCs1-3 coloured by the selected categorical variable; if `plot.type = "boxplot"` for categorical variables, the function creates boxplots of PCs1-3 across the variable.
 
-**NOTE to improve `plotPCA()`**:
-Currently, when `plot.type = "boxplot"` this does not print the boxplots. Need to be updated s that prints the plot.  
 ```{r}
-for(i in variables){
+## Uncomment the commented section to export the plots
+# pdf(paste0(figPath, "PCA_Scatterplots.pdf"),
+#     height = 8,
+#     width = 7)
+for (i in variables) {
+#   print(
     brca.se.obj <- RUVIIIPRPS::plotPCA(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = i, 
-    fast.pca = TRUE, 
-    nb.pcs = 3,
-    plot.type = 'scatter',
-    points.size = 1, 
-    stroke.color = 'gray', 
-    stroke.size = .2, 
-    points.alpha = .4, 
-    densities.alpha = .3, 
-    plot.ncol = c(3, 1),
-    plot.nrow = c(4, 4),
-    save.se.obj = TRUE, 
-    verbose = TRUE)
+      se.obj = brca.se.obj,
+      assay.names = 'all',
+      variable = i,
+      fast.pca = TRUE,
+      nb.pcs = 3,
+      plot.type = 'scatter',
+      points.size = 1,
+      stroke.color = 'gray',
+      stroke.size = .2,
+      points.alpha = .4,
+      densities.alpha = .3,
+      plot.ncol = c(3, 1),
+      plot.nrow = c(4, 4),
+      save.se.obj = TRUE,
+      verbose = TRUE
+    )
+  # )
 }
+# dev.off()
+
+## Change plot types to boxplots; this adds boxplots for the categorical variables:
+# pdf(paste0(figPath, "PCA_Boxplots.pdf"),
+#     height = 8,
+#     width = 7)
+for (i in variables) {
+  # print(
+    brca.se.obj <- RUVIIIPRPS::plotPCA(
+      se.obj = brca.se.obj,
+      assay.names = 'all',
+      variable = i,
+      fast.pca = TRUE,
+      nb.pcs = 3,
+      plot.type = 'boxplot',
+      points.size = 1,
+      stroke.color = 'gray',
+      stroke.size = .2,
+      points.alpha = .4,
+      densities.alpha = .3,
+      plot.ncol = c(3, 1),
+      plot.nrow = c(4, 4),
+      save.se.obj = TRUE,
+      verbose = TRUE
+    )
+  # )
+}
+dev.off()
 
 ## check PCA scatterplots of all assays coloured by PAM50
-brca.se.obj@metadata$plot$PCA$fast.pca$PAM50$pca.scat.plot
+# brca.se.obj@metadata$plot$PCA$fast.pca$PAM50$pca.var.scat.plot
+
+# for(i in variables) {
+#   cur_var_plot <- brca.se.obj@metadata$plot$PCA$fast.pca[[i]]
+#   cur_var_plot_name <- grep("scat", names(cur_var_plot), value = T)
+#   
+#   png(
+#     paste0(figPath, "PCA_", i, "_", cur_var_plot_name, ".png"),
+#     height = 8,
+#     width = 7,
+#     res = 300,
+#     units = "in"
+#   )
+#   print(cur_var_plot[cur_var_plot_name])
+#   dev.off()
+#   
+#   ## if there are also boxplots available for the variable, plot that too
+#   if (any(grepl("box", names(cur_var_plot)))) {
+#     cur_var_plot_name <- grep("box", names(cur_var_plot), value = T)
+#     
+#     png(
+#       paste0(figPath, "PCA_", i, "_", cur_var_plot_name, ".png"),
+#       height = 6,
+#       width = 7,
+#       res = 300,
+#       units = "in"
+#     )
+#     print(cur_var_plot[cur_var_plot_name])
+#     dev.off()
+#   }
+# }
 ```
 
 ### PC Variable Correlation
-Vector correlation performed by `computePCVariableCorrelation()` measures the associations between cumulative PCs and a selected **categorical variable**. 
+Vector correlation analysis (**VCA**) performed by `computePCVariableCorrelation()` measures the associations between cumulative PCs and a selected **categorical variable**. 
 Then, the `plotPCVariableCorrelation()` function visualises the results of vector correlation analysis in the form of lineplots, with each line representing the results from different assays/normalisations across cumulative PCs. A good normalisation must show a higher correlation values for the biological factors (*e.g.* PAM50) and lower correlation values for batch variables (*e.g.* batch.FcCh). The `VCA` results are saved in the metadata. 
 ```{r}
 categorical.variables <- c('batch.FcCh', 'PAM50')
@@ -433,21 +550,33 @@ for (i in categorical.variables) {
 ```
 
 ```{r}
-for(i in categorical.variables){
+## uncomment the code to export the plot
+# the plot can also be accessed through brca.se.obj@metadata$plot$VCA
+
+# pdf(
+#   paste0(figPath, "PC_VariableCorr_Lineplots.pdf"),
+#   height = 5,
+#   width = 6
+# )
+for (i in categorical.variables) {
+  # print(
     brca.se.obj <- plotPCVariableCorrelation(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = i, 
-    fast.pca = TRUE, 
-    nb.pcs = 10, 
-    plot.output = TRUE, 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
+      se.obj = brca.se.obj,
+      assay.names = 'all',
+      variable = i,
+      fast.pca = TRUE,
+      nb.pcs = 10,
+      plot.output = TRUE,
+      save.se.obj = TRUE,
+      verbose = TRUE
+    )
+  # )
 }
+# dev.off()
 ```
 
 ### PC Variable Regression
-For **continuous variables**, we perform linear regression using `computePCVariableRegression()` to check their associations with first cumulative PCs. We then use `plotPCVariableRegression()` to generate linear regression anaysis (LRA) lineplots of R^2 of the fitted linear models. A good nomalisation shows a smaller R^2 for continuous batch variables, such as library size. The `LRA` results are saved in the metadata. 
+For **continuous variables**, we perform linear regression using `computePCVariableRegression()` to check their associations with first cumulative PCs. We then use `plotPCVariableRegression()` to generate linear regression analysis (**LRA**) lineplots of R^2 of the fitted linear models. A good nomalisation shows a smaller R^2 for continuous batch variables, such as library size. The `LRA` results are saved in the metadata. 
 ```{r}
 continuous.variables <- c('library.size', 'tumour.purity.estimate')
 for (i in continuous.variables) {
@@ -464,17 +593,26 @@ for (i in continuous.variables) {
 ```
 
 ```{r}
-for(i in continuous.variables){
+pdf(
+  paste0(figPath, "PC_VariableRegression_Lineplots.pdf"),
+  height = 5,
+  width = 6
+)
+for (i in continuous.variables) {
+  print(
     brca.se.obj <- plotPCVariableRegression(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = i, 
-    fast.pca = TRUE, 
-    nb.pcs = 10, 
-    save.se.obj = TRUE, 
-    plot.output = TRUE, 
-    verbose = TRUE)
+      se.obj = brca.se.obj,
+      assay.names = 'all',
+      variable = i,
+      fast.pca = TRUE,
+      nb.pcs = 10,
+      save.se.obj = TRUE,
+      plot.output = TRUE,
+      verbose = TRUE
+    )
+  )
 }
+dev.off()
 ```
 
 ### Adjusted Rand Index (ARI)
@@ -496,17 +634,24 @@ for(i in categorical.variables){
 ```
 
 ```{r}
-for(i in categorical.variables){
+pdf(paste0(figPath, "ARI_Barplots.pdf"),
+    height = 5,
+    width = 5)
+for (i in categorical.variables) {
+  print(
     brca.se.obj <- plotARI(
-    se.obj = brca.se.obj, 
-    assay.names = assay.names, 
-    variables = i, 
-    ari.method = 'hclust.complete.euclidian', 
-    plot.type = 'single.plot', 
-    plot.output = TRUE, 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
+      se.obj = brca.se.obj,
+      assay.names = assay.names,
+      variables = i,
+      ari.method = 'hclust.complete.euclidian',
+      plot.type = 'single.plot',
+      plot.output = TRUE,
+      save.se.obj = TRUE,
+      verbose = TRUE
+    )
+  )
 }
+dev.off()
 
 ```
 
@@ -532,20 +677,25 @@ for(i in categorical.variables){
 
 ```
 
-**NOTE to improve `plotSilhouette()`**:
-Change the function so that when `plot.output = TRUE`, we do not plot the barplots for each assay separately.
 ```{r}
-for(i in categorical.variables){
+pdf(paste0(figPath, "Silhouette_Barplots.pdf"),
+    height = 5,
+    width = 5)
+for (i in categorical.variables) {
+  print(
     brca.se.obj <- plotSilhouette(
-    se.obj = brca.se.obj, 
-    assay.names = assay.names,
-    variables = i, 
-    silhouette.method = 'sil.euclidian', 
-    plot.type = 'single.plot', 
-    plot.output = TRUE, 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
+      se.obj = brca.se.obj,
+      assay.names = assay.names,
+      variables = i,
+      silhouette.method = 'sil.euclidian',
+      plot.type = 'single.plot',
+      plot.output = TRUE,
+      save.se.obj = TRUE,
+      verbose = TRUE
+    )
+  )
 }
+dev.off()
 ```
 
 ## Gene Variable Associations
@@ -581,21 +731,31 @@ head(brca.se.obj@metadata$metric$FPKM$Correlation$spearman$library.size$cor.coef
 
 
 ```{r}
-for(i in continuous.variables){
+pdf(
+  paste0(figPath, "GeneVarAssociation_Boxplots.pdf"),
+  height = 5,
+  width = 5
+)
+for (i in continuous.variables) {
+  print(
     brca.se.obj <- plotGenesVariableCorrelation(
-    se.obj = brca.se.obj, 
-    assay.names = assay.names, 
-    variable = i, 
-    correlation.method = 'spearman', 
-    plot.output = TRUE, 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
+      se.obj = brca.se.obj,
+      assay.names = assay.names,
+      variable = i,
+      correlation.method = 'spearman',
+      plot.output = TRUE,
+      save.se.obj = TRUE,
+      verbose = TRUE
+    )
+  )
 }
+dev.off()
 ```
 
 ### Genes Variable Anova
 If we have **categorical variables**, we can examine the associations between genes and variables using the ANOVA test through the `computeGenesVariableAnova()` function. The results are visualised in form of boxplots. In this case, we expect to see a larger F statistic for biology variables, and a lower F value for batch variables for a good normalisation method. 
 ```{r}
+
 for(i in categorical.variables){
    brca.se.obj <- computeGenesVariableAnova(
     se.obj = brca.se.obj, 
@@ -615,16 +775,23 @@ for(i in categorical.variables){
 ```
 
 ```{r}
-for(i in categorical.variables){
+pdf(paste0(figPath, "GeneVarANOVA_Boxplots.pdf"),
+    height = 5,
+    width = 5)
+for (i in categorical.variables) {
+  print(
     brca.se.obj <- plotGenesVariableAnova(
-    se.obj = brca.se.obj, 
-    assay.names = assay.names, 
-    variable = i, 
-    anova.method = 'aov', 
-    plot.output = TRUE, 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
+      se.obj = brca.se.obj,
+      assay.names = assay.names,
+      variable = i,
+      anova.method = 'aov',
+      plot.output = TRUE,
+      save.se.obj = TRUE,
+      verbose = TRUE
+    )
+  )
 }
+dev.off()
 ```
 
 ## Compute DGE
@@ -646,6 +813,9 @@ for(i in categorical.variables){
 ```
 
 ```{r}
+pdf(paste0(figPath, "DEGs_Hists.pdf"),
+    height = 4,
+    width = 12)
 brca.se.obj <- plotDGE(
     se.obj = brca.se.obj, 
     assay.names = 'all', 
@@ -655,6 +825,7 @@ brca.se.obj <- plotDGE(
     plot.output = TRUE, 
     save.se.obj = TRUE, 
     verbose = FALSE)
+dev.off()
 ```
 
 # RUV-III-PRPS normalization
