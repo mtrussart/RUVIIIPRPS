@@ -829,124 +829,91 @@ dev.off()
 ```
 
 # RUV-III-PRPS normalization
-## Find NCGs
-### Supervised 
+We need to define Negative Control Genes (Ncg) and pseudo-replicates of pseudo-samples. Here we show example of how to define data-driven NCGs. 
+
+## Find NCGs (Supervised)
+NCGs are genes whose expression is associated with unwanted variation but not with biological factor of interest. There are different ways to define these genes; here we show the supervised method. The associated functions, e.g. `findNcgSupervised()`, include five steps:
+
+1. Pre-process the data (e.g. log2 transformation, library size normalisation, or regressing out biological or unwanted variation).
+2. Creates all possible sample groups with respect to biological and unwanted variation separately.
+3. Performs two-way ANOVA (or combination of ANOVA and correlation, see `approach` argument) for each of the groups of biological factors and unwanted variation separately to find genes associated with these factors. 
+4. Summarizes the statistical outputs to select the top n number of genes as NCGs; methods for this step includes: `non.overlap` (default), `prod`, `average`, `sum`, and `auto`. 
+5. Assesses the performance of NCGs (when `assess.ncg = TRUE`) 
+This selects genes that are highly associated with unwanted variation (e.g. have high F-statistics) while have the low associations with biological variation.
+
+To perform assessment of NCGs, the functiomn performs PCA using the selected NCGs, and then calculates the corr between cumulative PCs and NCGs in each groups. The lineplot viasualises the correlation between cumulative PCs and NCGs in each of the biological factor and unwanted variation. A good set of NCGs should show higher corr with unwanted variation and lower correlation with biological variation. You can change the `approach` argument and see how the assessment plot changes. There are three main approaches (`approach`) to select from:
+
+- `TwoWayAnova`: calls `findNcgByTwoWayAnov()` to perform two-way ANOVA on two homogeneous groups of each of biological and unwanted variations.
+- `AnovaCorr.AcrossAllSamples`: calls `findNcgAcrossSamples()` to compute gene-level ANOVA and correlation analysis on all samples and all biological and unwanted variation to find genes that are highly affected by categorical and continuous variables. 
+- `AnovaCorr.PerBatchPerBio`: calls  `findNcgPerBiologyPerBatch()` to perform both the correlation and ANOVA within groups of samples that
+are homogeneous with respect to biological or unwanted variation
+
+
+
 ```{r}
+# pdf(paste0(figPath, "Assess_NCGs_TwoWayAnova.pdf"),
+#     height = 5,
+#     width = 6)
 brca.se.obj <- findNcgSupervised(
     se.obj = brca.se.obj, 
     assay.name = 'RawCount', 
-    approach = 'AnoCorrAs', 
-    ncg.selection.method = 'AbsNoneOverlap', 
+    approach = 'TwoWayAnova', 
+    ncg.selection.method = 'non.overlap', 
     bio.variables = 'PAM50', 
     uv.variables = c('library.size', 'batch.FcCh', 'tumour.purity.estimate'), 
-    nb.ncg = 10, 
-    grid.nb = 1, 
-    top.rank.bio.genes = 85, 
-    top.rank.uv.genes = 70, 
-    bio.groups = NULL, 
-    nb.bio.clusters = 3, 
-    bio.clustering.method = 'kmeans', 
-    uv.groups = NULL, 
-    nb.uv.clusters = 3, 
-    uv.clustering.method = 'kmeans', 
-    normalization = 'CPM', 
-    regress.out.uv.variables = NULL, 
-    regress.out.bio.variables = NULL, 
-    apply.log = TRUE, 
-    pseudo.count = 1,
-    min.sample.for.aov = 3, 
-    min.sample.for.correlation = 10, 
-    corr.method = 'spearman', 
-    a = 0.05, 
-    rho = 0, 
-    anova.method = 'aov',
-    assess.ncg = TRUE, 
-    variables.to.assess.ncg = NULL, 
-    nb.pcs = 10, 
-    center = TRUE, 
-    scale = FALSE, 
-    assess.se.obj = FALSE,
-    assess.variables = FALSE, 
-    remove.na = 'none', 
-    save.se.obj = TRUE, 
-    output.name = 'AnoCorrAs',
-    verbose = TRUE)
+    output.name = 'ctrl_2wayanova', 
+    assess.ncg = TRUE)
+# dev.off()
 ```
 
 
-### Un supervised 
+
+## Find PRPS (Supervised)
+To have define technical replicates we use the pseudo-replicates of pseudo-samples (PRPS) approach. Each PRPS needs to have at least two PS, and each UV can have multiple sets of PRPS. There are supervised and unsupervised approaches to define PRPS.
+
+The `createPrPsSupervised()` function is used when we know the sources of unwanted variation and biology. PRPS can be created for individual sources of unwanted variation with or without taking into account the other sources of unwanted variation. Rhis function creates several groups of pseudo-samples by averaging the samples of the same biological subtype defined in `bio.variables` in each batch, defined in `uv.variables` argument.
 ```{r}
-brca.se.obj <- findNcgsUnSupervised(
-    se.obj = brca.se.obj, 
-    assay.name = 'RawCount', 
-     ncg.selection.method ='AbsNoneOverlap',
-    grid.nb = 1,
-    top.rank.bio.genes = 80,
-    top.rank.uv.genes = 10,
-    uv.variables = c('library.size', 'batch.FcCh', 'tumour.purity.estimate'),
-    variables.to.assess.ncg = c('PAM50','library.size', 'batch.FcCh', 'tumour.purity.estimate'))
-brca.se.obj@metadata$NCG$un.supervised$
-```
-
-
-# Find negative control genes
-## supervised
-
-```{r}
+# pdf(paste0(figPath, "Visualise_PRPS.pdf"),
+#     height = 5,
+#     width = 10)
 brca.se.obj <- createPrPsSupervised(
     se.obj = brca.se.obj, 
     assay.name = 'RawCount', 
     bio.variables = 'PAM50', 
     uv.variables = c('library.size', 'batch.FcCh', 'tumour.purity.estimate'), 
-    apply.other.uv.variables = T, 
-    min.sample.for.prps = 3, 
-    bio.clustering.method = 'kmeans', 
+    apply.other.uv.variables = TRUE,
     nb.bio.clusters = 3, 
-    other.uv.clustering.method = 'kmeans', 
     nb.other.uv.clusters = 3, 
-    check.prps.connectedness = TRUE, 
-    apply.log = TRUE, 
-    pseudo.count = 1, 
     assess.se.obj = FALSE, 
-    assess.variables = FALSE, 
     remove.na = 'none', 
     save.se.obj = TRUE, 
     plot.output = TRUE, 
-    prps.set.name = 'Set2',
+    prps.set.name = 'Set2', #	TTT messages displayed during the execution of the functions, by default it is set to TRUE. BUT Default is NULL??
     verbose = TRUE)
-brca.se.obj@metadata$PRPS <- NULL
+# dev.off()
+# WHY?
+# brca.se.obj@metadata$PRPS <- NULL
 ```
 
-## unsupervised
-```{r}
-brca.se.obj <- createPrPsUnSupervised(
-    se.obj = brca.se.obj, 
-    assay.name = 'RawCount', 
-    approach = 'mnn',
-    uv.variables = c('library.size'))
-```
-
-
+## Run Normalisation
+This function uses the NCGs and PRPS defined above to normalise the data; we can include several Ks (dimension of unwanted variation) to examine which k performs better. 
 ```{r}
 brca.se.obj <- RUVIII.PRPS(
     se.obj = brca.se.obj, 
     assay.name = 'RawCount', 
     prps.group = 'supervised', 
-    prps.set.names = NULL,
     ncg.group = 'supervised', 
-    ncg.set.names = NULL, 
     k = c(1,10,15,20), 
-    apply.log = 'assay', 
-    pseudo.count = 1, 
-    alpha = NULL,
-    eta = NULL, 
-    include.intercept = TRUE, 
     return.info = TRUE, 
     assess.se.obj = FALSE, 
     remove.na = 'none', 
     save.se.obj = TRUE)
 ```
 
+## Assess Variarion
+The result of `RUVIII.PRPS()` function abive is log transformed; to be able to run several assessments, we need to have all the assays log transformed too. We use `createLogAssays()` function for this purpose.
+
+The `assessVariation()` function that applies both global (e.g. PCA, RLE, ARI) and gene-level (e.g. DEGs, ANOVA, correlation) assessments.
 ```{r}
 dd <- names(assays(brca.se.obj))[1:4]
 brca.se.obj <- RUVIIIPRPS:::createLogAssays(
@@ -963,328 +930,40 @@ brca.se.obj <- assessVariation(
     se.obj = brca.se.obj, 
     assay.names = 'all', 
     variables = variables, 
-    bio.variables = c('PAM50', 'batch.FcCh'), 
-    uv.variables = c('library.size', 'tumour.purity.estimate'), 
     apply.log = F
     )
-brca.se.obj@metadata$plot$
-```
 
-## RLE plot
-We first compute of the RLE of all the assays in the SummarizedExperiment object.
-```{r computeRLE, message=FALSE, warning=F}
-brca.se.obj <- computeRLE(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    apply.log = FALSE, 
-    pseudo.count = 1, 
-    outputs.to.return = 'all', 
-    assess.se.obj = FALSE, 
-    remove.na = 'none', 
-    save.se.obj = TRUE)
-```
-Then, we explore the association of the RLE data with sources of unwanted variation. Here, we create colored RLE plot for
-the 'batch_FcCh' as categorical variable.
-
-```{r}
-brca.se.obj <- plotRLE(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = 'batch_FcCh', 
-    ylim.rle.plot = NULL, 
-    iqr.width = 1, 
-    median.points.size = 1, 
-    median.points.color = 'cyan', 
-    geom.hline.color = 'red', 
-    plot.ncol = 1, 
-    plot.nrow = 4, 
-    plot.output = TRUE, 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
-```
-
-
-```{r}
-brca.se.obj <- plotRleVariable(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = 'tumour.purity.estimate', 
-    rle.data.type = 'both', 
-    ylim.rle.med.plot = NULL, 
-    ylim.rle.iqr.plot = NULL, 
-    points.size = 1, 
-    plot.ncol = 2, 
-    plot.nrow = 3, 
-    plot.output = TRUE, 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
-brca.se.obj@metadata$metric$fpkm_unstrand$RLE$rle.data$rle.med
-```
-
-
-```{r}
-brca.se.obj <- computePCA(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    fast.pca = TRUE, 
-    nb.pcs = 10, 
-    center = TRUE, 
-    scale = FALSE, 
-    apply.log = FALSE, 
-    pseudo.count = 1, 
-    svd.bsparam = BiocSingular::bsparam(), 
-    assess.se.obj = FALSE, 
-    remove.na = 'none', 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
+getwd()
 ```
 
 ```{r}
-brca.se.obj <- RUVIIIPRPS::plotPCA(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = 'paper_BRCA_Subtype_PAM50', 
-    fast.pca = TRUE, 
-    nb.pcs = 3,
-    plot.type = 'scatter',
-    points.size = 1, 
-    stroke.color = 'gray', 
-    stroke.size = .2, 
-    points.alpha = .4, 
-    densities.alpha = .3, 
-    plot.ncol = 1, 
-    plot.nrow = 3,
-    save.se.obj = TRUE, 
-    verbose = TRUE)
-brca.se.obj@metadata$plot$PCA$fastPCA$paper_BRCA_Subtype_PAM50
+brca.se.obj <- assessNormalization(
+  se.obj = brca.se.obj,
+  assay.names = "all",
+  bio.variables = c('PAM50', 'batch.FcCh'),
+  uv.variables = c('library.size', 'tumour.purity.estimate')
+)
 ```
 
+
+
+
+
+
+
+### unsupervised
+In this approach  the biological factors and/or unwanted variation are not known. So the function has two approaches to find similar samples across known or estimated batches ()see `approach` argument: 
+
+- A combination of k-nearest neighbor (knn) and mutual nearest neighbors (mnn) 
+- Applies `findIntegrationAnchor()` from the `Seurat` package
 ```{r}
-brca.se.obj <- computePCVariableCorrelation(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = 'batch_FcCh', 
-    fast.pca = TRUE, 
-    nb.pcs = 10, 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
-```
-
-```{r}
-brca.se.obj <- plotPCVariableCorrelation(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = 'batch_FcCh', 
-    fast.pca = TRUE, 
-    nb.pcs = 10, 
-    plot.output = TRUE, 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
-brca.se.obj@metadata$plot$VecCorr$batch_FcCh
-```
-
-```{r}
-brca.se.obj <- computePCVariableRegression(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = 'tumour.purity.estimate', 
-    fast.pca = TRUE, 
-    nb.pcs = 10, 
-    save.se.obj = TRUE,
-    verbose = TRUE)
-```
-
-```{r}
-brca.se.obj <- plotPCVariableRegression(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = 'tumour.purity.estimate', 
-    fast.pca = TRUE, 
-    nb.pcs = 10, 
-    save.se.obj = TRUE, 
-    plot.output = TRUE, 
-    verbose = TRUE)
-```
-
-```{r}
-brca.se.obj <- computeARI(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = 'batch_FcCh', 
-    fast.pca = TRUE,
-    nb.pcs = 3, 
-    clustering.method = 'hclust', 
-    hclust.method = 'complete', 
-    hclust.dist.measure = 'euclidian', 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
-```
-
-```{r}
-brca.se.obj <- plotARI(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variables = 'batch_FcCh', 
-    ari.method = 'hclust.complete.euclidian', 
-    plot.type = 'single.plot', 
-    plot.output = TRUE, 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
-```
-
-```{r}
-brca.se.obj <- computeSilhouette(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = 'batch_FcCh', 
-    dist.measure = 'euclidian', 
-    fast.pca = TRUE, 
-    nb.pcs = 3, 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
+brca.se.obj <- createPrPsUnSupervised(
+  se.obj = brca.se.obj,
+  assay.name = 'RawCount',
+  approach = 'mnn',
+  uv.variables = c('library.size')
+)
 ```
 
 
-```{r}
-brca.se.obj <- plotSilhouette(
-    se.obj = brca.se.obj, 
-    assay.names = 'all',
-    variables = 'batch_FcCh', 
-    silhouette.method = 'sil.euclidian', 
-    plot.type = 'single.plot', 
-    plot.output = TRUE, 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
-```
-
-
-```{r}
-brca.se.obj <- computeGenesVariableCorrelation(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = 'tumour.purity.estimate',
-    method = 'spearman', 
-    a = 0.05, 
-    rho = 0, 
-    apply.log = TRUE, 
-    pseudo.count = 1 , 
-    plot.top.genes = FALSE, 
-    nb.top.genes = NULL,
-    apply.round = TRUE, 
-    assess.se.obj = FALSE, 
-    remove.na = 'none', 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
-```
-
-
-```{r}
-brca.se.obj <- plotGenesVariableCorrelation(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = 'tumour.purity.estimate', 
-    correlation.method = 'gene.spearman.corr', 
-    plot.output = TRUE, 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
-```
-
-
-```{r}
-brca.se.obj <- computeGenesVariableAnova(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = 'batch_FcCh', 
-    method = 'aov', 
-    apply.log = TRUE,
-    pseudo.count = 1, 
-    plot.top.genes = TRUE,
-    nb.top.genes = 3, 
-    apply.round = FALSE,
-    assess.se.obj = FALSE, 
-    remove.na = 'none', 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
-```
-
-```{r}
-brca.se.obj <- plotGenesVariableAnova(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = 'batch_FcCh', 
-    anova.method = 'genes.aov.anova', 
-    plot.output = TRUE, 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
-brca.se.obj@metadata$plot$GeneVarAnova$genes.aov.anova
-```
-
-
-```{r}
-brca.se.obj <- computeDGE(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = 'batch_FcCh', 
-    apply.log = FALSE,
-    pseudo.count = 1, 
-    assess.se.obj = FALSE, 
-    remove.na = 'none', 
-    save.se.obj = TRUE, 
-    verbose = TRUE)
-```
-
-```{r}
-brca.se.obj <- plotDGE(
-    se.obj = brca.se.obj, 
-    assay.names = 'all', 
-    variable = 'batch_FcCh', 
-    plot.ncol = 7, 
-    plot.output = TRUE, 
-    save.se.obj = TRUE, 
-    verbose = FALSE)
-ks.test(brca.se.obj@metadata$metric$`RUVIIIRPPS_K:15`$DGE$batch_FcCh$p.vals$`FcCh_A&FcCh_B`$pvalue>0.1, "punif")
-ks.test(brca.se.obj@metadata$metric$Log_fpkm_unstrand$DGE$batch_FcCh$p.vals$`FcCh_A&FcCh_B`$pvalue>0.1, "punif")
-```
-
-
-```{r}
-head(all.de.tests$Log_fpkm_unstrand)
-breaks <- seq(0, 1, by = .1)
-binned <- cut(
-    all.de.tests$Log_fpkm_unstrand$`FcCh_A&FcCh_B.pvalue`, 
-    breaks = breaks, 
-    include.lowest = TRUE)
-frequency <- table(binned)
-```
-
-
-# Estimate possible unknown batch effects
-
-```{r}
-raw.counts <- log2(assay(brca.se.obj, 'unstranded') + 1)
-mm <- apply(
-    raw.counts, 
-    1, function(x) cor.test(x, brca.se.obj@metadata$UknownUV$unstranded$BrCa_Batches$input.data)[[4]])
-ncg <- names(sort(mm, decreasing = T)[1:200])
-
-gene.an <- rowData(brca.se.obj)
-ncg <- gene.an$micorarray.hk.genes
-
-brca.se.obj <- RUVIIIPRPS::identifyUnknownUV(
-    se.obj = brca.se.obj[ncg , ], 
-    assay.name = 'unstranded', approach = 'pca',  nb.pcs = 3, 
-    max.samples.per.batch = .4, 
-    order.batches = F,
-    remove.current.estimates = TRUE,
-    output.name = 'BrCa_Batches')
-temp <- table(brca.se.obj@metadata$UknownUV$unstranded$BrCa_Batches$batches,
-      brca.se.obj$batch.years)
-ComplexHeatmap::Heatmap(
-    matrix = temp, 
-    cluster_rows = T, 
-    cluster_columns = T, 
-    col = c('grey90', 'darkgreen'), 
-    name = 'Frequency')
-brca.se.obj$unknown.batch <- brca.se.obj@metadata$UknownUV$unstranded$BrCa_Batches$batches
-```
 
