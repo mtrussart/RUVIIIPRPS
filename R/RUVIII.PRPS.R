@@ -623,7 +623,7 @@ RUVIII.PRPS <- function(
     ## saving the norm data into a new assay ####
     print('hhhhhhhoooo')
     if (isTRUE(save.se.obj)) {
-        if(length(k == 1)){
+        if(length(k) == 1){
             newY <- all.ruv$newY
             colnames(newY) <- colnames.se.obj
             se.obj@assays@data[[output.name]] <- newY
