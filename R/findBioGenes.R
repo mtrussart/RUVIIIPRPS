@@ -1129,7 +1129,7 @@ findBioGenes <- function(
         color = 'blue',
         verbose = verbose)
 
-    # Performance assessment of selected NCG  ####
+    # Performance assessment of selected bio genes  ####
     if(isTRUE(assess.bio.genes)){
         printColoredMessage(
             message = '-- Assess the performance of the selected bio genes set:',
