@@ -202,7 +202,7 @@ findNcgSupervised <- function(
     # find NCGs ####
     ## find NCGs using AnovaCorr.PerBatchPerBio approach ####
     if(approach == 'AnovaCorr.PerBatchPerBiology'){
-        ncg.set <- findNcgPerBiologyPerBatch(
+        se.obj <- findNcgPerBiologyPerBatch(
             se.obj = se.obj,
             assay.name = assay.name,
             bio.variables = bio.variables,
@@ -251,7 +251,7 @@ findNcgSupervised <- function(
     }
     ## find NCGs using AnovaCorr.AcrossAllSamples approach ####
     if(approach == 'AnovaCorr.AcrossAllSamples'){
-        ncg.set <- findNcgAcrossSamples(
+        se.obj <- findNcgAcrossSamples(
             se.obj = se.obj,
             assay.name = assay.name,
             bio.variables = bio.variables,
@@ -293,7 +293,7 @@ findNcgSupervised <- function(
     }
     ## find NCGs using TwoWayAnova approach ####
     if(approach == 'TwoWayAnova'){
-        ncg.set <- findNcgByTwoWayAnova(
+        se.obj <- findNcgByTwoWayAnova(
             se.obj = se.obj,
             assay.name = assay.name,
             bio.variables = bio.variables,
@@ -332,5 +332,5 @@ findNcgSupervised <- function(
     printColoredMessage(message = '------------The findNcgSupervised function finished.',
                         color = 'white',
                         verbose = verbose)
-    return(ncg.set)
+    return(se.obj)
 }
