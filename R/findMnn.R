@@ -152,7 +152,7 @@ findMnn <- function(
     printColoredMessage(message = '-- Data normalization, transformation and regression:',
                         color = 'magenta',
                         verbose = verbose)
-    groups <- unique(se.obj[[uv.variable]])
+    groups <- levels(se.obj[[uv.variable]])
     all.norm.data <- lapply(
         groups,
         function(x) {
@@ -260,10 +260,11 @@ findMnn <- function(
                 verbose = verbose
             )
             if (is.null(hvg)) {
-                mnn.samples <- findMutualNN(
-                    data1 = t(all.norm.data[[pairs.batch[1, x]]]),
+                mnn.samples <- BiocNeighbors::findMutualNN(
+                    data1 = t(all.norm.data[[pairs.batch[1, x]]] ),
                     data2 = t(all.norm.data[[pairs.batch[2, x]]]),
                     k1 = 1,
+                    k2 = 1,
                     BPPARAM = mnn.bpparam)
             } else{
                 mnn.samples <- findMutualNN(
@@ -284,6 +285,10 @@ findMnn <- function(
             return(df)
         })
     all.mnn <- do.call(rbind, all.mnn)
+    sum(is.na(all.mnn))
+    if(isTRUE(all.mnn)){
+        stop('There something wrong with the MNN step.')
+    }
     se.obj[[uv.variable]] <- ini.variable
     # Save the results ####
     ## saving the results in the metadata of the SummarizedExperiment ####
