@@ -441,10 +441,7 @@ createPrPsForCategoricalUV <- function(
                     size = 10,
                     angle = 45,
                     hjust = 1),
-                axis.text.y = element_text(
-                    size = 12,
-                    angle = 45,
-                    hjust = 1),
+                axis.text.y = element_text(size = 10),
                 legend.position = 'none'
             )
         if(verbose) print(p)
