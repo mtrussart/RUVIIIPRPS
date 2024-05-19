@@ -114,7 +114,7 @@ assessNormalization <- function(
         plot.output = TRUE,
         verbose = TRUE
 ){
-    printColoredMessage(message = '------------The assessVariation function starts:',
+    printColoredMessage(message = '------------The assessNormalization function starts:',
                         color = 'white',
                         verbose = verbose)
     # Check the inputs of function ####
@@ -130,7 +130,6 @@ assessNormalization <- function(
         stop('To performe "overall.performance" both "uv.variables" and "bio.variables" must be provided.')
     }
 
-
     # Assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
@@ -141,7 +140,7 @@ assessNormalization <- function(
 
     # All possible metrics for each variable #####
     printColoredMessage(
-        message = 'Find all possible assessment metrics:',
+        message = '-- Find all possible assessment metrics:',
         color = 'magenta',
         verbose = verbose)
     se.obj <- getAssessmentMetrics(
@@ -160,12 +159,21 @@ assessNormalization <- function(
     printColoredMessage(
         message = paste0(
             nrow(se.obj@metadata$AssessmentMetrics$metrics.table),
-            ' assessment will be generated.'),
+            ' assessment metrics will be considered for normalization performance assessment.'),
         color = 'blue',
+        verbose = verbose)
+
+    printColoredMessage(
+        message = '-- Summarize all the selected assessment metrics:',
+        color = 'magenta',
         verbose = verbose)
 
     ## rle scores #####
     if('rleMed||rleIqr' %in% assessments.table$Assessments){
+        printColoredMessage(
+            message = '- Summarize the RLE plots:',
+            color = 'blue',
+            verbose = verbose)
         rle.meds <- unlist(lapply(
             assay.names,
             function(x){
@@ -223,6 +231,10 @@ assessNormalization <- function(
     ## rle medians and variable scores #####
     rle.med.variables <- assessments.table$Variables[metrics.table$Factors == 'rleMedians']
     if(!is.null(rle.med.variables)){
+        printColoredMessage(
+            message = '- Summarize the association between the rle medians and variables:',
+            color = 'blue',
+            verbose = verbose)
         # check
         rle.meds <- unlist(lapply(
             assay.names,
@@ -269,6 +281,10 @@ assessNormalization <- function(
     ## vector correlation scores ####
     pc.vec.corr.vars <- assessments.table$Variables[assessments.table$Metrics == 'VCA']
     if(!is.null(pc.vec.corr.vars)){
+        printColoredMessage(
+            message = '- Summarize the vector correlations:',
+            color = 'blue',
+            verbose = verbose)
         # check
         for(i in pc.vec.corr.vars){
             vca <- unlist(lapply(
@@ -296,6 +312,10 @@ assessNormalization <- function(
     ## linear regression scores ####
     pc.reg.vars <- assessments.table$Variables[assessments.table$Metrics == 'LRA']
     if(!is.null(pc.reg.vars)){
+        printColoredMessage(
+            message = '- Summarize the linear regression analysis:',
+            color = 'blue',
+            verbose = verbose)
         # check
         for(i in pc.reg.vars){
             lra <- unlist(lapply(
@@ -323,6 +343,10 @@ assessNormalization <- function(
     all.sil.vars <- assessments.table$Metrics == 'Silhouette' & assessments.table$PlotTypes != 'combinedPlot'
     all.sil.vars <- assessments.table$Variables[all.sil.vars]
     if(!is.null(all.sil.vars)){
+        printColoredMessage(
+            message = '- Summarize the silhouette coefficients:',
+            color = 'blue',
+            verbose = verbose)
         # check
         for(i in all.sil.vars){
             sil.coeff <- unlist(lapply(
@@ -353,6 +377,10 @@ assessNormalization <- function(
     all.ari.vars <- assessments.table$Metrics == 'ARI' & assessments.table$PlotTypes != 'combinedPlot'
     all.ari.vars <- assessments.table$Variables[ all.ari.vars]
     if(!is.null(all.ari.vars)){
+        printColoredMessage(
+            message = '- Summarize the ARI coefficients:',
+            color = 'blue',
+            verbose = verbose)
         ari.scores <- NULL
         if(ari.clustering.method == 'mclust'){
             out.put.name <- 'mclust'
@@ -384,6 +412,10 @@ assessNormalization <- function(
     ## gene variable correlations scores ####
     gene.var.corr.vars <- assessments.table$Variables[assessments.table$Factors == 'geneCorr']
     if(!is.null(gene.var.corr.vars)){
+        printColoredMessage(
+            message = '- Summarize the gene-variable correlations analysis:',
+            color = 'blue',
+            verbose = verbose)
         gene.var.corr.coef.scores <- NULL
         gene.var.corr.pvalue.scores <- NULL
         gene.var.corr.qvalue.scores <- NULL
@@ -427,6 +459,10 @@ assessNormalization <- function(
     index <- assessments.table$Factors == 'geneAnova'
     gene.var.anova.vars <- assessments.table$Variables[index]
     if(!is.null(gene.var.anova.vars)){
+        printColoredMessage(
+            message = '- Summarize the gene-variable ANOVA :',
+            color = 'blue',
+            verbose = verbose)
         gene.var.anova.coef.scores <- NULL
         gene.var.anova.pvalue.scores <- NULL
         gene.var.anova.qvalue.scores <- NULL
@@ -472,6 +508,10 @@ assessNormalization <- function(
     dge.pvalue.scores <- NULL
     dge.vars <- assessments.table$Variables[metrics.table$Metrics == 'DGE' & assessments.table$Assessments != 'Exc']
     if(!is.null(dge.vars)){
+        printColoredMessage(
+            message = '- Summarize the DEG analysis :',
+            color = 'blue',
+            verbose = verbose)
         for(i in dge.vars){
             # check
             for(v in dge.vars){
@@ -825,7 +865,7 @@ assessNormalization <- function(
         geom_stripes(odd = "#00000000", even = "#33333333") +
         guides(color = guide_legend(override.aes = list(size = 5)))
     if(isTRUE(plot.output)) print(p.overall)
-    printColoredMessage(message = '------------The normAssessment function finished.',
+    printColoredMessage(message = '------------The assessNormalization function finished.',
                         color = 'white',
                         verbose = verbose)
     return(se.obj)
