@@ -171,24 +171,42 @@ createPrPsByMnn <- function(
         all.knn <- all.knn@metadata$PRPS$unsupervised$KnnMnn$knn[[1]]
 
     # Find mutual nearest neighbor ####
-    all.mnn <- findMnn(
-        se.obj = se.obj,
-        assay.name = assay.name,
-        uv.variable = uv.variable,
-        clustering.method = clustering.method,
-        nb.clusters = nb.clusters,
-        hvg = hvg,
-        normalization = normalization,
-        regress.out.bio.variables = regress.out.bio.variables,
-        apply.log = apply.log,
-        pseudo.count = pseudo.count,
-        assess.se.obj = assess.se.obj,
-        mnn.bpparam = SerialParam(),
-        remove.na = remove.na,
-        save.se.obj = save.se.obj,
-        verbose = verbose)
-    if(isTRUE(save.se.obj))
-        all.mnn <- all.mnn@metadata$PRPS$unsupervised$KnnMnn$mnn[[1]]
+    if(isTRUE(save.se.obj)){
+        se.obj <- findMnn(
+            se.obj = se.obj,
+            assay.name = assay.name,
+            uv.variable = uv.variable,
+            clustering.method = clustering.method,
+            nb.clusters = nb.clusters,
+            hvg = hvg,
+            normalization = normalization,
+            regress.out.bio.variables = regress.out.bio.variables,
+            apply.log = apply.log,
+            pseudo.count = pseudo.count,
+            assess.se.obj = assess.se.obj,
+            mnn.bpparam = SerialParam(),
+            remove.na = remove.na,
+            save.se.obj = save.se.obj,
+            verbose = verbose)
+        all.mnn <- se.obj@metadata$PRPS$unsupervised$KnnMnn$mnn[[1]]
+    } else {
+        all.mnn <- findMnn(
+            se.obj = se.obj,
+            assay.name = assay.name,
+            uv.variable = uv.variable,
+            clustering.method = clustering.method,
+            nb.clusters = nb.clusters,
+            hvg = hvg,
+            normalization = normalization,
+            regress.out.bio.variables = regress.out.bio.variables,
+            apply.log = apply.log,
+            pseudo.count = pseudo.count,
+            assess.se.obj = assess.se.obj,
+            mnn.bpparam = SerialParam(),
+            remove.na = remove.na,
+            save.se.obj = save.se.obj,
+            verbose = verbose)
+    }
 
     # Find PRPS sets ####
     all.prps.sets <- lapply(
@@ -390,6 +408,5 @@ createPrPsByMnn <- function(
                             verbose = verbose)
         return(prps.data = prps.data)
     }
-
 }
 
