@@ -117,17 +117,22 @@ prepareSeObj <- function(
         }
         if(isTRUE(calculate.library.size)){
             if(is.null(sample.annotation) & isFALSE(create.sample.annotation)){
-                stop('To add the calculated library size, either a "sample.annotation" should be provided or set the create.sample.annotation=TRUE.')
+                stop('To calculate library size, either a "sample.annotation" should be provided or set the "create.sample.annotation=TRUE".')
             }
         }
         if(is.logical(estimate.tumor.purity)){
-            stop('The "estimate.tumor.purity" must be one of the "estimate", "singscore", "both" and "NULL"')
+            stop('The "estimate.tumor.purity" must be one of the "estimate", "singscore", "both" or "NULL"')
         }
+
         if(!is.null(estimate.tumor.purity)){
             if(is.null(sample.annotation) & isFALSE(create.sample.annotation)){
                 stop('To add the calculated tumour purity, either a "sample.annotation" should be provided or set the create.sample.annotation=TRUE.')
             } else if(is.null(assay.name.to.estimate.purity)){
                 stop('To estimate the tumour purity, the "assay.name.to.estimate.purity" must be provided.')
+            } else if (!estimate.tumor.purity %in% c("estimate", "singscore", "both")){
+                stop('The "estimate.tumor.purity" must be one of the "estimate", "singscore", "both" or "NULL"')
+            } else if (is.null(gene.group)){
+                stop('To estimate purity, the "gene.group" must be specified ("entrezgene_id", "hgnc_symbol" and "ensembl_gene_id").')
             }
         }
         if(isTRUE(add.gene.details)){
@@ -230,7 +235,7 @@ prepareSeObj <- function(
             stop('To add "add.immun.stroma.genes", gene annotation must be provided or "create.gene.annotation" must set to "TRUE".')
         }
         if(isTRUE(add.gene.details) & is.null(gene.group)){
-            stop('To add gene details, the "gene.group" must be specified (entrezgene_id, hgnc_symbol and ensembl_gene_id).')
+            stop('To add gene details, the "gene.group" must be specified ("entrezgene_id", "hgnc_symbol" and "ensembl_gene_id").')
         }
         if(isTRUE(add.gene.details) &!is.null(gene.group)){
             if(!gene.group %in% c('entrezgene_id', 'hgnc_symbol', 'ensembl_gene_id')){
@@ -560,7 +565,11 @@ prepareSeObj <- function(
                 sample.annotation[['tumour.purity']] <- 1 - tumour.purity
             } else if (estimate.tumor.purity == 'both'){
                 printColoredMessage(
-                    message = '-- Estimate tumour purity using both ESTIMATE and singscore methods:',
+                    message = '- Estimate tumour purity using both ESTIMATE and singscore methods:',
+                    color = 'blue',
+                    verbose = verbose)
+                printColoredMessage(
+                    message = '- Apply Estimate method:',
                     color = 'blue',
                     verbose = verbose)
                 tumour.purity <- tidyestimate::filter_common_genes(
@@ -573,6 +582,10 @@ prepareSeObj <- function(
                     df = tumour.purity,
                     is_affymetrix = TRUE)
                 tumour.purity.estimate <- tumour.purity$purity
+                printColoredMessage(
+                    message = '- Apply singscore method:',
+                    color = 'blue',
+                    verbose = verbose)
                 im.str.gene.sig <- hk_immunStroma$immune.gene.signature == 'TRUE' |
                     hk_immunStroma$stromal.gene.signature == 'TRUE'
                 if(gene.group == "entrezgene_id"){
@@ -713,8 +726,6 @@ prepareSeObj <- function(
                 stop('The "assay.name.to.estimate.purity" cannot be found in the SummarizedExperiment object.')
             }
         }
-
-
         ## check raw.count.assay.name ####
         if(!is.null(raw.count.assay.name)){
             if(length(raw.count.assay.name) > 1){
