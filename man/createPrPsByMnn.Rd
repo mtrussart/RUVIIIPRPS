@@ -32,8 +32,9 @@ createPrPsByMnn(
 \arguments{
 \item{se.obj}{A summarized experiment object.}
 
-\item{assay.name}{Symbol. A symbol for the selection of the name of the assay in the SummarizedExperiment object to be
-used to find k nearest neighbors data.}
+\item{assay.name}{Symbol. A symbol indicates the name of the assay in the SummarizedExperiment object. This assay will
+be used to first find k nearest neighbors and them mutual nearest neighbors data. This data must the one that will be
+used for the RUV-III normalization.}
 
 \item{uv.variable}{Symbol. Indicates the name of a column in the sample annotation of the SummarizedExperiment object.
 The 'uv.variable' can be either categorical and continuous. If 'uv.variable' is a continuous variable, this will be
@@ -99,8 +100,8 @@ or to output the result as list. By default it is set to TRUE.}
 }
 \description{
 This function uses the k and mutual nearest neighbors approaches to create PRPS in the RNA-seq data. This function
-can be used in situation that the biological variation are not known. The function applies the 'findKnn' function
-to find similar samples per batch and then average them to create pseudo-samples. The, function uses the 'findMnn' to
+can be used in situation that the biological variation are entirely unknown. The function applies the 'findKnn' function
+to find similar samples per batch and then average them to create pseudo-samples. Then, function uses the 'findMnn' to
 match up pseudo samples across batches to create pseudo-replicates.
 }
 \author{
