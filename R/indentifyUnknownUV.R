@@ -3,11 +3,15 @@
 #' @author Ramyar Molania
 
 #' @description
-#' Identifies sources of unwanted variation in RNA-seq data when none are known.
+#' This function identifies sources of unwanted variation in RNA-seq data using different approaches.
 
 #' @details
+#' Identification of sources of unwanted variation is essential to creating PRPS data for RUV-III normalization. There
+#' could be instances where certain sources of unwanted variation remain unrecorded. We refer to these as ”unknown”
+#' sources of unwanted variation.
 #' This function uses three different approaches: 'rle', 'pca' and 'sample.scoring' to find potential sources of unwanted
-#' variation in RNA-seq data when none are known. In the 'rle' approach, a clustering method specified by
+#' variation in RNA-seq data when none are known.
+#' - In the 'rle' approach, a clustering method specified by
 #' 'clustering.methods' will be applied on either the RLE medians or IQRs or both separately. In the absence of unwanted
 #' variation,there should be no clearly distinguishable clusters. In the 'pca' approach, first, a principal component analysis on
 #' either a set of negative control genes or all genes will be applied and then a clustering method will be used to cluster the
@@ -97,12 +101,12 @@
 
 #' @importFrom SummarizedExperiment assay colData
 #' @importFrom singscore rankGenes simpleScore
-#' @importFrom BiocSingular bsparam runSVD
-#' @importFrom NbClust NbClust
-#' @importFrom stats as.formula
-#' @importFrom dplyr arrange
-#' @importFrom GGally ggpairs wrap
 #' @importFrom RColorBrewer brewer.pal.info
+#' @importFrom BiocSingular bsparam runSVD
+#' @importFrom GGally ggpairs wrap
+#' @importFrom stats as.formula
+#' @importFrom NbClust NbClust
+#' @importFrom dplyr arrange
 #' @import ggplot2
 #' @export
 
@@ -220,7 +224,7 @@ identifyUnknownUV <- function(
     }
 
     if (!clustering.methods %in% c('kmeans', 'cut', 'quantile', 'nbClust')) {
-        stop('The clustering.methods should be one of kmeans, cut, quantile or nbClust.')
+        stop('The clustering.methods should be one of "kmeans", "cut", "quantile" or "nbClust".')
     }
     if(clustering.methods %in% c('kmeans', 'cut', 'quantile')){
         if(is.null(nb.clusters))
@@ -274,8 +278,7 @@ identifyUnknownUV <- function(
                 verbose = verbose)
         }
     }
-
-    # check the SummarizedExperiment object ####
+    # Check the SummarizedExperiment object ####
     if (assess.se.obj) {
         se.obj <- checkSeObj(
             se.obj = se.obj,
@@ -284,7 +287,8 @@ identifyUnknownUV <- function(
             remove.na = remove.na,
             verbose = verbose)
     }
-    # data transformation ####
+
+    # Data transformation ####
     printColoredMessage(message = '-- Data transformation:',
         color = 'magenta',
         verbose = verbose)
@@ -312,7 +316,7 @@ identifyUnknownUV <- function(
         temp.data <- assay(x = se.obj, i = assay.name)
     }
 
-    # regress out bio variables and bio gene sets ####
+    # Regress out bio variables and bio gene sets ####
     if(!is.null(regress.out.bio.variables) | !is.null(regress.out.bio.gene.sets)){
         printColoredMessage(
             message = '-- Regress out "regress.out.bio.variables" and "regress.out.bio.gene.sets" from the data:',
@@ -391,7 +395,8 @@ identifyUnknownUV <- function(
             row.names(temp.data) <- row.names(se.obj)
         }
     }
-    # select data input for clustering ####
+
+    # Select data input for clustering ####
     printColoredMessage( message = '-- Select input data for clustering:',
         color = 'magenta',
         verbose = verbose)
@@ -437,7 +442,7 @@ identifyUnknownUV <- function(
     } else if (approach == 'rle'){
         if(is.null(ncg)){
             printColoredMessage(
-                message = paste0('-Apply RLE on the data.'),
+                message = paste0('- Apply RLE on the data.'),
                 color = 'blue',
                 verbose = verbose)
             rle.data <- temp.data - rowMedians(temp.data)
@@ -474,15 +479,17 @@ identifyUnknownUV <- function(
         ranked.data <- rankGenes(temp.data)
         input.data <- lapply(
             names(all.uv.gene.sets),
-            function(x) singscore::simpleScore(rankData = ranked.data, upSet = all.uv.gene.sets[[x]])$TotalScore)
+            function(x) singscore::simpleScore(
+                rankData = ranked.data,
+                upSet = all.uv.gene.sets[[x]])$TotalScore)
         names(input.data) <- names(all.uv.gene.sets)
         rm(ranked.data)
-        gc()
         if(clustering.methods == 'nbClust'){
             input.data.name <- paste0(approach, '|nbClust.', nbClust.method, 'Clustering')
         } else input.data.name <- paste0(approach, '|', clustering.methods, 'Clustering')
     }
-    # clustering ####
+
+    # Clustering ####
     printColoredMessage(message = '- Cluster the data',
         color = 'magenta',
         verbose = verbose)
@@ -493,10 +500,10 @@ identifyUnknownUV <- function(
             verbose = verbose)
         ## kmeans ####
         set.seed(3344)
-        groups <-
-            kmeans(x = input.data,
-                   centers = nb.clusters,
-                   iter.max = 10000)$cluster
+        groups <- kmeans(
+            x = input.data,
+            centers = nb.clusters,
+            iter.max = 10000)$cluster
         uv.sources <- paste0('Batch' , groups)
     } else if (clustering.methods == 'cut'){
         printColoredMessage(
@@ -504,14 +511,12 @@ identifyUnknownUV <- function(
             color = 'blue',
             verbose = verbose)
         ## cut ####
-        groups <-
-            as.numeric(cut(
+        groups <- as.numeric(cut(
                 x = input.data,
                 breaks = nb.clusters,
                 include.lowest = TRUE
             ))
         uv.sources <- paste0('Batch' , groups)
-
     } else if(clustering.methods == 'quantile'){
         printColoredMessage(
             message = paste0('- Apply the quantile method with probs = ',
@@ -519,16 +524,13 @@ identifyUnknownUV <- function(
             color = 'blue',
             verbose = verbose)
         ## quantile ####
-        quantiles <-
-            quantile(x = input.data, probs = seq(0, 1, 1 / nb.clusters))
-        groups <-
-            as.numeric(cut(
+        quantiles <- quantile(x = input.data, probs = seq(0, 1, 1 / nb.clusters))
+        groups <- as.numeric(cut(
                 x = input.data,
                 breaks = quantiles,
                 include.lowest = TRUE
             ))
         uv.sources <- paste0('Batch' , groups)
-
     } else if(clustering.methods == 'nbClust'){
         printColoredMessage(
             message = '- Apply the nbClust method on the data.',
@@ -591,8 +593,7 @@ identifyUnknownUV <- function(
             assay.name,
             ' data.'),
         color = 'blue',
-        verbose = verbose
-    )
+        verbose = verbose)
 
     # plot outputs ####
     currentCols <-  c(
@@ -724,7 +725,7 @@ identifyUnknownUV <- function(
     printColoredMessage(message = '- Save the the results:',
                         color = 'magenta',
                         verbose = verbose)
-    if(save.se.obj == TRUE){
+    if(isTRUE(save.se.obj)){
         if (!'UknownUV' %in%  names(se.obj@metadata)) {
             se.obj@metadata[['UknownUV']] <- list()
         }

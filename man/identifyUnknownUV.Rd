@@ -144,11 +144,16 @@ colors representing the identified groups. The default value is 'TRUE}
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
 \description{
-Identifies sources of unwanted variation in RNA-seq data when none are known.
+This function identifies sources of unwanted variation in RNA-seq data using different approaches.
 }
 \details{
+Identification of sources of unwanted variation is essential to creating PRPS data for RUV-III normalization. There
+could be instances where certain sources of unwanted variation remain unrecorded. We refer to these as ”unknown”
+sources of unwanted variation.
 This function uses three different approaches: 'rle', 'pca' and 'sample.scoring' to find potential sources of unwanted
-variation in RNA-seq data when none are known. In the 'rle' approach, a clustering method specified by
+variation in RNA-seq data when none are known.
+\itemize{
+\item In the 'rle' approach, a clustering method specified by
 'clustering.methods' will be applied on either the RLE medians or IQRs or both separately. In the absence of unwanted
 variation,there should be no clearly distinguishable clusters. In the 'pca' approach, first, a principal component analysis on
 either a set of negative control genes or all genes will be applied and then a clustering method will be used to cluster the
@@ -156,6 +161,7 @@ first principal components to find unknown sources of unwanted variation. In the
 first, individual samples will be scored against a set of gene set(s) e.g. housekeeping gene, whose visible variation
 indicates the existence of unwanted variation s, then clustering method will be applied on the scoring to find potential
 unknown sources of unwanted variation.
+}
 }
 \references{
 Gandolfo L. C. & Speed, T. P., RLE plots: visualizing unwanted variation in high dimensional data. PLoS ONE, 2018.\
