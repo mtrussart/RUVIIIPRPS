@@ -47,6 +47,8 @@ Imports:
     ruv,
     Matrix,
     DescTools,
+    survminer,
+    survival,
     knitr,
     tidyestimate,
     edgeR,
