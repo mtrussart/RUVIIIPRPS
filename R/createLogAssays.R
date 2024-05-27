@@ -20,7 +20,7 @@ createLogAssays <- function(
         assay.names = 'all',
         pseudo.count = 1,
         replace.assays = FALSE,
-        apply.round = TRUE,
+        apply.round = FALSE,
         verbose = TRUE
 ){
     printColoredMessage(message = '------------The createLogAssays function starts:',
