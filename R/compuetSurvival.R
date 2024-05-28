@@ -36,7 +36,7 @@
 #' to output the result as list. By default it is set to TRUE.
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
-#' @importFrom survival survfit Surv
+#' @importFrom survival survfit survdiff Surv
 #' @importFrom survminer ggsurvplot
 #' @export
 
@@ -106,6 +106,7 @@ computeSurvival <- function(
 
     # Select colored ####
     selected.colores <-  c(
+        c("#E7B800", "#2E9FDF", 'red4'),
         RColorBrewer::brewer.pal(8, "Dark2")[-5],
         RColorBrewer::brewer.pal(10, "Paired"),
         RColorBrewer::brewer.pal(12, "Set3"),
@@ -190,7 +191,7 @@ computeSurvival <- function(
                             fit.surv <- survival::survfit(formula = survival::Surv(time , status) ~ gene, data = all.genes.grouping[[i]][[x]])
                             p <- ggsurvplot(fit.surv,
                                             pval = TRUE,
-                                            conf.int = TRUE,
+                                            conf.int = FALSE,
                                             risk.table = FALSE,
                                             risk.table.col = "strata",
                                             linetype = 1,
@@ -214,19 +215,32 @@ computeSurvival <- function(
             verbose = verbose)
         # Survival data ####
         survival.data <- as.data.frame(colData(se.obj))[ , c(survival.time, survival.events, variable)]
-        colnames(survival.data) <- c('time', 'status', 'variable')
-        diff.surv <- survival::survdiff(formula = survival::Surv(time , status) ~ variable, data = survival.data)
+        colnames(survival.data) <- c('time', 'status', 'group')
+        survdiff.fun <- function(survival.data) {
+            result <- survdiff(Surv(time, status) ~ group, data = survival.data)
+            return(result)
+        }
+        diff.surv <- survdiff.fun(survival.data)
         surv.pvalue.variable <- diff.surv$pvalue
-        fit.surv <- survival::survfit(formula = survival::Surv(time , status) ~ variable, data = survival.data)
-        surv.plot.variable <- ggsurvplot(fit.surv,
-                        pval = TRUE,
-                        conf.int = TRUE,
-                        risk.table = FALSE,
-                        risk.table.col = "strata",
-                        linetype = 1,
-                        legend = "bottom",
-                        title = x,
-                        palette = selected.colores[seq(length(unique(survival.data$variable)))])
+
+        survfit.fun <- function(survival.data) {
+            result <- survfit(Surv(time, status) ~ group, data = survival.data)
+            return(result)
+        }
+        fit.surv <- survfit.fun(survival.data)
+        ggsurvplot.fun <- function(fit.surv) {
+            ggsurvplot(fit = fit.surv,
+                       data = survival.data,
+                       pval = TRUE,
+                       conf.int = FALSE,
+                       risk.table = FALSE,
+                       risk.table.col = "strata",
+                       linetype = 1,
+                       legend = "bottom",
+                       title = variable,
+                       palette = selected.colores[seq(length(unique(survival.data$group)))])
+        }
+        surv.plot.variable <- ggsurvplot.fun(fit.surv)
         if(isTRUE(plot.output))
             print(surv.plot.variable)
     }
@@ -292,8 +306,9 @@ computeSurvival <- function(
                 if(isTRUE(return.survival.plots)){
                     ## check if metadata metric already exist for this assay and this metric
                     if (!'plots' %in% names(se.obj@metadata[['metric']][[x]][['Survival']][['variable.level']])) {
-                        se.obj@metadata[['metric']][[x]][['Survival']][['variable.level']][['plots']] <- surv.plot.variable
+                        se.obj@metadata[['metric']][[x]][['Survival']][['variable.level']][['plots']] <- list
                     }
+                    se.obj@metadata[['metric']][[x]][['Survival']][['variable.level']][['plots']] <- surv.plot.variable
                 }
             }
         }
@@ -308,7 +323,7 @@ computeSurvival <- function(
         return(se.obj = se.obj)
     }
     if(isFALSE(save.se.obj)){
-        return(corr.coeff)
+        return(surv.plot.variable)
     }
 
 }
