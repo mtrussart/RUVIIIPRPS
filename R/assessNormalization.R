@@ -71,6 +71,8 @@
 #' @param corr.method Symbol. Indicates which correlation methods should be used. Options are The default is 'spearman'.
 #' @param anova.method Symbol. Indicates which ANOVA methods should be used. Options are ... . The default is 'aov'.
 #' @param plot.output BB
+#' @param output.name TTTT
+#' @param save.se.obj TTTT
 #' @param output.file Path and name of the output file to save the assessments plots in a pdf format.
 #' @param verbose Logical. If TRUE, displaying process messages is enabled.
 #' @param fstat.cutoff Numeric. Specifies the threshold for selecting genes that have a F-statistics lower than this value
@@ -112,6 +114,8 @@ assessNormalization <- function(
         anova.method = 'aov',
         output.file = NULL,
         plot.output = TRUE,
+        output.name = NULL,
+        save.se.obj = TRUE,
         verbose = TRUE
 ){
     printColoredMessage(message = '------------The assessNormalization function starts:',
@@ -463,7 +467,7 @@ assessNormalization <- function(
             message = '- Summarize the gene-variable ANOVA :',
             color = 'blue',
             verbose = verbose)
-        gene.var.anova.coef.scores <- NULL
+        gene.var.anova.fvalue.scores <- NULL
         gene.var.anova.pvalue.scores <- NULL
         gene.var.anova.qvalue.scores <- NULL
         for(i in gene.var.anova.vars ){
@@ -843,9 +847,12 @@ assessNormalization <- function(
                         .default = "grey")
                 ))
     )
+    num.colors <- length(assays(se.obj))
+    original.palette <- brewer.pal(n = 8, name = 'Oranges')[8:1]
+    interpolated.colors <- grDevices::colorRampPalette(original.palette)(num.colors)
     p.overall <- ggplot(data = all.measurements, aes(x = test, y = data)) +
         geom_point(aes(size = measurements, color = rank)) +
-        scale_color_manual(values = RColorBrewer::brewer.pal(n = 8, name = 'Oranges')[8:1]) +
+        scale_color_manual(values = interpolated.colors) +
         theme_bw()  +
         xlab('') +
         ylab('') +
@@ -858,7 +865,7 @@ assessNormalization <- function(
               strip.text = element_text(size = c(12)),
               panel.border = element_rect(color = "grey90"),
               axis.line.y = element_line(colour = 'white', linewidth = 1),
-              axis.text.x = element_text(size = 8, angle = 45, hjust = 1),
+              axis.text.x = element_text(size = 8, angle = 25, hjust = 1),
               axis.text.y = element_text(size = 12),
               axis.ticks.x = element_blank(),
               axis.ticks.y = element_blank()) +
@@ -868,5 +875,60 @@ assessNormalization <- function(
     printColoredMessage(message = '------------The assessNormalization function finished.',
                         color = 'white',
                         verbose = verbose)
+
+
+    # Save results ####
+    ### add results to the SummarizedExperiment object ####
+    if(is.null(output.name))
+        output.name <- paste0('NormAssessment_', length(assays(se.obj)), '_assays.')
+
+    if(isTRUE(save.se.obj)){
+        printColoredMessage(
+            message = '-- Save the selected bio genes to the metadata of the SummarizedExperiment object.',
+            color = 'magenta',
+            verbose = verbose)
+        ## check if metadata metric already exist
+        if (!'NormAssessment' %in% names(se.obj@metadata)) {
+            se.obj@metadata[['NormAssessment']] <- list()
+        }
+        ## check if metadata metric already exist for this assay
+        if (!output.name %in% names(se.obj@metadata[['NormAssessment']])) {
+            se.obj@metadata[['NormAssessment']][[output.name]] <- list()
+        }
+        ## check if metadata metric already exist for this assay and this metric
+        if (!'AssessmentTable' %in% names(se.obj@metadata[['NormAssessment']][[output.name]])) {
+            se.obj@metadata[['NormAssessment']][[output.name]][['output.name']][['AssessmentTable']] <- list()
+        }
+        se.obj@metadata[['NormAssessment']][[output.name]][['output.name']][['AssessmentTable']] <- all.measurements
+
+        if (!'AssessmentPlot' %in% names(se.obj@metadata[['NormAssessment']][[output.name]])) {
+            se.obj@metadata[['NormAssessment']][[output.name]][['output.name']][['AssessmentPlot']] <- list()
+        }
+        se.obj@metadata[['NormAssessment']][[output.name]][['output.name']][['AssessmentPlot']] <- p.overall
+
+        printColoredMessage(
+            message = '- The assessment table and plot are saved to metadata of the SummarizedExperiment object.',
+            color = 'blue',
+            verbose = verbose)
+        printColoredMessage(message = '------------The assessNormalization function starts:',
+                            color = 'white',
+                            verbose = verbose)
+        return(se.obj)
+    }
+    ### export results as list ####
+    if(isFALSE(save.se.obj)){
+        printColoredMessage(
+            message = '- The assessment table and plot are outputed as list.',
+            color = 'blue',
+            verbose = verbose)
+        printColoredMessage(
+            message = '------------The findBioGenes function finished.',
+            color = 'white',
+            verbose = verbose)
+        return(list(AssessmentTable = all.measurements, AssessmentPlot = p.overall))
+    }
     return(se.obj)
 }
+
+
+
