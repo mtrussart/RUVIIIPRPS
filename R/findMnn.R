@@ -8,8 +8,6 @@
 
 #' @details
 #' Additional details...
-#'
-
 
 #' @param se.obj A summarized experiment object.
 #' @param assay.name Symbol. A symbol that indicates the name of the assay in the SummarizedExperiment object. This data
@@ -21,7 +19,6 @@
 #' @param hvg Vector. A vector of the names of the highly variable genes. These genes will be used to find mutual nearest
 #' neighbors samples across the batches. The default is set to 'NULL'. The 'findBioGenes' function can be used for specify
 #' a set of genes.
-
 #' @param clustering.method Symbol. A symbol that indicates the choice of clustering method for grouping the 'uv.variable'
 #' if a continuous variable is provided. Options include 'kmeans', 'cut', and 'quantile'. The default is set to 'kmeans'.
 #' @param nb.clusters Numeric. A numeric value indicating how many clusters should be found if the 'uv.variable' is a
@@ -43,6 +40,8 @@
 #' @param remove.na Symbol. To remove NA or missing values from the assays or not. The options are 'assays' and 'none'.
 #' The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
 #' the checkSeObj function for more details.
+#' @param output.name TTTT
+#' @param plot.output TTTT
 #' @param save.se.obj Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object
 #'  or to output the result as list. By default it is set to TRUE.
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
@@ -67,6 +66,8 @@ findMnn <- function(
         mnn.bpparam = SerialParam(),
         assess.se.obj = TRUE,
         remove.na = 'both',
+        output.name = NULL,
+        plot.output = TRUE,
         save.se.obj = TRUE,
         verbose = TRUE
         ) {
@@ -90,7 +91,7 @@ findMnn <- function(
             stop('All the hvg genes are not found in the SummarizedExperiment object.')
     }
 
-    # Assess.se.obj #####
+    # # Assess SummarizedExperiment object #####
     if (assess.se.obj) {
         se.obj <- checkSeObj(
             se.obj = se.obj,
@@ -99,11 +100,10 @@ findMnn <- function(
             remove.na = remove.na,
             verbose = verbose)
     }
-
     all.samples.index <- c(1:ncol(se.obj))
     ini.variable <- se.obj[[uv.variable]]
 
-    # Assess the unwanted variable ####
+    # Assess and group the unwanted variable ####
     if (class(se.obj[[uv.variable]]) %in% c('integer', 'numeric')) {
         ## cluster the continouse variable ####
         printColoredMessage(
@@ -148,7 +148,7 @@ findMnn <- function(
         se.obj[[uv.variable]] <- factor(x = se.obj[[uv.variable]])
     }
 
-    # Data transformation and regression #####
+    # Data normalization and transformation and regression ####
     printColoredMessage(message = '-- Data normalization, transformation and regression:',
                         color = 'magenta',
                         verbose = verbose)
@@ -159,7 +159,7 @@ findMnn <- function(
             selected.samples <- colData(se.obj)[[uv.variable]] == x
             if (!is.null(normalization) & is.null(regress.out.bio.variables)) {
                 printColoredMessage(
-                    message = paste0('Applying the ', normalization, ' within samples from ', x),
+                    message = paste0('- Apply the ', normalization, ' within samples from ', x),
                     color = 'blue',
                     verbose = verbose)
                 norm.data <- applyOtherNormalizations(
@@ -175,7 +175,7 @@ findMnn <- function(
                 norm.data
             } else if (!is.null(normalization) & !is.null(regress.out.bio.variables)) {
                 printColoredMessage(
-                    message = paste0('Applying the ', normalization, ' within samples from ', x,
+                    message = paste0('- Apply the ', normalization, ' within samples from ', x,
                         ' and then regressing out ', paste0(regress.out.bio.variables, collapse = '&'), '.'),
                     color = 'blue',
                     verbose = verbose
@@ -208,7 +208,7 @@ findMnn <- function(
             } else if (is.null(normalization) & is.null(regress.out.bio.variables & apply.log)) {
                 printColoredMessage(
                     message = paste0(
-                        'Applying log2 transformation ',
+                        '- Apply log2 transformation ',
                         'within samples from ',
                         unique(colData(se.obj)[[uv.variable]][x]),
                         ', and then finding ',
@@ -238,11 +238,15 @@ findMnn <- function(
     # Find MNN between batches ####
     pairs.batch <- combn(x = groups, m = 2)
     printColoredMessage(
-        message = paste0('-- Finding mnn between all possible pairs of sub-groups: "',
-                         uv.variable, '".', 'This may take few minuets.'),
+        message = '-- Find mnn, this may take few minuets."',
         color = 'magenta',
-        verbose = verbose
-    )
+        verbose = verbose)
+
+    printColoredMessage(
+        message = paste0('- All mnn between all possible pairs of sub-groups: "',
+                         uv.variable, '" will be found:'),
+        color = 'blue',
+        verbose = verbose)
     total <- ncol(pairs.batch)
     pb <- utils::txtProgressBar(min = 0, max = total, style = 3)
     all.mnn <- lapply(
@@ -251,7 +255,7 @@ findMnn <- function(
             message(' ')
             printColoredMessage(
                 message = paste0(
-                    '- Finding mutual nearest neighbors between ',
+                    '- Find mutual nearest neighbors between ',
                     pairs.batch[1, x],
                     ' and ',
                     pairs.batch[2, x],
@@ -272,36 +276,93 @@ findMnn <- function(
                     data2 = t(all.norm.data[[pairs.batch[2, x]]][hvg ,]),
                     k1 = 1,
                     k2 = 1,
-                    BPPARAM = mnn.bpparam
-                )
+                    BPPARAM = mnn.bpparam)
             }
+            group1 <- group2 <- NULL
             df <- data.frame(
                 group1 = rep(pairs.batch[1, x], length(mnn.samples$first)),
                 group2 = rep(pairs.batch[2, x], length(mnn.samples$second)),
                 sample.no.1 = all.samples.index[se.obj[[uv.variable]] == pairs.batch[1, x]][mnn.samples$first],
                 sample.no.2 = all.samples.index[se.obj[[uv.variable]] == pairs.batch[2, x]][mnn.samples$second]
             )
+            printColoredMessage(
+                message = paste0(
+                    '- ', nrow(df), ' mnn are found.'),
+                color = 'blue',
+                verbose = verbose)
             setTxtProgressBar(pb, x)
             return(df)
         })
     all.mnn <- do.call(rbind, all.mnn)
-    sum(is.na(all.mnn))
-    if(isTRUE(all.mnn)){
-        stop('There something wrong with the MNN step.')
-    }
+
+    # Plot mnn distribution ####
+    p.mnn <- ggplot(all.mnn, aes(x = group1, y = group2)) +
+        geom_point() +
+        geom_count() +
+        xlab('') +
+        ylab('') +
+        theme(
+            axis.line = element_line(colour = 'black', linewidth = 1),
+            axis.title.x = element_text(size = 10),
+            axis.title.y = element_text(size = 10),
+            plot.title = element_text(size = 12),
+            axis.text.x = element_text(size = 10, vjust = 1, hjust = 1),
+            axis.text.y = element_text(size = 10),
+            strip.text.x = element_text(size = 12))
+    if(isTRUE(plot.output))
+        print(p.mnn)
+    message(' ')
+    printColoredMessage(
+        message = paste0(
+            nrow(all.mnn), ' mnn are found in total.'),
+        color = 'blue',
+        verbose = verbose)
+    if(isTRUE(sum(is.na(all.mnn))))
+        stop('There are NA in the MNN.')
+
     se.obj[[uv.variable]] <- ini.variable
-    # Save the results ####
-    ## saving the results in the metadata of the SummarizedExperiment ####
-    if (isTRUE(save.se.obj)) {
+    # Select output name ####
+    if(is.null(output.name))
         output.name <- paste0(uv.variable, '||' , assay.name)
-        se.obj@metadata[['PRPS']][['unsupervised']][['KnnMnn']][['mnn']][[output.name]] <- all.mnn
+
+    # Save the results ####
+    ## save the results in the SummarizedExperiment object ####
+    message(' ')
+    printColoredMessage(message = '-- Save the results.',
+                        color = 'magenta',
+                        verbose = verbose)
+    if (isTRUE(save.se.obj)) {
+        if(!'PRPS' %in% names(se.obj@metadata)){
+            se.obj@metadata[['PRPS']] <- list()
+        }
+        if(!'un.supervised' %in% names(se.obj@metadata[['PRPS']])){
+            se.obj@metadata[['PRPS']][['un.supervised']] <- list()
+        }
+        if(!'KnnMnn' %in% names(se.obj@metadata[['PRPS']][['un.supervised']])){
+            se.obj@metadata[['PRPS']][['un.supervised']][['KnnMnn']] <- list()
+        }
+        if(!'knn' %in% names(se.obj@metadata[['PRPS']][['un.supervised']][['KnnMnn']])){
+            se.obj@metadata[['PRPS']][['un.supervised']][['KnnMnn']][['mnn']] <- list()
+        }
+        if(!output.name %in% names(se.obj@metadata[['PRPS']][['un.supervised']][['KnnMnn']][['knn']])){
+            se.obj@metadata[['PRPS']][['un.supervised']][['KnnMnn']][['mnn']][[output.name]] <- list()
+        }
+        se.obj@metadata[['PRPS']][['un.supervised']][['KnnMnn']][['mnn']][[output.name]] <- all.mnn
+        printColoredMessage(
+            message = '- All the mnn results are saved in the metadata of the SummarizedExperiment object.',
+            color = 'blue',
+            verbose = verbose)
         printColoredMessage(message = '------------The findMnn function finished.',
                             color = 'white',
                             verbose = verbose)
         return(se.obj)
     }
-    ## saving the output ####
+    ## output the results as matrix  ####
     if(isFALSE(save.se.obj)){
+        printColoredMessage(
+            message = '- All the mnn results are outputed as matrix.',
+            color = 'blue',
+            verbose = verbose)
         printColoredMessage(message = '------------The findMnn function finished.',
                             color = 'white',
                             verbose = verbose)
