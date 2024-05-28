@@ -73,7 +73,7 @@
 #' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
 #' object 'se.obj' or to output the result, by default it is set to TRUE.
 #' @param verbose Logical. Indicates whether to show or reduce the level of output or
-#' @param prps.set.name TTT
+#' @param prps.name TTT
 #' messages displayed during the execution of the functions, by default it is set to TRUE.
 
 #' @return A SummarizedExperiment object or a list that contains all the PRPS sets.
@@ -104,7 +104,7 @@ createPrPsSupervised <- function(
         remove.na = 'both',
         save.se.obj = TRUE,
         plot.output = TRUE,
-        prps.set.name = NULL,
+        prps.name = NULL,
         verbose = TRUE
 ) {
     printColoredMessage(message = '------------The supervisedPRPS function starts:',
@@ -147,7 +147,7 @@ createPrPsSupervised <- function(
                         assess.se.obj = FALSE,
                         save.se.obj = save.se.obj,
                         remove.na = remove.na,
-                        prps.set.name = prps.set.name,
+                        prps.name = prps.name,
                         verbose = verbose
                     )
                 })
@@ -177,7 +177,7 @@ createPrPsSupervised <- function(
                     assess.se.obj = FALSE,
                     save.se.obj = save.se.obj,
                     remove.na = remove.na,
-                    prps.set.name = prps.set.name,
+                    prps.name = prps.name,
                     verbose = verbose
                 )
             }
@@ -212,7 +212,7 @@ createPrPsSupervised <- function(
                         save.se.obj = save.se.obj,
                         pseudo.count = pseudo.count,
                         remove.na = remove.na,
-                        prps.set.name = prps.set.name,
+                        prps.name = prps.name,
                         verbose = verbose
                     )
                 })
@@ -241,7 +241,7 @@ createPrPsSupervised <- function(
                     save.se.obj = save.se.obj,
                     pseudo.count = pseudo.count,
                     remove.na = remove.na,
-                    prps.set.name = prps.set.name,
+                    prps.name = prps.name,
                     verbose = verbose
                 )
             }
