@@ -15,6 +15,7 @@
 #' argument, several group of pseudo-samples will be created, one for each homogeneous group of samples and for each batch.
 #' All those pseudo-samples belonging to the same group across batches will be defined as pseudo-replicates which constitutes
 #' a PRPS set.
+
 #' @param se.obj A SummarizedExperiment object.
 #' @param assay.name Symbol. Indicates a name of an assay in the SummarizedExperiment object. The selected assay should
 #' be the one that will be used for RUV-III-PRPS normalization.
@@ -65,7 +66,7 @@
 #' to 'FALSE'. We refer to the 'assessVariableAssociation' for more details.
 #' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
 #' object 'se.obj' or to output the result, by default it is set to TRUE.
-#' @param  prps.set.name Symbol.
+#' @param  prps.name Symbol.
 #' @param verbose Logical. Indicates whether to show or reduce the level of output or
 #' messages displayed during the execution of the functions, by default it is set to TRUE.
 
@@ -99,7 +100,7 @@ createPrPsForCategoricalUV <- function(
         cont.cor.coef = c(0.95, 0.95),
         plot.prps.map = TRUE,
         save.se.obj = TRUE,
-        prps.set.name = NULL,
+        prps.name = NULL,
         verbose = TRUE) {
     printColoredMessage(message = '------------The prpsForCategoricalUV function starts:',
                         color = 'white',
@@ -190,8 +191,10 @@ createPrPsForCategoricalUV <- function(
             save.se.obj = FALSE,
             remove.na = 'none',
             verbose = verbose)
-        if(sum(table(homo.bio.groups) == 1) == length(unique(homo.bio.groups)))
-            stop('All the homogeneous biological group of samples have only 1 sample. PRPS cannot be created.')
+        if(sum(table(homo.bio.groups) >=  2*min.sample.for.prps) == 0)
+            stop(paste0(
+            'All the homogeneous biological group of samples have less than ',
+            2*min.sample.for.prps, ' samples. PRPS cannot be created.'))
 
         ## create homogeneous sample groups with respect to unwanted variables ####
         printColoredMessage(
@@ -237,6 +240,16 @@ createPrPsForCategoricalUV <- function(
         ## check samples distribution ####
         samples.dis <- table(all.groups$bio.batch, all.groups$uv.group)
         selected.groups <- sum(rowSums(samples.dis >= min.sample.for.prps) > 1)
+        if(selected.groups == 0){
+            stop(paste0(
+                selected.groups,
+                ' sample groups of ',
+                length(unique(all.groups$bio.batch)),
+                ' homogeneous samples have at least ',
+                min.sample.for.prps,
+                ' samples in at least two batches of ',
+                main.uv.variable, '. PRPS cannot be created.'))
+        }
         printColoredMessage(
             message = paste0(
                 selected.groups,
@@ -423,13 +436,9 @@ createPrPsForCategoricalUV <- function(
         df.count <- info %>% dplyr::count(catvar, groups)
         df.count$use <- 'unselected'
         df.count$use[df.count$n >= min.sample.for.prps] <- 'Selected'
-        p <- ggplot(df.count, aes(x = catvar, y = groups)) +
+        prps.map.plot <- ggplot(df.count, aes(x = catvar, y = groups)) +
             geom_count(aes(color = use)) +
-            geom_text(aes(
-                label = n,
-                hjust = 0.5,
-                vjust = 0.5
-            )) +
+            geom_text(aes(label = n,hjust = 0.5,vjust = 0.5)) +
             xlab(main.uv.variable) +
             ylab('Homogeneous groups') +
             theme_bw() +
@@ -442,9 +451,8 @@ createPrPsForCategoricalUV <- function(
                     angle = 45,
                     hjust = 1),
                 axis.text.y = element_text(size = 10),
-                legend.position = 'none'
-            )
-        if(verbose) print(p)
+                legend.position = 'none')
+        if(isTRUE(verbose)) print(prps.map.plot)
     }
     # Save the results ####
     ## select output name ####
@@ -465,8 +473,8 @@ createPrPsForCategoricalUV <- function(
             '|',
             assay.name)
     }
-    if(is.null(prps.set.name)){
-        prps.set.name <- 'PRPS_Set1'
+    if(is.null(prps.name)){
+        prps.name <- paste0('prps_', main.uv.variable)
     }
     ## save the output in the SummarizedExperiment object ####
     if (isTRUE(save.se.obj)) {
@@ -478,21 +486,25 @@ createPrPsForCategoricalUV <- function(
         if (!'supervised' %in% names(se.obj@metadata[['PRPS']])) {
             se.obj@metadata[['PRPS']][['supervised']] <- list()
         }
-        ## check if prps.set.name already exists in the PRPS$supervised slot
-        if (!prps.set.name %in% names(se.obj@metadata[['PRPS']][['supervised']])) {
-            se.obj@metadata[['PRPS']][['supervised']][[prps.set.name]] <- list()
+        ## check if prps.name already exists in the PRPS$supervised slot
+        if (!prps.name %in% names(se.obj@metadata[['PRPS']][['supervised']])) {
+            se.obj@metadata[['PRPS']][['supervised']][[prps.name]] <- list()
         }
-        ## check if out.put.name already exists in the PRPS$supervised$prps.set.name slot
-        if (!out.put.name %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.set.name]])) {
-            se.obj@metadata[['PRPS']][['supervised']][[prps.set.name]][[out.put.name]] <- list()
+        ## check if prps.name already exists in the PRPS$supervised slot
+        if (!'prps.data' %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.name]])) {
+            se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.data']] <- list()
         }
-        se.obj@metadata[['PRPS']][['supervised']][[prps.set.name]][[out.put.name]] <- prps.sets
+        se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.data']][[out.put.name]] <- prps.sets
 
+        ## plot
+        if(isTRUE(plot.prps.map)){
+            if (!'prps.map.plot' %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.name]])) {
+                se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.map.plot']] <- list()
+            }
+            se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.map.plot']][[out.put.name]] <- prps.map.plot
+        }
         printColoredMessage(
-            message = paste0(
-                'The PRPS are saved to metadata@PRPS$Supervised: ',
-                out.put.name,
-                '.'),
+            message = 'The PRPS are saved to metadata@PRPS$Supervised',
             color = 'blue',
             verbose = verbose)
         printColoredMessage(message = '------------The prpsForCategoricalUV function finished.',
