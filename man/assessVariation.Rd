@@ -8,8 +8,7 @@ assessVariation(
   se.obj,
   assay.names = "all",
   variables,
-  metrics.to.exclude = NULL,
-  plots.to.exclude = NULL,
+  to.exclude = NULL,
   apply.log = TRUE,
   pseudo.count = 1,
   general.points.size = 1,
@@ -57,12 +56,9 @@ be selected.}
 \item{variables}{Symbols. Indicating the the column names containing variable(s) for assessing their variation within
 the SummarizedExperiment object. These variables may be either categorical or continuous.}
 
-\item{metrics.to.exclude}{Symbols. A symbol or vector of symbols indication which metrics to be excluded.
+\item{to.exclude}{Symbols. A symbol or vector of symbols indication which metrics to be excluded.
 The metrics can be obtained using the  'getAssessmentMetrics' function. The default is set to NULL. Refer
 to the details for more information.}
-
-\item{plots.to.exclude}{Symbols. A symbol or vector of symbols indicating which plots to exclude. These metrics can
-be acquired using the 'getAssessmentMetrics' function. Default is set to NULL. See the details for further information.}
 
 \item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data. By default
 no transformation will be selected.}

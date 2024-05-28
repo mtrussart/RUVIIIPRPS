@@ -40,11 +40,9 @@
 #' be selected.
 #' @param variables Symbols. Indicating the the column names containing variable(s) for assessing their variation within
 #' the SummarizedExperiment object. These variables may be either categorical or continuous.
-#' @param metrics.to.exclude Symbols. A symbol or vector of symbols indication which metrics to be excluded.
+#' @param to.exclude Symbols. A symbol or vector of symbols indication which metrics to be excluded.
 #' The metrics can be obtained using the  'getAssessmentMetrics' function. The default is set to NULL. Refer
 #' to the details for more information.
-#' @param plots.to.exclude Symbols. A symbol or vector of symbols indicating which plots to exclude. These metrics can
-#' be acquired using the 'getAssessmentMetrics' function. Default is set to NULL. See the details for further information.
 #' @param apply.log Logical. Indicates whether to apply a log-transformation to the data. By default
 #' no transformation will be selected.
 #' @param pseudo.count Numeric. A value as a pseudo count to be added to all measurements before log transformation,
@@ -123,56 +121,11 @@
 #' @importFrom graphics plot.new text
 #' @export
 
-
-# se.obj = brca.se.obj
-# assay.names = 'all'
-# variables = c('PAM50', 'library.size')
-# metrics.to.exclude = NULL
-# plots.to.exclude = NULL
-# apply.log = TRUE
-# pseudo.count = 1
-# general.points.size = 1
-# rle.iqr.width = 2
-# rle.median.points.size = 1
-# rle.median.points.color = 'red'
-# rle.geom.hline.color = "cyan"
-# rle.plot.ncol = 1
-# rle.plot.nrow = 3
-# rle.variables.colors = NULL
-# fast.pca = TRUE
-# compute.nb.pcs = 5
-# nb.pcs.toplot.pca = 3
-# center = TRUE
-# scale = FALSE
-# svd.bsparam = bsparam()
-# pca.variables.colors = NULL
-# sil.dist.measure = 'euclidian'
-# sli.nb.pcs = 3
-# ari.clustering.method = "hclust"
-# ari.hclust.method = "complete"
-# ari.hclust.dist.measure = "euclidian"
-# ari.nb.pcs = 3
-# vca.nb.pcs = 3
-# lra.nb.pcs = 3
-# corr.method = 'spearman'
-# a = 0.05
-# rho = 0
-# anova.method = 'aov'
-# deg.plot.ncol = 1
-# deg.plot.nrow = 3
-# assess.se.obj = TRUE
-# remove.na = 'none'
-# output.file.name = NULL
-# verbose = TRUE
-
-
-
 assessVariation <- function(
         se.obj,
         assay.names = 'all',
         variables,
-        metrics.to.exclude = NULL,
-        plots.to.exclude = NULL,
+        to.exclude = NULL,
         apply.log = TRUE,
         pseudo.count = 1,
         general.points.size = 1,
@@ -227,8 +180,8 @@ assessVariation <- function(
     if(is.null(variables)){
         stop('The "variables" cannot be empty or NULL.')
     }
-    if(is.logical(metrics.to.exclude) | is.logical(plots.to.exclude)){
-        stop('The "metrics.to.exclude" or "plots.to.exclude" must be a vector or NULL.')
+    if(is.logical(to.exclude)){
+        stop('The "to.exclude" must be a vector or NULL.')
     }
     if (isFALSE(is.logical(apply.log))) {
         stop('The "apply.log" must be "TRUE" or "FALSE".')
@@ -307,11 +260,11 @@ assessVariation <- function(
         save.se.obj = TRUE)
     # Metrics and plots to generate #####
     metrics.table <- se.obj@metadata$AssessmentMetrics$metrics.table
-    if(!is.null(metrics.to.exclude)){
-        metrics.table <- metrics.table[!metrics.table$Metrics %in% metrics.to.exclude, ]
+    if(!is.null(to.exclude)){
+        metrics.table <- metrics.table[!metrics.table$Code %in% to.exclude, ]
     }
-    if(!is.null(plots.to.exclude)){
-        plots.table <- metrics.table[!metrics.table$Code %in% plots.to.exclude, ]
+    if(!is.null(to.exclude)){
+        plots.table <- metrics.table[!metrics.table$Code %in% to.exclude, ]
     } else plots.table <- metrics.table
 
     printColoredMessage(
