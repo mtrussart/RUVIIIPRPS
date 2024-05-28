@@ -23,6 +23,7 @@ findKnn(
   pseudo.count = 1,
   assess.se.obj = TRUE,
   remove.na = "both",
+  output.name = NULL,
   save.se.obj = TRUE,
   verbose = TRUE
 )
@@ -84,6 +85,8 @@ function for more details.}
 \item{remove.na}{Symbol. To remove NA or missing values from the assays or not. The options are 'assays' and 'none'.
 The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
 the checkSeObj function for more details.}
+
+\item{output.name}{TTTT}
 
 \item{save.se.obj}{Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object
 or to output the result as list. By default it is set to TRUE.}
