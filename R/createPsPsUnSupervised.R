@@ -78,7 +78,7 @@
 #' the checkSeObj function for more details.
 #' @param save.se.obj Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment
 #' object or to output the result as list. By default it is set to TRUE.
-#' @param  prps.set.name Symbol.
+#' @param  prps.name Symbol.
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
 #' @importFrom SummarizedExperiment assay colData
@@ -126,7 +126,7 @@ createPrPsUnSupervised <- function(
         assess.se.obj = TRUE,
         remove.na = 'both',
         save.se.obj = TRUE,
-        prps.set.name = NULL,
+        prps.name = NULL,
         verbose = TRUE
 ) {
     if (approach == 'anchor') {
@@ -161,7 +161,7 @@ createPrPsUnSupervised <- function(
                 assess.se.obj = assess.se.obj,
                 remove.na = remove.na,
                 save.se.obj = save.se.obj,
-                prps.set.name = prps.set.name,
+                prps.name = prps.name,
                 verbose = verbose
             )
         }
@@ -189,7 +189,7 @@ createPrPsUnSupervised <- function(
                 assess.se.obj = assess.se.obj,
                 remove.na = remove.na,
                 save.se.obj = save.se.obj,
-                prps.set.name = prps.set.name,
+                prps.name = prps.name,
                 verbose = verbose
             )
         }
