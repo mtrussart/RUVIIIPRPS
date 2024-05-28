@@ -621,7 +621,6 @@ RUVIII.PRPS <- function(
 
     # Save data sets ####
     ## saving the norm data into a new assay ####
-    print('hhhhhhhoooo')
     if (isTRUE(save.se.obj)) {
         if(length(k) == 1){
             newY <- all.ruv$newY
