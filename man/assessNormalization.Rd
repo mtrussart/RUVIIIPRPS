@@ -22,6 +22,8 @@ assessNormalization(
   anova.method = "aov",
   output.file = NULL,
   plot.output = TRUE,
+  output.name = NULL,
+  save.se.obj = TRUE,
   verbose = TRUE
 )
 }
@@ -76,6 +78,10 @@ lower than this value with continuous variables. The default value is 0.2.}
 \item{output.file}{Path and name of the output file to save the assessments plots in a pdf format.}
 
 \item{plot.output}{BB}
+
+\item{output.name}{TTTT}
+
+\item{save.se.obj}{TTTT}
 
 \item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
 }
