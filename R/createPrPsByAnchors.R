@@ -57,7 +57,7 @@
 #' the checkSeObj function for more details.
 #' @param save.se.obj Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment
 #' object or to output the result as list. By default it is set to TRUE.
-#' @param  prps.set.name Symbol.
+#' @param  prps.name Symbol.
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
 #' @importFrom SummarizedExperiment assay colData
@@ -98,7 +98,7 @@ createPrPsByAnchors <- function(
         assess.se.obj = TRUE,
         remove.na = 'assays',
         save.se.obj = TRUE,
-        prps.set.name = NULL,
+        prps.name = NULL,
         verbose = TRUE) {
     printColoredMessage(message = '------------The createPrPsByAnchors function starts:',
                         color = 'white',
@@ -681,10 +681,12 @@ createPrPsByAnchors <- function(
         )
     }
     # saving the output ####
-   se.obj[[uv.variable]] <- ini.variable
-    out.put.name <- paste0(uv.variable, '|', assay.name)
-    if(is.null(prps.set.name)){
-        prps.set.name <- 'PRPS_Set1'
+    se.obj[[uv.variable]] <- ini.variable
+
+
+    ## select output name ####
+    if(is.null(prps.name)){
+        prps.name <- paste0('prps_anchors_', uv.variable)
     }
 
     if (save.se.obj) {
@@ -696,14 +698,15 @@ createPrPsByAnchors <- function(
         if (!'un.supervised' %in% names(se.obj@metadata[['PRPS']])) {
             se.obj@metadata[['PRPS']][['un.supervised']] <- list()
         }
-        ## check if prps.set.name already exists in the PRPS$supervised slot
-        if (!prps.set.name %in% names(se.obj@metadata[['PRPS']][['un.supervised']])) {
-            se.obj@metadata[['PRPS']][['un.supervised']][[prps.set.name]] <- list()
+        ## check if prps.name already exists in the PRPS$supervised slot
+        if (!prps.name %in% names(se.obj@metadata[['PRPS']][['un.supervised']])) {
+            se.obj@metadata[['PRPS']][['un.supervised']][[prps.name]] <- list()
         }
-        ## check if out.put.name already exists in the PRPS$supervised$prps.set.name slot
-        if (!out.put.name %in% names(se.obj@metadata[['PRPS']][['un.supervised']][[prps.set.name]])) {
-            se.obj@metadata[['PRPS']][['un.supervised']][[prps.set.name]][[out.put.name]] <- prps.data
+        ## check if metadata PRPS already exist for supervised
+        if (!'prps.data' %in% names(se.obj@metadata[['PRPS']][['un.supervised']][[prps.name]])) {
+            se.obj@metadata[['PRPS']][['un.supervised']][[prps.name]][['prps.data']] <- list()
         }
+        se.obj@metadata[['PRPS']][['un.supervised']][[prps.name]][['prps.data']][[prps.name]] <- prps.data
         printColoredMessage(message = '------------The createPrPsByAnchors function finished.',
                             color = 'white',
                             verbose = verbose)
