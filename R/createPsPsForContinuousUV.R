@@ -62,7 +62,7 @@
 #' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
 #' object 'se.obj' or to output the result, by default it is set to TRUE.
 #' @param plot.output description
-#' @param  prps.set.name Symbol.
+#' @param  prps.name Symbol.
 #' @param verbose Logical. Indicates whether to show or reduce the level of output or
 #' messages displayed during the execution of the functions, by default it is set to TRUE.
 
@@ -93,7 +93,7 @@ createPrPsForContinuousUV <- function(
         remove.na = 'both',
         save.se.obj = TRUE,
         plot.output = TRUE,
-        prps.set.name = NULL,
+        prps.name = NULL,
         verbose = TRUE) {
     printColoredMessage(message = '------------The prpsForContinuousUV function starts.',
                         color = 'white',
@@ -288,7 +288,7 @@ createPrPsForContinuousUV <- function(
             verbose = verbose
         )
         # plot prps sets ####
-        if(plot.output){
+        if(isTRUE(plot.output)){
             prps.sets.plot <- sapply(
                 selected.groups,
                 function(x) {
@@ -317,24 +317,15 @@ createPrPsForContinuousUV <- function(
                 scale_x_discrete(expand = c(0, 0.9)) +
                 ylab(main.uv.variable) +
                 xlab('Homogeneous groups') +
-                ylim(c(
-                    min(se.obj[[main.uv.variable]]),
-                    max(se.obj[[main.uv.variable]])
-                )) +
-                geom_hline(yintercept = c(
-                    min(se.obj[[main.uv.variable]]),
-                    max(se.obj[[main.uv.variable]])), color = 'gray70') +
+                ylim(c(min(se.obj[[main.uv.variable]]), max(se.obj[[main.uv.variable]]))) +
+                geom_hline(yintercept = c(min(se.obj[[main.uv.variable]]), max(se.obj[[main.uv.variable]])), color = 'gray70') +
                 theme(
                     legend.key = element_blank(),
                     axis.line = element_line(colour = 'black', linewidth = 1),
                     axis.title.x = element_text(size = 16),
                     axis.title.y = element_text(size = 16),
                     axis.text.y = element_text(size = 14),
-                    axis.text.x = element_text(
-                        size = 5,
-                        angle = 25,
-                        vjust = 1,
-                        hjust = 1),
+                    axis.text.x = element_text(size = 5, angle = 25, vjust = 1, hjust = 1),
                     legend.text = element_text(size = 14),
                     legend.title = element_text(size = 18),
                     strip.text.x = element_text(size = 15))
@@ -414,7 +405,7 @@ createPrPsForContinuousUV <- function(
         )
         # plot prps sets ####
         uv.var <- groups <- new.g <- bio.variable <- NULL
-        if(plot.output){
+        if(isTRUE(plot.output)){
             prps.sets.plot <- sapply(
                 selected.groups,
                 function(x) {
@@ -428,7 +419,7 @@ createPrPsForContinuousUV <- function(
                 pivot_longer(everything(), values_to = 'uv.var', names_to = 'bio.variable') %>%
                 arrange(bio.variable, uv.var) %>%
                 mutate(groups = rep(rep(c('bottom', 'top'), each = min.sample.for.prps), length(selected.groups)))
-            prps.sets.plot <- data.frame(
+            prps.map.plot <- data.frame(
                 bio.variable = rep(main.uv.variable, ncol(se.obj)),
                 uv.var = se.obj[[main.uv.variable]],
                 groups = main.uv.variable) %>%
@@ -465,10 +456,11 @@ createPrPsForContinuousUV <- function(
                     legend.text = element_text(size = 14),
                     legend.title = element_text(size = 18),
                     strip.text.x = element_text(size = 15))
-            print(prps.sets.plot)
+            if(isTRUE(plot.output)) print(prps.map.plot)
         }
     }
     # saving the output ####
+    ## select output name ####
     if(!is.null(other.uv.variables)) {
         out.put.name <- paste0(
             main.uv.variable,
@@ -486,32 +478,37 @@ createPrPsForContinuousUV <- function(
             '|',
             assay.name)
     }
-    if(is.null(prps.set.name)){
-        prps.set.name <- 'PRPS_Set1'
+    if(is.null(prps.name)){
+        prps.name <- paste0('prps_', main.uv.variable)
     }
     if (save.se.obj) {
-        ## Check if metadata PRPS already exists
+        ## check if PRPS already exists in the metadata
         if (!'PRPS' %in% names(se.obj@metadata)) {
             se.obj@metadata[['PRPS']] <- list()
         }
-        ## Check if metadata PRPS already exist for supervised
+        ## check if supervised already exists in the PRPS slot
         if (!'supervised' %in% names(se.obj@metadata[['PRPS']])) {
             se.obj@metadata[['PRPS']][['supervised']] <- list()
         }
-        ## check if prps.set.name already exists in the PRPS$supervised slot
-        if (!prps.set.name %in% names(se.obj@metadata[['PRPS']][['supervised']])) {
-            se.obj@metadata[['PRPS']][['supervised']][[prps.set.name]] <- list()
+        ## check if prps.name already exists in the PRPS$supervised slot
+        if (!prps.name %in% names(se.obj@metadata[['PRPS']][['supervised']])) {
+            se.obj@metadata[['PRPS']][['supervised']][[prps.name]] <- list()
         }
-        ## check if out.put.name already exists in the PRPS$supervised$prps.set.name slot
-        if (!out.put.name %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.set.name]])) {
-            se.obj@metadata[['PRPS']][['supervised']][[prps.set.name]][[out.put.name]] <- list()
+        ## check if prps.name already exists in the PRPS$supervised slot
+        if (!'prps.data' %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.name]])) {
+            se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.data']] <- list()
         }
-        se.obj@metadata[['PRPS']][['supervised']][[prps.set.name]][[out.put.name]] <- prps.sets
+        se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.data']][[out.put.name]] <- prps.sets
+
+        ## plot
+        if(isTRUE(plot.prps.map)){
+            if (!'prps.map.plot' %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.name]])) {
+                se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.map.plot']] <- list()
+            }
+            se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.map.plot']][[out.put.name]] <- prps.map.plot
+        }
         printColoredMessage(
-            message = paste0(
-                'The PRPS are saved to metadata@PRPS$supervised: ',
-                out.put.name,
-                '.'),
+            message = paste0('The PRPS are saved to metadata@PRPS$supervised:.'),
             color = 'blue',
             verbose = verbose)
         printColoredMessage(message = '------------The prpsForContinuousUV function finished.',
