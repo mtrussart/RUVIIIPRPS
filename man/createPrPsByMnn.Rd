@@ -9,6 +9,8 @@ createPrPsByMnn(
   assay.name,
   uv.variable,
   data.input = "expr",
+  filter.prps.sets = TRUE,
+  max.prps.sets = 20,
   nb.pcs = 2,
   center = TRUE,
   scale = FALSE,
@@ -25,7 +27,7 @@ createPrPsByMnn(
   assess.se.obj = TRUE,
   remove.na = "both",
   save.se.obj = TRUE,
-  prps.set.name = NULL,
+  prps.name = NULL,
   verbose = TRUE
 )
 }
@@ -43,6 +45,10 @@ divided into 'nb.clusters' groups using the 'clustering.method'.}
 \item{data.input}{Symbol. Indicates which data should be used an input for finding the k nearest neighbors data. Options
 include: 'expr' and 'pcs'. If 'pcs' is selected, the first PCs of the data will be used as input. If 'expr' is selected,
 the data will be selected as input.}
+
+\item{filter.prps.sets}{TTTT}
+
+\item{max.prps.sets}{TTTT}
 
 \item{nb.pcs}{Numeric. Indicates the number PCs should be used as data input for finding the k nearest neighbors. The
 'nb.pcs' must be set when the "data.input = PCs". The default is 2.}
@@ -94,7 +100,7 @@ the checkSeObj function for more details.}
 \item{save.se.obj}{Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object
 or to output the result as list. By default it is set to TRUE.}
 
-\item{prps.set.name}{TTTTT}
+\item{prps.name}{Symbol. A symbol that ...}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }

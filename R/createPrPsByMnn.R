@@ -8,8 +8,6 @@
 #' to find similar samples per batch and then average them to create pseudo-samples. Then, function uses the 'findMnn' to
 #' match up pseudo samples across batches to create pseudo-replicates.
 
-
-
 #' @param se.obj A summarized experiment object.
 #' @param assay.name Symbol. A symbol indicates the name of the assay in the SummarizedExperiment object. This assay will
 #' be used to first find k nearest neighbors and them mutual nearest neighbors data. This data must the one that will be
@@ -20,6 +18,8 @@
 #' @param data.input Symbol. Indicates which data should be used an input for finding the k nearest neighbors data. Options
 #' include: 'expr' and 'pcs'. If 'pcs' is selected, the first PCs of the data will be used as input. If 'expr' is selected,
 #' the data will be selected as input.
+#' @param filter.prps.sets TTTT
+#' @param max.prps.sets TTTT
 #' @param nb.pcs Numeric. Indicates the number PCs should be used as data input for finding the k nearest neighbors. The
 #' 'nb.pcs' must be set when the "data.input = PCs". The default is 2.
 #' @param center Logical. Indicates whether to scale the data or not. If center is TRUE, then centering is done by
@@ -54,7 +54,7 @@
 #' the checkSeObj function for more details.
 #' @param save.se.obj Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object
 #' or to output the result as list. By default it is set to TRUE.
-#' @param prps.set.name TTTTT
+#' @param prps.name Symbol. A symbol that ...
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
 #' @importFrom Seurat VariableFeatures FindIntegrationAnchors
@@ -69,6 +69,8 @@ createPrPsByMnn <- function(
         assay.name,
         uv.variable,
         data.input = 'expr',
+        filter.prps.sets = TRUE,
+        max.prps.sets = 20,
         nb.pcs = 2,
         center = TRUE,
         scale = FALSE,
@@ -85,12 +87,13 @@ createPrPsByMnn <- function(
         assess.se.obj = TRUE,
         remove.na = 'both',
         save.se.obj = TRUE,
-        prps.set.name = NULL,
+        prps.name = NULL,
         verbose = TRUE){
-    printColoredMessage(message = '------------The unsupervisedPRPSmnn function starts:',
+    printColoredMessage(message = '------------The createPrPsByMnn function starts:',
                         color = 'white',
                         verbose = verbose)
-    # Assess.se.obj #####
+
+    # Assess SummarizedExperiment object ####
     if(assess.se.obj){
         se.obj <- checkSeObj(
             se.obj = se.obj,
@@ -109,8 +112,7 @@ createPrPsByMnn <- function(
                 clustering.method,
                 ' clustering.'),
             color = 'blue',
-            verbose = verbose
-        )
+            verbose = verbose)
         if (clustering.method == 'kmeans') {
             set.seed(3456)
             uv.cont.clusters <- kmeans(
@@ -138,14 +140,15 @@ createPrPsByMnn <- function(
         se.obj[[uv.variable]] <- factor(x = se.obj[[uv.variable]])
     }
     if (length(findRepeatingPatterns(vec = se.obj[[uv.variable]], n.repeat = k.nn)) != length(unique(se.obj[[uv.variable]])))
-        stop(paste0('Some sub-groups of the variable ', uv.variable, ' have less than ', k.nn, ' samples. '))
+        stop(paste0(
+            'Some sub-groups of the variable "',
+            uv.variable,
+            '" have less than ',
+            k.nn,
+            ' (k.nn) samples. Then, knn cannot be found.'))
 
     # Finding k nearest neighbor ####
-    printColoredMessage(message = paste(
-            '-- Apply the find_knn function.',
-            'For individual samples per each group variable, ',
-            k.nn,
-            ' knn will be found.'),
+    printColoredMessage(message = '-- Apply the findKnn function:',
             color = 'magenta',
             verbose = verbose)
     if(isTRUE(save.se.obj)){
@@ -168,9 +171,12 @@ createPrPsByMnn <- function(
             pseudo.count = pseudo.count,
             assess.se.obj = assess.se.obj,
             remove.na = remove.na,
+            output.name = output.name,
             save.se.obj = save.se.obj,
             verbose = verbose)
-        all.knn <- se.obj@metadata$PRPS$unsupervised$KnnMnn$knn[[1]]
+        if(is.null(output.name))
+            output.name <- paste0(uv.variable, '|' , assay.name)
+        all.knn <- se.obj@metadata$PRPS$un.supervised$KnnMnn$knn[[output.name]]
     } else{
         all.knn <- findKnn(
             se.obj = se.obj,
@@ -191,10 +197,14 @@ createPrPsByMnn <- function(
             pseudo.count = pseudo.count,
             assess.se.obj = assess.se.obj,
             remove.na = remove.na,
+            output.name = uv.variable,
             save.se.obj = save.se.obj,
             verbose = verbose)
     }
     # Find mutual nearest neighbor ####
+    printColoredMessage(message = '-- Apply the findMnn function:',
+                        color = 'magenta',
+                        verbose = verbose)
     if(isTRUE(save.se.obj)){
         se.obj <- findMnn(
             se.obj = se.obj,
@@ -210,9 +220,12 @@ createPrPsByMnn <- function(
             assess.se.obj = assess.se.obj,
             mnn.bpparam = SerialParam(),
             remove.na = remove.na,
+            output.name = output.name,
             save.se.obj = save.se.obj,
             verbose = verbose)
-        all.mnn <- se.obj@metadata$PRPS$unsupervised$KnnMnn$mnn[[1]]
+        if(is.null(output.name))
+            output.name <- paste0(uv.variable, '|' , assay.name)
+        all.mnn <- se.obj@metadata$PRPS$un.supervised$KnnMnn$mnn[[output.name]]
     } else {
         all.mnn <- findMnn(
             se.obj = se.obj,
@@ -233,11 +246,14 @@ createPrPsByMnn <- function(
     }
 
     # Find PRPS sets ####
+    printColoredMessage(message = '-- Create the PRPS data:',
+                        color = 'magenta',
+                        verbose = verbose)
     all.prps.sets <- lapply(
         1:nrow(all.mnn),
         function(x){
             # ps set 1
-            ps.set.1 <- all.knn[ , c(1:c(k.nn+1)) ] == all.mnn$sample.no.1[x]
+            ps.set.1 <- all.knn[ , c(1:c(k.nn + 1)) ] == all.mnn$sample.no.1[x]
             ps.set.1 <- all.knn[rowSums(ps.set.1) > 0 , ]
             ps.set.1$mnn.sets <- paste0(
                 sort(c(all.mnn[x , 3], all.mnn[x , 4])),
@@ -266,26 +282,55 @@ createPrPsByMnn <- function(
             prps.set
         })
     all.prps.sets <- do.call(rbind, all.prps.sets)
+    if(is.null(all.prps.sets)){
+        stop('PRPS cannot be found.')
+    }
     all.prps.sets$aver.mnn.sets <- unlist(lapply(
         seq(1, nrow(all.prps.sets), 2),
         function(x) rep(mean(all.prps.sets$aver.dist[x:(x+1)]), 2)))
     all.prps.sets$rank.aver.mnn.sets <- rank(all.prps.sets$aver.mnn.sets)
 
     ## filter PRPS sets ####
-    all.prps.sets <- lapply(
-        unique(all.prps.sets$mnn.sets.data),
-        function(x){
-            temp.prps.set <- all.prps.sets[all.prps.sets$mnn.sets.data == x , ]
-            if(nrow(temp.prps.set) > 10*2){
-                temp.prps.set <- temp.prps.set[order(temp.prps.set$rank.aver.mnn.sets) , ]
-                temp.prps.set[1:c(10*2) , ]
-            } else{
+    if(isTRUE(filter.prps.sets)){
+        printColoredMessage(message = '-- Filter the PRPS data:',
+                            color = 'magenta',
+                            verbose = verbose)
+        printColoredMessage(message = paste0('- The maximum number of PRPS sets per across each batch is ', max.prps.sets),
+                            color = 'blue',
+                            verbose = verbose)
+        all.prps.sets <- lapply(
+            unique(all.prps.sets$mnn.sets.data),
+            function(x){
                 temp.prps.set <- all.prps.sets[all.prps.sets$mnn.sets.data == x , ]
-            }
-        })
-    all.prps.sets <- do.call(rbind, all.prps.sets)
+                if(nrow(temp.prps.set) > max.prps.sets){
+                    printColoredMessage(message = paste0('- The number of PRPS sets across batch ', x, ' is ', nrow(temp.prps.set), '.'),
+                                        color = 'blue',
+                                        verbose = verbose)
+                    printColoredMessage(message = paste0('- The PRPS sets will be filtered based on the distances between each knn sets.'),
+                                        color = 'blue',
+                                        verbose = verbose)
+                    printColoredMessage(message = paste0('- ', nrow(temp.prps.set) - max.prps.sets, ' PRPS sets are removed.'),
+                                        color = 'blue',
+                                        verbose = verbose)
+                    temp.prps.set <- temp.prps.set[order(temp.prps.set$rank.aver.mnn.sets) , ]
+                    temp.prps.set[1:c(max.prps.sets) , ]
+                } else {
+                    printColoredMessage(message = paste0('- The number of PRPS sets across batch ', x, ' is ', nrow(temp.prps.set), '.'),
+                                        color = 'blue',
+                                        verbose = verbose)
+                    temp.prps.set <- all.prps.sets[all.prps.sets$mnn.sets.data == x , ]
+                }
+            })
+        all.prps.sets <- do.call(rbind, all.prps.sets)
+    }
+    printColoredMessage(message = paste0('- ', nrow(all.prps.sets), ' PRPS stes are found in total.'),
+                        color = 'blue',
+                        verbose = verbose)
 
     ## check coverage ####
+    printColoredMessage(message = '-- Check the distribution PRPS stes:',
+                        color = 'magenta',
+                        verbose = verbose)
     groups <- sort(unique(unlist(strsplit(all.prps.sets$mnn.sets.data, '_'))))
     prps.coverage <- matrix('', nrow = nrow(all.prps.sets), ncol = length(groups))
     colnames(prps.coverage) <- groups
@@ -293,15 +338,20 @@ createPrPsByMnn <- function(
         names(prps.coverage[i, ]) %in% unlist(strsplit(all.prps.sets$mnn.sets.data[i], '_'))
     }))
     colnames(prps.coverage) <- groups
-    if(sum(colSums(prps.coverage) == 0)){
+    if(sum(colSums(prps.coverage) == 0) > 0 ){
         printColoredMessage(
             message = paste(paste0( colnames(prps.coverage)[ colSums(prps.coverage) == 0], collapse = ' & '), 'are not covered by any PRPS set' ),
-        color = 'blue',
+        color = 'red',
         verbose = verbose)
+    } else {
+        printColoredMessage(message = '- All batches are covered by PRPS sets.',
+                            color = 'blue',
+                            verbose = verbose)
     }
+
     # check connection
-    printColoredMessage(message = '### Asseesing the connection between PRPS sets.',
-                          color = 'blue',
+    printColoredMessage(message = '-- Assees the connection between PRPS sets across batch.',
+                          color = 'magenta',
                           verbose = verbose)
     prps.connection <- lapply(
         1:nrow(prps.coverage),
@@ -324,23 +374,24 @@ createPrPsByMnn <- function(
     all.covered.batches <- unique(all.covered.batches)
     all.not.covered.batches <- unique(unlist(all.covered.batches))[unique(unlist(all.covered.batches)) %in% groups]
     if (length(unique(unlist(all.covered.batches))) == length(groups)) {
-        printColoredMessage(message = 'The connections between PRPS sets can cover all the batches.',
-                              color = 'white',
-                              verbose = verbose)
+        printColoredMessage(
+            message = 'The connections between PRPS sets can cover all the batches.',
+            color = 'blue',
+            verbose = verbose)
     } else {
-        printColoredMessage(message = 'All batches are not covered by PRPS.',
-                              color = 'red',
-                              verbose = verbose)
+        printColoredMessage(
+            message = '- All batches are not covered by PRPS.',
+            color = 'red',
+            verbose = verbose)
         printColoredMessage(
             message = paste0(
                 'The PRPS sets donot cover ',
                 paste0(all.not.covered.batches, collapse = ' & '),
-                ' batches.'
-            ),
-            color = 'white',
-            verbose = verbose
-        )
+                ' batches.'),
+            color = 'blue',
+            verbose = verbose)
     }
+
     # Create PRPS data ####
     printColoredMessage(message = '-- Create PRPS data:',
         color = 'magenta',
@@ -385,15 +436,15 @@ createPrPsByMnn <- function(
             prps
         })
     prps.data <- do.call(cbind, prps.data)
+
     ## sanity check ####
     if(!sum(table(colnames(prps.data)) == 2) == ncol(prps.data)/2){
         stop('There someting wrong with PRPS sets.')
     }
 
-    # Save the outputs ####
-    output.name <- paste0(uv.variable, '||' , assay.name)
-    if(is.null(prps.set.name)){
-        prps.set.name <- 'PRPS_Set1'
+    # Save the results ####
+    if(is.null(prps.name)){
+        prps.name <- paste0('prps_mnn_', uv.variable)
     }
     printColoredMessage(message = '-- Save the PRPS data',
                         color = 'magenta',
@@ -412,22 +463,23 @@ createPrPsByMnn <- function(
         if (!'un.supervised' %in% names(se.obj@metadata[['PRPS']])) {
             se.obj@metadata[['PRPS']][['un.supervised']] <- list()
         }
-        ## check if prps.set.name already exists in the PRPS$supervised slot
-        if (!prps.set.name %in% names(se.obj@metadata[['PRPS']][['un.supervised']])) {
-            se.obj@metadata[['PRPS']][['un.supervised']][[prps.set.name]] <- list()
+        ## check if prps.name already exists in the PRPS$supervised slot
+        if (!prps.name %in% names(se.obj@metadata[['PRPS']][['un.supervised']])) {
+            se.obj@metadata[['PRPS']][['un.supervised']][[prps.name]] <- list()
         }
-        ## check if out.put.name already exists in the PRPS$supervised$prps.set.name slot
-        if (!prps.set.name %in% names(se.obj@metadata[['PRPS']][['un.supervised']][[prps.set.name]])) {
-            se.obj@metadata[['PRPS']][['un.supervised']][[prps.set.name]][[prps.set.name]] <- prps.data
+        ## check if metadata PRPS already exist for supervised
+        if (!'prps.data' %in% names(se.obj@metadata[['PRPS']][['un.supervised']][[prps.name]])) {
+            se.obj@metadata[['PRPS']][['un.supervised']][[prps.name]][['prps.data']] <- list()
         }
-        printColoredMessage(message = '------------The unsupervisedPRPSmnn function finished.',
+        se.obj@metadata[['PRPS']][['un.supervised']][[prps.name]][['prps.data']][[prps.name]] <- prps.data
+        printColoredMessage(message = '------------The createPrPsByMnn function finished.',
                             color = 'white',
                             verbose = verbose)
         return(se.obj)
     }
-    ## Output the PRPS data as matrix ####
-    if(isFALSE(prps.set.name)){
-        printColoredMessage(message = '------------The unsupervisedPRPSmnn function finished.',
+    ## output the PRPS data as matrix ####
+    if(isFALSE(prps.name)){
+        printColoredMessage(message = '------------The createPrPsByMnn function finished.',
                             color = 'white',
                             verbose = verbose)
         return(prps.data = prps.data)
