@@ -127,7 +127,7 @@ plotRLE <- function(
     }
     # Obtain rle data ####
     printColoredMessage(
-        message = paste0('-- Obtain the RLE data from the SummarizedExperiment object:'),
+        message = paste0('-- Obtain the computed RLE data from the SummarizedExperiment object:'),
         color = 'magenta',
         verbose = verbose
     )
@@ -150,7 +150,7 @@ plotRLE <- function(
                         ' data. Please run the computeRLE function with the "outputs.to.return" equal to "all" or "rle.data".'))
             }
             printColoredMessage(
-                message = paste0('- the RLE data of the', x , ' data:'),
+                message = paste0('- Obtain the RLE data for the ', x , ' data.'),
                 color = 'blue',
                 verbose = verbose)
 
@@ -160,7 +160,7 @@ plotRLE <- function(
 
     # generate the RLE plots ####
     printColoredMessage(
-        message = '-- Generate the RLE plots:',
+        message = '-- Generate the RLE boxplots :',
         color = 'magenta',
         verbose = verbose
     )
@@ -168,10 +168,9 @@ plotRLE <- function(
     # Specify ylim for the RLE plots ####
     if(is.null(ylim.rle.plot)){
         printColoredMessage(
-            message = '-- Specify ylim for the RLE plots:',
+            message = '- ylim is not provided, the specifying the same ylim for all the RLE plots:',
             color = 'blue',
-            verbose = verbose
-        )
+            verbose = verbose)
         ylim.rle.plot <- abs(unlist(lapply(
             levels(assay.names),
             function(x){
@@ -188,11 +187,9 @@ plotRLE <- function(
         levels(assay.names),
         function(x) {
             printColoredMessage(
-                message = paste0('-- Generate the RLE plot for the ', x , 'data.'),
+                message = paste0('- Generate the RLE plot for the ', x , 'data.'),
                 color = 'blue',
-                verbose = verbose
-            )
-
+                verbose = verbose)
             rle.data <- all.rle.data[[x]]
             rle.med.var <- round(x = stats::mad(matrixStats::colMedians(rle.data)) , digits = 2)
             rle.iqr.var <- round(x = stats::mad(matrixStats::colIQRs(rle.data)), digits = 2)
@@ -272,15 +269,18 @@ plotRLE <- function(
     if(length(assay.names) > 1){
         printColoredMessage(
             message = '-- Put all the RLE plots together.',
-            color = 'blue',
-            verbose = verbose
-        )
+            color = 'magenta',
+            verbose = verbose)
         overall.rle.plot <- ggpubr::ggarrange(
             plotlist = all.rle.plots,
             ncol = plot.ncol,
             nrow = plot.nrow,
             legend = "bottom",
             common.legend = TRUE)
+        printColoredMessage(
+            message = '- The individual assay RLE plots are combined into one.',
+            color = 'blue',
+            verbose = verbose)
     if (isTRUE(plot.output)) print(overall.rle.plot)
     }
 
@@ -292,7 +292,7 @@ plotRLE <- function(
     ## add plots to the SummarizedExperiment object ####
     if (save.se.obj == TRUE) {
         printColoredMessage(
-            message = '-- Save all the RLE plots to the metadata of the SummarizedExperiment object.',
+            message = '- Save all the RLE plots to the "metadata" of the SummarizedExperiment object.',
             color = 'blue',
             verbose = verbose)
         ## add RLE plots of individual assays ####
@@ -319,11 +319,10 @@ plotRLE <- function(
         }
         printColoredMessage(
             message = paste0(
-                'The RLE plots of individual assays are saved to metadata@metric'),
+                '- The RLE plot of individual assay(s) are saved to the ',
+                '"se.obj@metadata$metric$AssayName$RLE$rle.plot" in the SummarizedExperiment object.'),
             color = 'blue',
-            verbose = verbose
-        )
-
+            verbose = verbose)
         ## add overall RLE plots of all assays ####
         if(length(assay.names) > 1){
             if (!'plot' %in%  names(se.obj@metadata)) {
@@ -347,7 +346,8 @@ plotRLE <- function(
                 se.obj@metadata[['plot']][['RLE']][['uncolored.rle.plot']] <- overall.rle.plot
             }
             printColoredMessage(
-                message = paste0('The RLE plots of all assays are saved to metadata@plot'),
+                message = paste0('- The combined RLE plots of all assays are saved to the',
+                                 ' "se.obj@metadata$plot$RLE" in the SummarizedExperiment object.'),
                 color = 'blue',
                 verbose = verbose
             )
