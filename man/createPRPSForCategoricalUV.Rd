@@ -10,7 +10,7 @@ createPrPsForCategoricalUV(
   bio.variables,
   main.uv.variable,
   other.uv.variables = NULL,
-  min.sample.for.prps = 3,
+  min.sample.for.ps = 3,
   bio.clustering.method = "kmeans",
   nb.bio.clusters = 2,
   other.uv.clustering.method = "kmeans",
@@ -32,62 +32,62 @@ createPrPsForCategoricalUV(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.name}{Symbol. Indicates a name of an assay in the SummarizedExperiment object. The selected assay should
-be the one that will be used for RUV-III-PRPS normalization.}
+\item{assay.name}{Symbol. A symbol specifying the assay name within the SummarizedExperiment object. The selected
+assay should be the one that will be used for RUV-III-PRPS normalization.}
 
-\item{bio.variables}{Symbol. A symbol or a list of symbols indicating the column names that contain biological
-variables. All categorical and continuous variables can be provided. If more than one symbols are specified, all
-possible homogeneous biological groups will be created by the createHomogeneousBioGroups function.}
+\item{bio.variables}{Symbol. A symbol or symbols representing the label of biological variable(s), such as cancer
+subtypes, tumour purity, ... within the SummarizedExperiment object. This can comprise a vector containing either
+categorical, continuous, or a combination of both variables.}
 
-\item{main.uv.variable}{Symbol. Indicates a name of the column that contains a source of categorical variable of
-unwanted variation that PRPS should be created for.}
+\item{main.uv.variable}{Symbols. A symbol representing the label of a categorical unwanted variable, such as batch effects,
+, ... within the SummarizedExperiment object.}
 
-\item{other.uv.variables}{String of the label of (a) categorical or continuous variable(s) used to define homogeneous
-groups of samples such as library size, plates from colData(se). By default it is set to 'NULL' meaning the samples
-will be assigned to homogeneous biological groups of samples using the 'bio.variables'.}
+\item{other.uv.variables}{Symbol. A symbol or symbols representing the label of unwanted variable(s), such as batch effects,
+library size, ... within the SummarizedExperiment object. This can comprise a vector containing either categorical,
+continuous, or a combination of both variables. These variable(s) will be considered when generating PRPS sets fo the
+main.uv.variable. The default is set to 'NULL'.}
 
-\item{min.sample.for.prps}{Numeric. Indicates the minimum number of samples to be averaged to create one pseudo-sample,
-by default is 3.
-to create a PRPS set for each continuous variable. The minimum should be '2*min.sample.for.prps'. By default it is
-set to 6.}
+\item{min.sample.for.ps}{Numeric. Indicates the minimum number of biologically homogeneous samples to be averaged
+to create one pseudo-sample. The default it is set to 3.}
 
-\item{bio.clustering.method}{String of the clustering method to assign each sample to an homogeneous biological
-clusters/group using the function 'kmeans', cut' from base or the function 'quantile'. By default it is to 'kmeans'.}
+\item{bio.clustering.method}{Symbol. A symbol indicating the clustering method used to group each continuous biological
+variable. The option include 'kmeans', cut' and 'quantile'. The default is to 'kmeans'. We refer to the
+createHomogeneousBioGroups() function for more details.}
 
-\item{nb.bio.clusters}{Numeric. A value to specify the number of homogeneous biological clusters/groups of samples.
-By default it is set to 3.}
+\item{nb.bio.clusters}{Numeric. A numeric value to specify the number of clusters/groups for each continuous biological
+variable. The default it set to 3.}
 
-\item{other.uv.clustering.method}{String of the clustering method to assign each sample to an homogeneous clusters/group
-of samples based on the 'other.uv.variables' using the function 'kmeans','cut' from base or the function 'quantile'.
-By default it is to 'kmeans'.}
+\item{other.uv.clustering.method}{Symbol. A symbol indicating the clustering method used to group each continuous unwanted
+variable. The option include 'kmeans', cut' and 'quantile'. The default is to 'kmeans'. We refer to the
+createHomogeneousUVGroups() function for more details.}
 
-\item{nb.other.uv.clusters}{Numeric. A value to specify the number of groups for continuous sources of biological
-variation. The default is 2. This means each continuous sources will be divided into 2 groups using the 'clustering.method'.}
+\item{nb.other.uv.clusters}{Numeric. A numeric value to specify the number of clusters/groups for each continuous biological
+variable. The default it set to 3.}
 
-\item{check.prps.connectedness}{Logical. Indicates to assess the connectedness between the PRPS sets or not. The default
-is set to 'TRUE'. We refer to the reference number X for more detail.}
+\item{check.prps.connectedness}{Logical. Indicates whether to assess the connectedness between the PRPS sets or not.
+The default is set to 'TRUE'. See the details for more information.}
 
-\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data, by default it is set to TRUE.}
+\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data. The default is set to 'TRUE'.}
 
-\item{pseudo.count}{Numeric. A value as a pseudo count to be added to all measurements before log transformation,
-by default it is set to 1.}
+\item{pseudo.count}{Numeric. A numeric value as a pseudo count to be added to all measurements before log transformation.
+The default is set to 1.}
 
-\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment class object.
-By default it is set to TRUE.}
+\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment object. If 'TRUE', the checkSeObj
+will be applied inside the function. The default is set to 'TRUE'.}
 
-\item{remove.na}{String. Indicates whether to remove NA or missing values from either the 'assays', the 'sample.annotation',
-'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If
-'sample.annotation' is selected, the samples that contains NA or missing values for any 'bio.variables' and
-'uv.variables' will be excluded. By default, it is set to both'.}
+\item{remove.na}{Symbol. A symbol Indicating whether to remove NA or missing values from either the 'assays', the
+'sample.annotation', both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be
+excluded. If sample.annotation' is selected, the samples that contains NA or missing values for any 'bio.variables' and
+'uv.variables' will be excluded. The default is set to both'.}
 
-\item{assess.variables}{Logical. Indicates whether ot assess the association between the variable. The default is set
-to 'FALSE'. We refer to the 'assessVariableAssociation' for more details.}
+\item{assess.variables}{Logical. Indicates whether to assess the association between the biological or unwanted
+variable(s) separately. The default is set to 'FALSE'. We refer to the 'assessVariableAssociation' for more details.}
 
 \item{cat.cor.coef}{Vector of two numerical values. Indicates the cut-off of the correlation coefficient between each
-pair of categorical variables. The first one is between each pair of 'uv.variables' and the second one is between
-each pair of 'bio.variables'. The correlation is computed by the function ContCoef from the DescTools package. If the
-correlation of a pair of variable is higher than the cut-off, then only the variable that has the highest number of
-factor will be kept and the other one will be excluded from the remaining analysis. By default they are both set to 0.7.}
+pair of categorical variables. The first one is between each pair of 'uv.variables' and the second one is between each
+pair of 'bio.variables'. The correlation is computed by the function ContCoef from the DescTools package. If the correlation
+of a pair of variable is higher than the cut-off, then only the variable that has the highest number of factor will be
+kept and the other one will be excluded from the remaining analysis. By default they are both set to 0.7.}
 
 \item{cont.cor.coef}{Vector of two numerical values. Indicates the cut-off of the Spearman correlation coefficient
 between each pair of continuous variables. The first one is between each pair of 'uv.variables' and the second one is
@@ -95,18 +95,20 @@ between each pair of 'bio.variables'. If the correlation of a pair of variable i
 the variable that has the highest variance will be kept and the other one will be excluded from the remaining analysis.
 By default they are both set to 0.7.}
 
-\item{plot.prps.map}{Logical. Whether to plot the PRPS map or not. The default is set to 'TRUE'.}
+\item{plot.prps.map}{Logical. Indicates whether to generate the PRPS map plot for individual sources of unwanted variation.
+The default is 'TRUE'.}
 
-\item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
-object 'se.obj' or to output the result, by default it is set to TRUE.}
+\item{save.se.obj}{Logical. Indicates whether to save the results in the metadata of the SummarizedExperiment object
+or to output the result as list. The default by is set to 'TRUE'.}
 
-\item{prps.name}{Symbol.}
+\item{prps.name}{Symbol. A symbol to specify the name of all PRPS sets that will be created for all specified source(s)
+of unwanted variation. The default is set to 'NULL'. The, the function creates a name based on paste0('prps_', uv.variable).}
 
-\item{verbose}{Logical. Indicates whether to show or reduce the level of output or
-messages displayed during the execution of the functions, by default it is set to TRUE.}
+\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
 \value{
-A SummarizedExperiment object or a list that containing the PRPS data.
+A SummarizedExperiment object that contains all the PRPS data and PPRS map plot in the metadata or a list
+that contains all the results.
 }
 \description{
 Distinct group of PRPS are created for each source of unwanted variation defined in the 'main.uv.variable' argument

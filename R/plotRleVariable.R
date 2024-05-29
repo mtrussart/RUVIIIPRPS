@@ -105,7 +105,7 @@ plotRleVariable <- function(
 
     # obtain rle data ####
     printColoredMessage(
-        message = paste0('-- Obtain the RLE medians and IQR data from the SummarizedExperiment object:'),
+        message = paste0('-- Obtain the computed RLE medians and IQR from the SummarizedExperiment object:'),
         color = 'magenta',
         verbose = verbose
     )
@@ -124,6 +124,10 @@ plotRleVariable <- function(
                     x,
                     ' assay. Please run the computeRLE function first.'))
             }
+            printColoredMessage(
+                message = paste0('- Obtain the RLE medians and IQR for the ', x , ' data.'),
+                color = 'blue',
+                verbose = verbose)
             list(rle.medians = se.obj@metadata[['metric']][[x]][['RLE']][['rle.data']]$rle.med,
                  rle.iqrs = se.obj@metadata[['metric']][[x]][['RLE']][['rle.data']]$rle.iqr)
         })
@@ -151,10 +155,9 @@ plotRleVariable <- function(
 
     # generate the plots ####
     printColoredMessage(
-        message = paste0('-- Generate the plots with the RLE medians:'),
+        message = paste0('-- Generate plots between the "variable" and the RLE medians:'),
         color = 'magenta',
-        verbose = verbose
-    )
+        verbose = verbose)
     samples <- rle <- everything <- sample <- rle.medians <- r.label <- NULL
     all.rle.med.var.plots <- lapply(
         levels(assay.names),
@@ -165,7 +168,8 @@ plotRleVariable <- function(
             if(class(colData(se.obj)[[variable]]) %in% c('numeric', 'integr')){
                 # scatter plot ####
                 printColoredMessage(
-                    message = paste0('-Generate a scatter plot between the RLE medians of the ', x,' data and the variable:'),
+                    message = paste0('- Generate a scatter plot between the RLE medians of the ',
+                                     x,' data and the ',  variable,  'variable.'),
                     color = 'blue',
                     verbose = verbose)
                 p.rle <- ggplot(rle.med.data, aes(x = var, y = rle.medians)) +
@@ -189,9 +193,8 @@ plotRleVariable <- function(
             } else{
                 # boxplot ####
                       printColoredMessage(
-                          message = paste0(
-                              '-Generate a boxplot between the RLE medians of the ', x,
-                              ' data and the variable:'),
+                          message = paste0('- Generate a boxplot between the RLE medians of the ',
+                                           x,' data and the ',  variable,  'variable.'),
                           color = 'blue',
                           verbose = verbose)
                 p.rle <- ggplot(rle.med.data, aes(x = var, y = rle.medians)) +
@@ -217,24 +220,26 @@ plotRleVariable <- function(
     # generate the overall RLE plots ####
     if(length(assay.names) > 1){
         printColoredMessage(
-            message = '-- Put together all the plots of the RLE medians and the variable:',
+            message = '-- Put all the plots together:',
             color = 'magenta',
-            verbose = verbose
-        )
+            verbose = verbose)
         overall.rle.med.var.plots <- ggpubr::ggarrange(
             plotlist = all.rle.med.var.plots,
             ncol = plot.ncol,
             nrow = plot.nrow,
             common.legend = TRUE)
+        printColoredMessage(
+            message = '- The individual assay plots are combined into one.',
+            color = 'blue',
+            verbose = verbose)
         if (isTRUE(plot.output)) print(overall.rle.med.var.plots)
     }
 
     # generate the RLE IQR plots ####
     printColoredMessage(
-        message = '-- Generate the plots with the RLE IQRs:',
+        message = paste0('-- Generate plots between the "variable" and the RLE IQRs:'),
         color = 'magenta',
-        verbose = verbose
-        )
+        verbose = verbose)
     samples <- rle <- everything <- sample <- rle.iqr <- r.label <- NULL
     all.rle.iqr.var.plots <- lapply(
         levels(assay.names),
@@ -246,8 +251,8 @@ plotRleVariable <- function(
                 # scatter plot ####
                 printColoredMessage(
                     message = paste0(
-                        '-Generate a scatter plot between the RLE IQR of the ', x,
-                        ' data and the variable:'),
+                        '- Generate a scatter plot between the RLE IQR of the ', x,
+                        ' data and the ', variable,  ' variable.'),
                     color = 'blue',
                     verbose = verbose)
                 p.rle <- ggplot(rle.iqr.data, aes(x = var, y = rle.iqr)) +
@@ -269,8 +274,8 @@ plotRleVariable <- function(
                 # boxplot ####
                 printColoredMessage(
                     message = paste0(
-                        '-Generate a boxplot between the RLE IQR of the ', x,
-                        ' data and the variable:'),
+                        '- Generate a boxplot between the RLE IQR of the ', x,
+                        ' data and the ', variable, ' variable.'),
                     color = 'blue',
                     verbose = verbose)
                 p.rle <- ggplot(rle.iqr.data, aes(x = var, y = rle.iqr)) +
@@ -299,7 +304,7 @@ plotRleVariable <- function(
     if(length(assay.names) > 1){
         ## nrow and ncol of plot grid ####
         printColoredMessage(
-            message = '-- Put together all the plots of the RLE medians and the variable:',
+            message = '-- Put all the plots together:',
             color = 'magenta',
             verbose = verbose)
         overall.rle.iqr.var.plots <- ggpubr::ggarrange(
@@ -307,6 +312,10 @@ plotRleVariable <- function(
             ncol = plot.ncol,
             nrow = plot.nrow,
             common.legend = TRUE)
+        printColoredMessage(
+            message = '- The individual assay plots are combined into one.',
+            color = 'blue',
+            verbose = verbose)
         if (plot.output) print(overall.rle.iqr.var.plots)
     }
     # save the plots ####
@@ -341,23 +350,26 @@ plotRleVariable <- function(
                 if (!'rle.iqr.var.plot' %in% names(se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']][[variable]])){
                     se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']][[variable]][['rle.iqr.var.plot']] <- list()
                 }
-                se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']][[variable]][['rle.iqr.var.plot']] <- all.rle.iqr.var.plots[[x]]
+                se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']][[variable]][['rle.iqr.var.plot']] <-
+                    all.rle.iqr.var.plots[[x]]
 
             } else if (rle.data.type == 'rle.medians') {
                 if (!'rle.med.var.plot' %in% names(se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']][[variable]])){
                     se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']][[variable]][['rle.med.var.plot']] <- list()
                 }
-                se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']][[variable]][['rle.med.var.plot']] <- all.rle.med.var.plots[[x]]
+                se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']][[variable]][['rle.med.var.plot']] <-
+                    all.rle.med.var.plots[[x]]
             } else if (rle.data.type == 'rle.iqr'){
                 if (!'rle.iqr.var.plot' %in% names(se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']][[variable]])){
                     se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']][[variable]][['rle.iqr.var.plot']] <- list()
                 }
-                se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']][[variable]][['rle.iqr.var.plot']] <- all.rle.iqr.var.plots[[x]]
+                se.obj@metadata[['metric']][[x]][['RLE']][['rle.plot']][['rle.var.plot']][[variable]][['rle.iqr.var.plot']] <-
+                    all.rle.iqr.var.plots[[x]]
             }
         }
         printColoredMessage(
-            message = paste0(
-                'The RLE plots of individual assays are saved to metadata@metric'),
+            message = paste0('- The plot of individual assay(s) are saved to the',
+                             ' "se.obj@metadata$metric$AssayName$RLE$rle.plot$rle.var.plot" in the SummarizedExperiment object..'),
             color = 'blue',
             verbose = verbose)
 
@@ -397,10 +409,10 @@ plotRleVariable <- function(
                 se.obj@metadata[['plot']][['RLE']][['rle.var.plot']][[variable]][['rle.iqr.var.plot']]  <- overall.rle.iqr.var.plots
             }
             printColoredMessage(
-                message = paste0('The RLE plots of all assays are saved to metadata@plot'),
+                message = paste0('- The combined plots of all assays are saved to the',
+                                 ' "se.obj@metadata$plot$RLE$rle.var.plot" in the SummarizedExperiment object.'),
                 color = 'blue',
-                verbose = verbose
-            )
+                verbose = verbose)
         }
         printColoredMessage(message = '------------The plotRleVariable function finished.',
             color = 'white',
