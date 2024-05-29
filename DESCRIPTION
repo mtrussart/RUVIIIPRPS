@@ -23,6 +23,7 @@ Imports:
     BiocSingular,
     ggpubr,
     tibble,
+    viridis,
     igraph,
     BiocNeighbors,
     RANN,
