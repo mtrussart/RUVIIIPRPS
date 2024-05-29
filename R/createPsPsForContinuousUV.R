@@ -2,12 +2,14 @@
 
 #' @author Ramyar Molania
 
-
-#' We will create distinct group of pseudo-replicates for each source of unwanted variation defined in the 'uv.variables'
-#' argument. For example to correct for library size if defined in the 'uv.variables' argument, several group of pseudo-samples
+#' @description
+#' The function creates PRPS sets for a continuous source of unwanted variation defined in the 'main.uv.variable' argument.
+#' For example to correct for library size if defined in the 'uv.variables' argument, several group of pseudo-samples
 #' will be created by averaging the top and bottom-ranked samples by library size of the same biological subtype in each batch.
-#' Then those pseudo-samples will be defined as pseudo-replicates which constitutes a PRPS set.
+#' Then those pseudo-samples will be defined as pseudo-replicates which constitutes a PRPS set
 #'
+
+#' @details
 #' Distinct group of PRPS are created for each source of unwanted variation defined in the 'main.uv.variable' argument
 #' within an homogeneous group of samples. The grouping of samples are created based on each biological subtype defined
 #' using the 'bio.variables' using the 'bio.clustering.method' selected and it might be also be combined with
@@ -20,51 +22,62 @@
 #' will be created for each homogeneous group of samples, each pair by averaging the top and the bottom-ranked samples by
 #' library size.Each pair of pseudo-samples belonging to the same group will be defined as pseudo-replicates which
 #' constitutes a PRPS set.
-#' @param se.obj A SummarizedExperiment object that will be used to create PRPS.
-#' @param assay.name Symbol for the selection of the name of the assay of the SummarizedExperiment class object.
-#' @param main.uv.variable String of the label of a continuous or continuous variable.
-#' such as samples types or batch from colData(se) that will be used to define PRPS.
-#' @param bio.variables String of the label of a categorical variable that specifies major biological groups
-#' such as samples types from colData(se).
-#' @param other.uv.variables String of the label of a categorical variable that specifies major batch groups
-#' such as plates from colData(se).
-#' @param min.sample.for.prps Numeric. Indicates the minimum number of samples to create one pseudo-sample,
-#' by default it is set to 3.
-#' @param bio.clustering.method String of the clustering method to assign each sample to an homogeneous biological
-#' clusters/group using the function 'kmeans', cut' from base or the function 'quantile'. By default it is to 'kmeans'.
-#' @param other.uv.clustering.method String of the clustering method to assign each sample to an homogeneous clusters/group
-#' of samples based on the 'other.uv.variables' using the function 'kmeans','cut' from base or the function 'quantile'.
-#' By default it is to 'kmeans'.
-#' @param nb.bio.clusters Numeric. A value to specify the number of homogeneous biological clusters/groups of samples.
-#' By default it is set to 3.
-#' @param nb.other.uv.clusters Numeric. A value to specify the number of groups for continuous sources of biological
-#' variation. The default is 2. This means each continuous sources will be divided into 2 groups using the
-#' 'clustering.method'.
+
+
+#' @param se.obj A SummarizedExperiment object.
+#' @param assay.name Symbol. A symbol specifying the assay name within the SummarizedExperiment object. The selected
+#' assay should be the one that will be used for RUV-III-PRPS normalization.
+#' @param bio.variables Symbol. A symbol or symbols representing the label of biological variable(s), such as cancer
+#' subtypes, tumour purity, ... within the SummarizedExperiment object. This can comprise a vector containing either
+#' categorical, continuous, or a combination of both variables.
+#' @param main.uv.variable Symbols. A symbol representing the label of a continuous unwanted variable, such as batch effects,
+#' , ... within the SummarizedExperiment object.
+#' @param other.uv.variables  Symbol. A symbol or symbols representing the label of unwanted variable(s), such as batch effects,
+#' library size, ... within the SummarizedExperiment object. This can comprise a vector containing either categorical,
+#' continuous, or a combination of both variables. These variable(s) will be considered when generating PRPS sets fo the
+#' main.uv.variable. The default is set to 'NULL'.
+#' @param min.sample.for.prps Numeric. Indicates the minimum number of biologically homogeneous samples to be averaged
+#' to create one pseudo-sample. The default it is set to 3.
+#' @param bio.clustering.method Symbol. A symbol indicating the clustering method used to group each continuous biological
+#' variable. The option include 'kmeans', cut' and 'quantile'. The default is to 'kmeans'. We refer to the
+#' createHomogeneousBioGroups() function for more details.
+#' @param nb.bio.clusters Numeric. A numeric value to specify the number of clusters/groups for each continuous biological
+#' variable. The default it set to 3.
+#' @param other.uv.clustering.method Symbol. A symbol indicating the clustering method used to group each continuous unwanted
+#' variable. The option include 'kmeans', cut' and 'quantile'. The default is to 'kmeans'. We refer to the
+#' createHomogeneousUVGroups() function for more details.
+#' @param nb.other.uv.clusters Numeric. A numeric value to specify the number of clusters/groups for each continuous biological
+#' variable. The default it set to 3.
+#' @param check.prps.connectedness Logical. Indicates whether to assess the connectedness between the PRPS sets or not.
+#' The default is set to 'TRUE'. See the details for more information.
+#' @param apply.log Logical. Indicates whether to apply a log-transformation to the data. The default is set to 'TRUE'.
+#' @param pseudo.count Numeric. A numeric value as a pseudo count to be added to all measurements before log transformation.
+#' The default is set to 1.
+#' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment object. If 'TRUE', the checkSeObj
+#' will be applied inside the function. The default is set to 'TRUE'.
+#' @param assess.variables Logical. Indicates whether to assess the association between the biological or unwanted
+#' variable(s) separately. The default is set to 'FALSE'. We refer to the 'assessVariableAssociation' for more details.
 #' @param cat.cor.coef Vector of two numerical values. Indicates the cut-off of the correlation coefficient between each
 #' pair of categorical variables. The first one is between each pair of 'uv.variables' and the second one is between each
-#' pair of 'bio.variables'. The correlation is computed by the function ContCoef from the DescTools package. If the
-#' correlation of a pair of variable is higher than the cut-off, then only the variable that has the highest number of
-#' factor will be kept and the other one will be excluded from the remaining analysis. By default they are both set to 0.7.
+#' pair of 'bio.variables'. The correlation is computed by the function ContCoef from the DescTools package. If the correlation
+#' of a pair of variable is higher than the cut-off, then only the variable that has the highest number of factor will be
+#' kept and the other one will be excluded from the remaining analysis. By default they are both set to 0.7.
 #' @param cont.cor.coef Vector of two numerical values. Indicates the cut-off of the Spearman correlation coefficient
 #' between each pair of continuous variables. The first one is between each pair of 'uv.variables' and the second one is
 #' between each pair of 'bio.variables'. If the correlation of a pair of variable is higher than the cut-off, then only
 #' the variable that has the highest variance will be kept and the other one will be excluded from the remaining analysis.
 #' By default they are both set to 0.7.
-#' @param apply.log Logical. Indicates whether to apply a log-transformation to the data, by default it is set to TRUE.
-#' @param pseudo.count Numeric. A value as a pseudo count to be added to all measurements before log transformation,
-#' by default it is set to 1.
-#' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment class object.
-#' By default it is set to TRUE.
-#' @param remove.na String. Indicates whether to remove NA or missing values from either the 'assays', the 'sample.annotation',
-#' 'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If
-#' 'sample.annotation' is selected, the samples that contains NA or missing values for any 'bio.variables' and
-#' 'uv.variables' will be excluded. By default, it is set to both'.
-#' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
-#' object 'se.obj' or to output the result, by default it is set to TRUE.
-#' @param plot.output description
-#' @param  prps.name Symbol.
-#' @param verbose Logical. Indicates whether to show or reduce the level of output or
-#' messages displayed during the execution of the functions, by default it is set to TRUE.
+#' @param remove.na Symbol. A symbol Indicating whether to remove NA or missing values from either the 'assays', the
+#' 'sample.annotation', both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be
+#' excluded. If sample.annotation' is selected, the samples that contains NA or missing values for any 'bio.variables' and
+#' 'uv.variables' will be excluded. The default is set to both'.
+#' @param save.se.obj Logical. Indicates whether to save the results in the metadata of the SummarizedExperiment object
+#' or to output the result as list. The default by is set to 'TRUE'.
+#' @param plot.prps.map Logical. Indicates whether to generate the PRPS map plot for individual sources of unwanted variation.
+#' The default is 'TRUE'.
+#' @param prps.name Symbol. A symbol to specify the name of all PRPS sets that will be created for all specified source(s)
+#' of unwanted variation. The default is set to 'NULL'. The, the function creates a name based on paste0('prps_', uv.variable).
+#' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
 #' @return SummarizedExperiment A SummarizedExperiment object containing the PRPS data or just PRPS data.
 
@@ -85,20 +98,22 @@ createPrPsForContinuousUV <- function(
         nb.bio.clusters = 2,
         other.uv.clustering.method = 'kmeans',
         nb.other.uv.clusters = 3,
-        cat.cor.coef = c(0.7, 0.7),
-        cont.cor.coef = c(0.7, 0.7),
         apply.log = TRUE,
         pseudo.count = 1,
         assess.se.obj = TRUE,
+        assess.variables = FALSE,
+        cat.cor.coef = c(0.7, 0.7),
+        cont.cor.coef = c(0.7, 0.7),
         remove.na = 'both',
         save.se.obj = TRUE,
-        plot.output = TRUE,
+        plot.prps.map = TRUE,
         prps.name = NULL,
-        verbose = TRUE) {
+        verbose = TRUE
+        ){
     printColoredMessage(message = '------------The prpsForContinuousUV function starts.',
                         color = 'white',
                         verbose = verbose)
-    # check the function inputs ####
+    # Check the function inputs ####
     if (length(assay.name) > 1) {
         stop('The function can only take a single assay name.')
     } else if (length(main.uv.variable) > 1) {
@@ -139,54 +154,42 @@ createPrPsForContinuousUV <- function(
     printColoredMessage(message = '-- Data transformation:',
                         color = 'magenta',
                         verbose = verbose)
-    if (apply.log) {
+    if (isTRUE(apply.log)) {
         printColoredMessage(
-            message = paste0(
-                'Applying log2 + ',
-                pseudo.count,
-                ' (pseudo.count',
-                ') on the ',
-                assay.name,
-                ' data before creating PRPS.'),
+            message = paste0('Applying log2 + ', pseudo.count,' (pseudo.count',') on the ', assay.name, ' data before creating PRPS.'),
             color = 'blue',
-            verbose = verbose
-        )
+            verbose = verbose)
         expre.data <- log2(assay(se.obj, assay.name) + pseudo.count)
     } else{
         printColoredMessage(
-            message = paste0(
-                'The ',
-                assay.name,
-                ' data will be used without log for creating PRPS.'),
+            message = paste0('The ', assay.name,' data will be used without log for creating PRPS.'),
             color = 'blue',
-            verbose = verbose
-        )
+            verbose = verbose)
         expre.data <- assay(se.obj, assay.name)
     }
-    # make homogeneous biological groups of samples ####
-    printColoredMessage(message = '-- Create all possible homogeneous bioloical populations:',
-                        color = 'magenta',
-                        verbose = verbose)
+    # Create homogeneous biological groups of samples ####
+    printColoredMessage(
+        message = '-- Create all possible homogeneous bioloical populations:',
+        color = 'magenta',
+        verbose = verbose)
     homo.bio.groups <- createHomogeneousBioGroups(
         se.obj = se.obj,
         bio.variables = bio.variables,
         nb.clusters = nb.bio.clusters,
         clustering.method = bio.clustering.method,
         assess.se.obj = FALSE,
-        assess.variables = FALSE,
+        assess.variables = assess.variables,
         cat.cor.coef = cat.cor.coef,
         cont.cor.coef = cont.cor.coef,
         save.se.obj = FALSE,
         remove.na = 'none',
         verbose = verbose
     )
-    # make homogeneous groups of samples with respect to unwanted variation ####
+    # Create homogeneous groups of samples with respect to unwanted variation ####
     if (!is.null(other.uv.variables)) {
         printColoredMessage(
-            message = paste0(
-                '-- Create all possible homogeneous sample groups with respect to the',
-                paste0(other.uv.variables, collapse = ' & '),
-                ':'),
+            message = paste0('-- Create all possible homogeneous sample groups with respect to the',
+                paste0(other.uv.variables, collapse = ' & '), ':'),
             color = 'magenta',
             verbose = verbose)
         homo.uv.groups <- createHomogeneousUVGroups(
@@ -195,27 +198,25 @@ createPrPsForContinuousUV <- function(
             nb.clusters = nb.other.uv.clusters,
             clustering.method = other.uv.clustering.method,
             assess.se.obj = FALSE,
-            assess.variables = FALSE,
+            assess.variables = assess.variables,
             cat.cor.coef = cat.cor.coef,
             cont.cor.coef = cont.cor.coef,
             save.se.obj = FALSE,
             remove.na = 'none',
-            verbose = verbose
-        )
+            verbose = verbose)
         annot.data <- data.frame(
             uv.variable = se.obj[[main.uv.variable]],
             homo.uv.groups = homo.uv.groups,
-            homo.bio.groups = homo.bio.groups
-        )
-        printColoredMessage(message = '-- Create all possible homogeneous samples groups with respect to both bioloical and unwanted variables:',
-                            color = 'magenta',
-                            verbose = verbose)
+            homo.bio.groups = homo.bio.groups)
+        printColoredMessage(
+            message = '-- Create all possible homogeneous samples groups with respect to both bioloical and unwanted variables:',
+            color = 'magenta',
+            verbose = verbose)
         bio.batch <- NULL
         annot.data$bio.batch <- paste(
             annot.data$homo.uv.groups,
             annot.data$homo.bio.groups,
-            sep = '||'
-        )
+            sep = '||')
         printColoredMessage(
             message = paste0(
                 length(unique(annot.data$bio.batch)),
@@ -237,10 +238,7 @@ createPrPsForContinuousUV <- function(
         }
         cover <- c(length(bio.batch.groups)/length(unique(annot.data$bio.batch))) * 100
         printColoredMessage(
-            message = paste0(
-                length(bio.batch.groups),
-                ' (',
-                round(cover, digits = 0),
+            message = paste0(length(bio.batch.groups),' (', round(cover, digits = 0),
                 '%) groups have enough samples (2 * min.sample.for.prps) for creating PRPS.'),
             color = 'blue',
             verbose = verbose)
@@ -276,19 +274,13 @@ createPrPsForContinuousUV <- function(
             })
         prps.sets <- do.call(cbind, prps.sets)
         printColoredMessage(
-            message = paste0(
-                'In totall ',
-                length(unique(colnames(prps.sets))),
-                ' PRPS sets with ',
-                ncol(prps.sets),
-                ' total number of pseudo-samples are created for the removal of the ',
-                main.uv.variable,
-                ' effects.'),
+            message = paste0('In totall ', length(unique(colnames(prps.sets))), ' PRPS sets with ',
+                ncol(prps.sets),' total number of pseudo-samples are created for the removal of the ',
+                main.uv.variable,' effects.'),
             color = 'blue',
-            verbose = verbose
-        )
+            verbose = verbose)
         # plot prps sets ####
-        if(isTRUE(plot.output)){
+        if(isTRUE(plot.prps.map)){
             prps.sets.plot <- sapply(
                 selected.groups,
                 function(x) {
@@ -333,13 +325,10 @@ createPrPsForContinuousUV <- function(
         }
     } else if (is.null(other.uv.variables)){
         printColoredMessage(
-            message = paste0(
-                '-- Finding homogeneous biological groups with at least ',
-                2 * min.sample.for.prps,
-                ' (2* min.sample.for.prps) samples.'),
+            message = paste0('-- Find homogeneous biological groups with at least ',
+                             2 * min.sample.for.prps, ' (2* min.sample.for.prps) samples.'),
             color = 'magenta',
-            verbose = verbose
-        )
+            verbose = verbose)
         bio.groups <- findRepeatingPatterns(
             vec = homo.bio.groups,
             n.repeat = c(2 * min.sample.for.prps))
@@ -405,7 +394,7 @@ createPrPsForContinuousUV <- function(
         )
         # plot prps sets ####
         uv.var <- groups <- new.g <- bio.variable <- NULL
-        if(isTRUE(plot.output)){
+        if(isTRUE(plot.prps.map)){
             prps.sets.plot <- sapply(
                 selected.groups,
                 function(x) {
@@ -456,10 +445,10 @@ createPrPsForContinuousUV <- function(
                     legend.text = element_text(size = 14),
                     legend.title = element_text(size = 18),
                     strip.text.x = element_text(size = 15))
-            if(isTRUE(plot.output)) print(prps.map.plot)
+            if(isTRUE(plot.prps.map)) print(prps.map.plot)
         }
     }
-    # saving the output ####
+    # Saving the output ####
     ## select output name ####
     if(!is.null(other.uv.variables)) {
         out.put.name <- paste0(
@@ -470,7 +459,7 @@ createPrPsForContinuousUV <- function(
             paste0(other.uv.variables, collapse = '&'),
             '|',
             assay.name)
-    } else{
+    } else if (is.null(other.uv.variables)) {
         out.put.name <- paste0(
             main.uv.variable,
             '|',
@@ -478,23 +467,24 @@ createPrPsForContinuousUV <- function(
             '|',
             assay.name)
     }
+    ## select prps.name ####
     if(is.null(prps.name)){
         prps.name <- paste0('prps_', main.uv.variable)
     }
-    if (save.se.obj) {
-        ## check if PRPS already exists in the metadata
+    if (isTRUE(save.se.obj)) {
+        ## check if PRPS exists
         if (!'PRPS' %in% names(se.obj@metadata)) {
             se.obj@metadata[['PRPS']] <- list()
         }
-        ## check if supervised already exists in the PRPS slot
+        ## check if supervised exists
         if (!'supervised' %in% names(se.obj@metadata[['PRPS']])) {
             se.obj@metadata[['PRPS']][['supervised']] <- list()
         }
-        ## check if prps.name already exists in the PRPS$supervised slot
+        ## check if prps.name exists
         if (!prps.name %in% names(se.obj@metadata[['PRPS']][['supervised']])) {
             se.obj@metadata[['PRPS']][['supervised']][[prps.name]] <- list()
         }
-        ## check if prps.name already exists in the PRPS$supervised slot
+        ## check if prps.data exists
         if (!'prps.data' %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.name]])) {
             se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.data']] <- list()
         }
@@ -502,23 +492,31 @@ createPrPsForContinuousUV <- function(
 
         ## plot
         if(isTRUE(plot.prps.map)){
+            ## check if prps.map.plot exists
             if (!'prps.map.plot' %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.name]])) {
                 se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.map.plot']] <- list()
             }
             se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.map.plot']][[out.put.name]] <- prps.map.plot
         }
         printColoredMessage(
-            message = paste0('The PRPS are saved to metadata@PRPS$supervised:.'),
+            message = paste0('The PRPS data and PRPS map plots are saved to the metadata of the SummarizedExperiment object.'),
             color = 'blue',
             verbose = verbose)
-        printColoredMessage(message = '------------The prpsForContinuousUV function finished.',
-                            color = 'white',
-                            verbose = verbose)
+        printColoredMessage(
+            message = '------------The prpsForContinuousUV function finished.',
+            color = 'white',
+            verbose = verbose)
         return(se.obj)
-    } else {
-        printColoredMessage(message = '------------The prpsForContinuousUV function finished.',
-                            color = 'white',
-                            verbose = verbose)
-        return(prps.sets)
+    }
+    if(isFALSE(save.se.obj)){
+        printColoredMessage(
+            message = paste0('The PRPS data and PRPS map plots are outputed as a list.'),
+            color = 'blue',
+            verbose = verbose)
+        printColoredMessage(
+            message = '------------The prpsForContinuousUV function finished.',
+            color = 'white',
+            verbose = verbose)
+        return(list(prps.sets = prps.sets, prps.map.plot = prps.map.plot))
     }
 }
