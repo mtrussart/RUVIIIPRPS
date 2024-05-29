@@ -91,7 +91,6 @@ computePCA <- function(
     }
 
     # assays ####
-    # assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else  assay.names <- factor(x = assay.names , levels = assay.names)
@@ -111,7 +110,7 @@ computePCA <- function(
 
     # data transformation ####
     printColoredMessage(
-        message = '-- Data transformation:',
+        message = '-- Data log transformation:',
         color = 'magenta',
         verbose = verbose)
     all.assays <- lapply(
@@ -120,23 +119,23 @@ computePCA <- function(
             temp.data <- as.matrix(assay(x = se.obj, i = x))
             if (isTRUE(apply.log) & !is.null(pseudo.count)) {
                 printColoredMessage(
-                    message = paste0('Apply log2 + ', pseudo.count,  ' (pseudo.count) on the ' , x, ' data.'),
+                    message = paste0('- Apply log2 + ', pseudo.count,  ' (pseudo.count) on the ' , x, ' data.'),
                     color = 'blue',
                     verbose = verbose)
                 temp.data <- log2(temp.data + pseudo.count)
             } else if (isTRUE(apply.log) & is.null(pseudo.count)) {
                 printColoredMessage(
-                    message = paste0('Apply log2 transformation on the', x, ' data.'),
+                    message = paste0('- Apply log2 transformation on the ', x, ' data.'),
                     color = 'blue',
                     verbose = verbose)
                 temp.data <- temp.data
             } else if (!apply.log){
                 printColoredMessage(
-                    message = paste0('The ', x,' data will be used without log transformation.'),
+                    message = paste0('- The ', x,' data will be used without log transformation.'),
                     color = 'blue',
                     verbose = verbose)
                 printColoredMessage(
-                    message = 'Please note, the assay should be in log scale before computing SVD.',
+                    message = '- Please note, the assay should be in log scale before computing SVD.',
                     color = 'red',
                     verbose = verbose)
                 temp.data <- temp.data
@@ -147,20 +146,20 @@ computePCA <- function(
 
     # svd ####
     printColoredMessage(
-        message = '-- Perform SVD:',
+        message = '-- Perform singular value decomposition (SVD):',
         color = 'magenta',
         verbose = verbose)
     ## fast svd ####
     if (isTRUE(fast.pca)) {
         printColoredMessage(
             message = paste0(
-                '-- Perform fast singular value decomposition with scale = ',
+                '- Perform "fast" singular value decomposition with scale = ',
                 scale, ' and center = ', center, '.'),
             color = 'blue',
             verbose = verbose)
         printColoredMessage(
         message = paste0(
-            'Note: in the fast svd analysis, the percentage of variation of PCs will be ',
+            '- Note: in the fast svd analysis, the percentage of variation of PCs will be ',
             'computed proportional to the highest selected number of PCs (left singular vectors), not on all the PCs.'),
             color = 'red',
             verbose = verbose)
@@ -170,7 +169,7 @@ computePCA <- function(
             levels(assay.names),
             function(x) {
                 printColoredMessage(
-                    message = paste0('- Perform fast singular value decomposition on the ', x , ' data.'),
+                    message = paste0('- Perform fast SVD on the ', x , ' data.'),
                     color = 'blue',
                     verbose = verbose)
                 sv.dec <- BiocSingular::runSVD(
@@ -192,7 +191,7 @@ computePCA <- function(
         ## ordinary svd ####
         printColoredMessage(
             message = paste0(
-                '-- Perform singular value decomposition with scale = ',
+                '- Perform "ordinary" singular value decomposition with scale = ',
                 scale, ' and center = ', center, '.'),
             color = 'blue',
             verbose = verbose)
@@ -260,15 +259,22 @@ computePCA <- function(
                 se.obj@metadata[['metric']][[x]][['PCA']][['pca']][['pca.data']] <- all.sv.decomposition[[x]]
             }
         }
+        if(isTRUE(fast.pca)){
+            svd.tech <- 'fast.pca'
+        } else svd.tech <- 'pca'
         printColoredMessage(
-            message = 'The SVD results of individual assays are saved to metadata@metric',
+            message = paste0('- The SVD results of individual assay (s) are saved to the',
+                             ' "se.obj@metadata$metric$AssayName$PCA$', svd.tech, '$pca.data" in the SummarizedExperiment object.'),
             color = 'blue',
             verbose = verbose)
+
         printColoredMessage(message = '------------The computePCA function finished.',
                             color = 'white',
                             verbose = verbose)
         return(se.obj)
-    } else if (save.se.obj == FALSE) {
+    }
+
+    if (isFALSE(save.se.obj)) {
         ## return a list ####
         printColoredMessage(
             message = 'The SVD results of individual assays are outputed as a list.',
