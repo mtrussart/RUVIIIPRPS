@@ -229,7 +229,7 @@ computeSurvival <- function(
         }
         fit.surv <- survfit.fun(survival.data)
         ggsurvplot.fun <- function(fit.surv) {
-            ggsurvplot(fit = fit.surv,
+            p <- ggsurvplot(fit = fit.surv,
                        data = survival.data,
                        pval = TRUE,
                        conf.int = FALSE,
@@ -239,6 +239,13 @@ computeSurvival <- function(
                        legend = "bottom",
                        title = variable,
                        palette = selected.colores[seq(length(unique(survival.data$group)))])
+            ggpubr::ggpar(p,
+                  font.main = c(12),
+                  font.x = c(12),
+                  font.y = c(12),
+                  font.caption = c(20),
+                  font.legend = c(12),
+                  font.tickslab = c(12))
         }
         surv.plot.variable <- ggsurvplot.fun(fit.surv)
         if(isTRUE(plot.output))
