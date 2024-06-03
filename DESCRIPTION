@@ -29,6 +29,7 @@ Imports:
     RANN,
     Seurat,
     SeuratObject,
+    gtools,
     purrr,
     BiocParallel,
     ggrepel,
