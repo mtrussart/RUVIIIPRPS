@@ -1,4 +1,4 @@
-#' compute the adjusted rand index (ARI).
+#' Compute adjusted rand index (ARI).
 
 #' @author Ramyar Molania
 
@@ -38,7 +38,6 @@
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
 #' @return A SummarizedExperiment object or a list that containing the computed ARI on the categorical variable.
-
 
 #' @importFrom SummarizedExperiment assays assay
 #' @importFrom mclust mclustBIC Mclust adjustedRandIndex
@@ -130,18 +129,19 @@ computeARI <- function(
 
     # ari on all assays ####
     printColoredMessage(
-        message = '-- Compute ARI: ',
+        message = paste0('-- Compute adjusted rand index (ARI) using the first ',
+                         nb.pcs, ' PCS for the ', variable, ' variable.') ,
         color = 'magenta',
         verbose = verbose)
     all.ari <- lapply(
         levels(assay.names),
         function(x) {
             printColoredMessage(
-                message = paste0('Compute ARI for the ', x, ' data:'),
+                message = paste0('- Compute the ARI for the "', x, '" data:'),
                 color = 'blue',
                 verbose = verbose)
             printColoredMessage(
-                message = paste0('-Obtain the first ', nb.pcs, ' computed PCs.'),
+                message = paste0('* obtain the first ', nb.pcs, ' computed PCs.'),
                 color = 'blue',
                 verbose = verbose)
             if (fast.pca) {
@@ -169,26 +169,26 @@ computeARI <- function(
 
             if(clustering.method == 'mclust'){
                 printColoredMessage(
-                    message = '-Cluster the PCs using the mclust function.',
+                    message = '* cluster the PCs using the mclust function.',
                     color = 'blue',
                     verbose = verbose)
                 bic <- mclustBIC(data = pca.data)
                 mod <- Mclust(data = pca.data, x = bic, G = length(unique(se.obj@colData[, variable])) )
                 printColoredMessage(
-                    message = '-Calculate the adjusted rand index.',
+                    message = '* calculate the adjusted rand index.',
                     color = 'blue',
                     verbose = verbose)
                 ari <- adjustedRandIndex(mod$classification, se.obj@colData[, variable])
             } else {
                 printColoredMessage(
-                    message = '-Cluster the PCs using the hclust function.',
+                    message = '* cluster the PCs using the hclust function.',
                     color = 'blue',
                     verbose = verbose)
                 clusters <- cutree(
                     tree = hclust(d = dist(x = pca.data, method = hclust.dist.measure), method = hclust.method),
                     k = length(unique(se.obj@colData[, variable])))
                 printColoredMessage(
-                    message = '-Calculate the adjusted rand index.',
+                    message = '* calculate the adjusted rand index.',
                     color = 'blue',
                     verbose = verbose)
                 ari <- adjustedRandIndex(clusters, se.obj@colData[, variable])
@@ -203,9 +203,9 @@ computeARI <- function(
         color = 'magenta',
         verbose = verbose)
     ## add results to the SummarizedExperiment object ####
-    if (save.se.obj == TRUE) {
+    if (isTRUE(save.se.obj)) {
         printColoredMessage(
-            message = '-Save the ARIs to the metadata of the SummarizedExperiment object:',
+            message = '- Save the ARIs of each assay(s) to the "metadata" in the SummarizedExperiment object:',
             color = 'blue',
             verbose = verbose)
 
@@ -231,15 +231,18 @@ computeARI <- function(
             } else out.put.name <- paste0('hclust.', hclust.method, '.', hclust.dist.measure)
             se.obj@metadata[['metric']][[x]][['ARI']][[out.put.name]][[variable]][['ari']] <- all.ari[[x]]
         }
-        printColoredMessage('The ARI results of induvial assays are saved to metadata@metric.',
-                            color = 'blue',
-                            verbose = verbose)
+        printColoredMessage(
+            message = paste0('- The ARI of induvial assay(s) is saved to the .',
+                             ' ".se.obj@metadata$metric$RawCount$ARI" in the SummarizedExperiment objec.'),
+            color = 'blue',
+            verbose = verbose)
         printColoredMessage(message = '------------The computeARI function finished.',
                             color = 'white',
                             verbose = verbose)
         return(se.obj = se.obj)
         ## return only the adjusted rand index results ####
-    } else if (save.se.obj == FALSE) {
+    }
+    if (isFALSE(save.se.obj)) {
         printColoredMessage(
             message = '-Save the ARIs as list.',
             color = 'blue',
