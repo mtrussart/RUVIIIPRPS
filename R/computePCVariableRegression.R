@@ -39,7 +39,7 @@ computePCVariableRegression <- function(
         nb.pcs = 10,
         save.se.obj = TRUE,
         verbose = TRUE
-) {
+        ){
     printColoredMessage(message = '------------The computePCVariableRegression function starts:',
                         color = 'white',
                         verbose = verbose)
@@ -76,18 +76,19 @@ computePCVariableRegression <- function(
 
     # Compute the regression on all assays ####
     printColoredMessage(
-        message = '-- Compute regression:',
+        message =  paste0('-- Compute linear regression between the first ',
+                          nb.pcs, ' PCs (cumulatively) and the "', variable, 'variable:' ),
         color = 'magenta',
         verbose = verbose)
     all.r.squared <- lapply(
         levels(assay.names),
         function(x) {
             printColoredMessage(
-                message = paste0('-- Compute regression for the', x , ' assay:'),
-                color = 'magenta',
+                message = paste0('- Compute the linear regression for the "', x , '" data:'),
+                color = 'blue',
                 verbose = verbose)
             printColoredMessage(
-                message = paste0('-Obtain the first ', nb.pcs, ' PCs.'),
+                message = paste0('- Obtain the first ', nb.pcs, ' computed PCs.'),
                 color = 'blue',
                 verbose = verbose)
             if (fast.pca) {
@@ -108,7 +109,7 @@ computePCVariableRegression <- function(
                             'Re-run the computePCA function with nb.pcs = ', nb.pcs, '.'))
             }
             printColoredMessage(
-                message = '-Compute the R squared of the regression analysis.',
+                message = '- Compute the R squared of the linear regression analysis.',
                 color = 'blue',
                 verbose = verbose)
             r.squared <- sapply(
@@ -120,13 +121,13 @@ computePCVariableRegression <- function(
 
     # save the results ####
     printColoredMessage(
-        message = '-- Save all the regression r squared:',
+        message = '-- Save all the R squared of the linear regression analysis:',
         color = 'magenta',
         verbose = verbose)
     ## add results to the SummarizedExperiment object ####
     if (save.se.obj == TRUE) {
         printColoredMessage(
-            message = '-Save the regression r squared to the metadata of the SummarizedExperiment object.',
+            message = '- Save all the R squared of the linear regression analysis for each assay(s) the "metadata" of the SummarizedExperiment object.',
             color = 'blue',
             verbose = verbose)
         for (x in levels(assay.names)) {
@@ -153,7 +154,8 @@ computePCVariableRegression <- function(
             se.obj@metadata[['metric']][[x]][['LRA']][[variable]][['rseq']] <- all.r.squared[[x]]
         }
         printColoredMessage(
-            message = 'The regression results for individal assays are saved to metadata@metric',
+            message = paste0('- The the R squared for the individal assay(s) are saved to the',
+                             ' "se.obj@metadata$metric$AssayName$LRA$Varible$rseq" in the SummarizedExperiment object.'),
             color = 'blue',
             verbose = verbose
             )
@@ -161,10 +163,11 @@ computePCVariableRegression <- function(
                             color = 'white',
                             verbose = verbose)
         return(se.obj = se.obj)
-        ## save the  regression r squared as a list ####
-    } else if (save.se.obj == FALSE) {
+    }
+    ## save the  regression r squared as a list ####
+    if (isFALSE(save.se.obj)) {
         printColoredMessage(
-            message = 'The regression r squared valuse for individual assay(s) are outputed as a list.',
+            message = '- The regression r squared valuse for individual assay(s) are outputed as a list.',
             color = 'blue',
             verbose = verbose)
         printColoredMessage(message = '------------The computePCVariableRegression function finished.',

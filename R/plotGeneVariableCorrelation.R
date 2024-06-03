@@ -36,7 +36,11 @@ plotGenesVariableCorrelation <- function(
         plot.output = TRUE,
         save.se.obj = TRUE,
         verbose = TRUE
-){
+        ){
+    printColoredMessage(message = '------------The plotGenesVariableCorrelation function starts:',
+                        color = 'white',
+                        verbose = verbose)
+
     # check the inputs ####
     if (is.null(assay.names)) {
         stop('Please provide at least an assay name.')
@@ -67,17 +71,17 @@ plotGenesVariableCorrelation <- function(
             if (!x %in% names(se.obj@metadata[['metric']]))
                 stop(paste0('Any correlation analysis has not been computed yet on the  ', x, ' assay'))
         })
-    # obtain correlations coeff ####
+    # obtain correlations coefficients ####
     printColoredMessage(
-        message = paste0('-- Obtain the correlation coefficient for the from the SummarizedExperiment object:'),
+        message = paste0('-- Obtain the computed correlation coefficient between genes and the "', variable, '" variable',
+                         ' from the SummarizedExperiment object:'),
         color = 'magenta',
-        verbose = verbose
-    )
+        verbose = verbose)
     all.corr.coeff <- lapply(
         levels(assay.names),
         function(x) {
             printColoredMessage(
-                message = paste0('-Obtain computed correlation coefficients the', x, 'data.'),
+                message = paste0('- Obtain computed correlation coefficients for the "', x, '" data.'),
                 color = 'blue',
                 verbose = verbose
             )
@@ -95,7 +99,7 @@ plotGenesVariableCorrelation <- function(
     names(all.corr.coeff) <- levels(assay.names)
 
     printColoredMessage(
-        message = '--Generate boxplots:',
+        message = '-- Generate boxplots of the correlation coefficients:',
         color = 'magenta',
         verbose = verbose
     )
@@ -103,7 +107,7 @@ plotGenesVariableCorrelation <- function(
         levels(assay.names),
         function(x){
             printColoredMessage(
-                message = paste0('-Generate boxplot of the computed correlation coefficients the ', x, ' data.'),
+                message = paste0('- Generate boxplot for the "', x, '" data.'),
                 color = 'blue',
                 verbose = verbose
             )
@@ -132,16 +136,20 @@ plotGenesVariableCorrelation <- function(
     everything <- datasets <- corr.coff <- NULL
     if(length(assay.names) > 1){
         printColoredMessage(
-            message = '-- Generate boxplots for all the assays.',
-            color = 'blue',
+            message = '-- Put all the boxplots of correlation coefficients together.',
+            color = 'magenta',
             verbose = verbose
         )
         all.corr.coeff <- as.data.frame(all.corr.coeff) %>%
             tidyr::pivot_longer(
                 dplyr::everything(),
                 names_to = 'datasets',
-                values_to = 'corr.coff')
-        all.corr.coeff$datasets <- factor(x = all.corr.coeff$datasets, levels = assay.names)
+                values_to = 'corr.coff'
+                )
+        all.corr.coeff$datasets <- factor(
+            x = all.corr.coeff$datasets,
+            levels = assay.names
+            )
         overall.corr.coeff.plot <- ggplot(all.corr.coeff, aes(x = datasets, y = corr.coff)) +
             geom_boxplot(outlier.color = 'gray') +
             ylab('Spearman correlation coefficients') +
@@ -156,15 +164,24 @@ plotGenesVariableCorrelation <- function(
                 plot.title = element_text(size = 15),
                 axis.text.x = element_text(size = 12, angle = 25, hjust = 1),
                 axis.text.y = element_text(size = 12))
+        printColoredMessage(
+            message = '- The boxplots of correlation coefficients of each assays are combined into one plot.',
+            color = 'blue',
+            verbose = verbose
+            )
         if(isTRUE(plot.output)) suppressMessages(print(overall.corr.coeff.plot))
     }
     # save the results ####
     printColoredMessage(
-        message = '-- Save the all the plots:',
+        message = '-- Save the all the boxplots of the correlation coefficients:',
         color = 'magenta',
         verbose = verbose)
     ## add results to the SummarizedExperiment object ####
     if (isTRUE(save.se.obj)) {
+        printColoredMessage(
+            message = '- Save all the boxplots of the correlation coefficients of each assay(s) in the "metadata" in the SummarizedExperiment object.',
+            color = 'blue',
+            verbose = verbose)
         for (x in levels(assay.names)) {
             ## check if metadata metric already exist for this assay, this metric and this variable
             if(!'cor.coef.plot' %in% se.obj@metadata[['metric']][[x]][['Correlation']][[correlation.method]][[variable]])
@@ -172,7 +189,8 @@ plotGenesVariableCorrelation <- function(
             se.obj@metadata[['metric']][[x]][['Correlation']][[correlation.method]][[variable]][['cor.coef.plot']] <- all.corr.coeff.plots[[x]]
         }
         printColoredMessage(
-            message = 'The correlation plots for indiviaul assay are saved to metadata@metric',
+            message = paste0('- The boxplot of the correlation coefficients for the indiviaul assay(s) is  saved to',
+                             '  "se.obj@metadata$metric$AssayName$Correlation$', correlation.method, ' in the SummarizedExperiment object.'),
             color = 'blue',
             verbose = verbose)
 
@@ -192,7 +210,8 @@ plotGenesVariableCorrelation <- function(
             se.obj@metadata[['plot']][['Correlation']][[correlation.method]][[variable]] <- overall.corr.coeff.plot
 
             printColoredMessage(
-                message = paste0('The correlation plots all assays are saved to metadata@plot'),
+                message = paste0('- The combined boxplots of the correlation coefficients of all the  indiviaul assay(s) is saved to',
+                                 '  "se.obj@metadata$plot$Correlation$', correlation.method, ' in the SummarizedExperiment object.'),
                 color = 'blue',
                 verbose = verbose)
 

@@ -33,7 +33,10 @@ plotGenesVariableAnova <- function(
         plot.output = TRUE,
         save.se.obj = TRUE,
         verbose = TRUE
-){
+        ){
+    printColoredMessage(message = '------------The plotGenesVariableAnova function finished.',
+                        color = 'white',
+                        verbose = verbose)
     # check the inputs ####
     if (is.null(assay.names)) {
         stop('Please provide at least an assay name.')
@@ -64,10 +67,21 @@ plotGenesVariableAnova <- function(
             if (!x %in% names(se.obj@metadata[['metric']]))
                 stop(paste0('Any ANOVA analysis has not been computed yet on the  ', x, ' assay'))
         })
+
     # obtain correlations coeff ####
+    printColoredMessage(
+        message = paste0('-- Obtain the computed ANOVA F-statistics between genes and the "', variable, '" variable',
+                         ' from the SummarizedExperiment object:'),
+        color = 'magenta',
+        verbose = verbose)
     all.aov.fvals <- lapply(
         levels(assay.names),
         function(x) {
+            printColoredMessage(
+                message = paste0('- Obtain the computed ANOVA F-statistics for the "', x, '" data.'),
+                color = 'blue',
+                verbose = verbose
+            )
             if (!'ANOVA' %in% names(se.obj@metadata[['metric']][[x]])) {
                 stop(paste0('Any ANOVA analysis has not been computed yet on the  ', x, ' assay'))
             }
@@ -80,10 +94,22 @@ plotGenesVariableAnova <- function(
             log2(se.obj@metadata[['metric']][[x]][['ANOVA']][[anova.method]][[variable]]$F.values$statistic)
         })
     names(all.aov.fvals) <- levels(assay.names)
+
+    # Plotting ####
+    printColoredMessage(
+        message = '-- Generate boxplots of the ANOVA F-statistics:',
+        color = 'magenta',
+        verbose = verbose
+    )
     aov.fvals <- NULL
     all.aov.fvals.plots <- lapply(
         levels(assay.names),
         function(x){
+            printColoredMessage(
+                message = paste0('- Generate boxplot for the "', x, '" data.'),
+                color = 'blue',
+                verbose = verbose
+            )
             aov.fvals <- all.aov.fvals[[x]]
             p.corr.coeff <- ggplot() +
                 geom_boxplot(aes(y = aov.fvals, x = 1)) +
@@ -105,11 +131,20 @@ plotGenesVariableAnova <- function(
     # overall plot ####
     everything <- datasets <- NULL
     if(length(assay.names) > 1){
+        printColoredMessage(
+            message = '-- Put all the boxplots of ANOVA F-statistics together.',
+            color = 'magenta',
+            verbose = verbose
+        )
         all.aov.fvals <- as.data.frame(all.aov.fvals) %>%
             tidyr::pivot_longer(
                 everything(),
                 names_to = 'datasets',
                 values_to = 'aov.fvals')
+        all.aov.fvals$datasets <- factor(
+            x = all.aov.fvals$datasets,
+            levels = assay.names
+        )
         overall.aov.fvals.plot <- ggplot(all.aov.fvals, aes(x = datasets, y = aov.fvals)) +
             geom_boxplot(outlier.colour = 'gray') +
             ggtitle(variable) +
@@ -124,22 +159,34 @@ plotGenesVariableAnova <- function(
                 plot.title = element_text(size = 15),
                 axis.text.x = element_text(size = 12, angle = 25, hjust = 1),
                 axis.text.y = element_text(size = 12))
+        printColoredMessage(
+            message = '- The boxplots of ANOVA F-statistics of each assays are combined into one plot.',
+            color = 'blue',
+            verbose = verbose
+        )
+        if(isTRUE(plot.output)) suppressMessages(print(overall.aov.fvals.plot))
     }
-    if(isTRUE(plot.output)) suppressMessages(print(overall.aov.fvals.plot))
 
     # save the results ####
     printColoredMessage(
-        message = '-- Save the all the plots:',
+        message = '-- Save the all the boxplots of the ANOVA F-statistics:',
         color = 'magenta',
-        verbose = verbose)
+        verbose = verbose
+        )
     ## add results to the SummarizedExperiment object ####
-    if (save.se.obj == TRUE) {
+    if (isTRUE(save.se.obj)) {
+        printColoredMessage(
+            message = '- Save all the boxplots of the ANOVA F-statistics of each assay(s) in the "metadata" in the SummarizedExperiment object.',
+            color = 'blue',
+            verbose = verbose
+            )
         for (x in levels(assay.names)) {
             ## check if metadata metric already exist for this assay, this metric and this variable
             se.obj@metadata[['metric']][[x]][['ANOVA']][[anova.method]][[variable]]$F.values.plot <- all.aov.fvals.plots[[x]]
         }
         printColoredMessage(
-            message = 'The F values plots for indiviaul assay are saved to metadata@metric',
+            message = paste0('- The boxplot of the ANOVA F-statistics for the indiviaul assay(s) is  saved to',
+                             '  "se.obj@metadata$metric$AssayName$ANOVA$', anova.method, ' in the SummarizedExperiment object.'),
             color = 'blue',
             verbose = verbose)
 
@@ -158,23 +205,24 @@ plotGenesVariableAnova <- function(
             }
             se.obj@metadata[['plot']][['ANOVA']][[anova.method]][[variable]] <- overall.aov.fvals.plot
             printColoredMessage(
-                message = paste0('The F values plots all assays are saved to metadata@plot'),
+                message = paste0('- The combined boxplots of the ANOVA F-statistics of all the  indiviaul assay(s) is saved to',
+                                 '  "se.obj@metadata$plot$ANOVA$', anova.method, ' in the SummarizedExperiment object.'),
                 color = 'blue',
                 verbose = verbose)
-
         }
-        printColoredMessage(message = '------------The plotGenesVariableCorrelation function finished.',
+        printColoredMessage(message = '------------The plotGenesVariableAnova function finished.',
                             color = 'white',
                             verbose = verbose)
         return(se.obj = se.obj)
 
-    } else if (save.se.obj == FALSE) {
+    }
+    if (isFALSE(save.se.obj)) {
         # return only the correlation result ####
         printColoredMessage(
             message = 'All the plots are saved as a list.',
             color = 'blue',
             verbose = verbose)
-        printColoredMessage(message = '------------The genesVariableCorrelation function finished.',
+        printColoredMessage(message = '------------The plotGenesVariableAnova function finished.',
                             color = 'white',
                             verbose = verbose)
         if(length(assay.names) == 1){

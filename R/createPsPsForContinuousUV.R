@@ -36,7 +36,7 @@
 #' library size, ... within the SummarizedExperiment object. This can comprise a vector containing either categorical,
 #' continuous, or a combination of both variables. These variable(s) will be considered when generating PRPS sets fo the
 #' main.uv.variable. The default is set to 'NULL'.
-#' @param min.sample.for.prps Numeric. Indicates the minimum number of biologically homogeneous samples to be averaged
+#' @param min.sample.for.ps Numeric. Indicates the minimum number of biologically homogeneous samples to be averaged
 #' to create one pseudo-sample. The default it is set to 3.
 #' @param bio.clustering.method Symbol. A symbol indicating the clustering method used to group each continuous biological
 #' variable. The option include 'kmeans', cut' and 'quantile'. The default is to 'kmeans'. We refer to the
@@ -48,8 +48,6 @@
 #' createHomogeneousUVGroups() function for more details.
 #' @param nb.other.uv.clusters Numeric. A numeric value to specify the number of clusters/groups for each continuous biological
 #' variable. The default it set to 3.
-#' @param check.prps.connectedness Logical. Indicates whether to assess the connectedness between the PRPS sets or not.
-#' The default is set to 'TRUE'. See the details for more information.
 #' @param apply.log Logical. Indicates whether to apply a log-transformation to the data. The default is set to 'TRUE'.
 #' @param pseudo.count Numeric. A numeric value as a pseudo count to be added to all measurements before log transformation.
 #' The default is set to 1.
@@ -93,7 +91,7 @@ createPrPsForContinuousUV <- function(
         bio.variables,
         main.uv.variable,
         other.uv.variables,
-        min.sample.for.prps = 3,
+        min.sample.for.ps = 3,
         bio.clustering.method = 'kmeans',
         nb.bio.clusters = 2,
         other.uv.clustering.method = 'kmeans',
@@ -118,8 +116,8 @@ createPrPsForContinuousUV <- function(
         stop('The function can only take a single assay name.')
     } else if (length(main.uv.variable) > 1) {
         stop('The main.uv.variable should be a single continuous source of unwanted variation.')
-    } else if (min.sample.for.prps <= 1) {
-        stop('The minimum value for the min.sample.for.prps is 2.')
+    } else if (min.sample.for.ps <= 1) {
+        stop('The minimum value for the min.sample.for.ps is 2.')
     } else if (var(se.obj[[main.uv.variable]]) == 0) {
         stop(paste(
                 'The variable ',
@@ -230,7 +228,7 @@ createPrPsForContinuousUV <- function(
             verbose = verbose)
         bio.batch.groups <- findRepeatingPatterns(
             vec = annot.data$bio.batch,
-            n.repeat = c(2 * min.sample.for.prps) )
+            n.repeat = c(2 * min.sample.for.ps) )
         if(length(bio.batch.groups) == 0){
             stop(paste0(
                     'There is not any sample groups with enough samples',
@@ -239,7 +237,7 @@ createPrPsForContinuousUV <- function(
         cover <- c(length(bio.batch.groups)/length(unique(annot.data$bio.batch))) * 100
         printColoredMessage(
             message = paste0(length(bio.batch.groups),' (', round(cover, digits = 0),
-                '%) groups have enough samples (2 * min.sample.for.prps) for creating PRPS.'),
+                '%) groups have enough samples (2 * min.sample.for.ps) for creating PRPS.'),
             color = 'blue',
             verbose = verbose)
 
@@ -252,15 +250,15 @@ createPrPsForContinuousUV <- function(
         annot.data <- annot.data %>%
             mutate(sOrder = c(1:ncol(se.obj))) %>%
             add_count(bio.batch) %>%
-            filter(n >= c(min.sample.for.prps * 2))
+            filter(n >= c(min.sample.for.ps * 2))
         top <- annot.data %>%
             arrange(desc(uv.variable)) %>%
             group_by(bio.batch) %>%
-            slice(1:min.sample.for.prps)
+            slice(1:min.sample.for.ps)
         bot <- annot.data %>%
             arrange(uv.variable) %>%
             group_by(bio.batch) %>%
-            slice(1:min.sample.for.prps)
+            slice(1:min.sample.for.ps)
         selected.groups <- unique(bot$bio.batch)
         prps.sets <- lapply(
             selected.groups,
@@ -292,7 +290,7 @@ createPrPsForContinuousUV <- function(
                 data.frame(.) %>%
                 pivot_longer(everything(), values_to = 'uv.var', names_to = 'bio.batch') %>%
                 arrange(bio.batch, uv.var) %>%
-                mutate(groups = rep(rep(c('bottom', 'top'), each = min.sample.for.prps), length(selected.groups)))
+                mutate(groups = rep(rep(c('bottom', 'top'), each = min.sample.for.ps), length(selected.groups)))
             prps.sets.plot <- data.frame(
                 bio.batch = rep(main.uv.variable, ncol(se.obj)),
                 uv.var = se.obj[[main.uv.variable]],
@@ -326,12 +324,12 @@ createPrPsForContinuousUV <- function(
     } else if (is.null(other.uv.variables)){
         printColoredMessage(
             message = paste0('-- Find homogeneous biological groups with at least ',
-                             2 * min.sample.for.prps, ' (2* min.sample.for.prps) samples.'),
+                             2 * min.sample.for.ps, ' (2* min.sample.for.ps) samples.'),
             color = 'magenta',
             verbose = verbose)
         bio.groups <- findRepeatingPatterns(
             vec = homo.bio.groups,
-            n.repeat = c(2 * min.sample.for.prps))
+            n.repeat = c(2 * min.sample.for.ps))
         if(length(bio.groups) == 0){
             stop(paste0(
                 'There is not any homogeneous biological groups with enough samples',
@@ -343,7 +341,7 @@ createPrPsForContinuousUV <- function(
                 length(bio.groups),
                 ' (',
                 round(cover, digits = 0),
-                '%) homogeneous biological groups have enough samples (2 * min.sample.for.prps) for creating PRPS.'),
+                '%) homogeneous biological groups have enough samples (2 * min.sample.for.ps) for creating PRPS.'),
             color = 'blue',
             verbose = verbose)
         # creating PRPS within individual homogeneous biological group ####
@@ -359,15 +357,15 @@ createPrPsForContinuousUV <- function(
         annot.data <- annot.data %>%
             mutate(sOrder = c(1:ncol(se.obj))) %>%
             add_count(bio.variable) %>%
-            filter(n >= c(min.sample.for.prps * 2))
+            filter(n >= c(min.sample.for.ps * 2))
         top <- annot.data %>%
             arrange(desc(uv.variable)) %>%
             group_by(bio.variable) %>%
-            slice(1:min.sample.for.prps)
+            slice(1:min.sample.for.ps)
         bot <- annot.data %>%
             arrange(uv.variable) %>%
             group_by(bio.variable) %>%
-            slice(1:min.sample.for.prps)
+            slice(1:min.sample.for.ps)
         selected.groups <- unique(bot$bio.variable)
         prps.sets <- lapply(
             selected.groups,
@@ -407,7 +405,7 @@ createPrPsForContinuousUV <- function(
                 data.frame(.) %>%
                 pivot_longer(everything(), values_to = 'uv.var', names_to = 'bio.variable') %>%
                 arrange(bio.variable, uv.var) %>%
-                mutate(groups = rep(rep(c('bottom', 'top'), each = min.sample.for.prps), length(selected.groups)))
+                mutate(groups = rep(rep(c('bottom', 'top'), each = min.sample.for.ps), length(selected.groups)))
             prps.map.plot <- data.frame(
                 bio.variable = rep(main.uv.variable, ncol(se.obj)),
                 uv.var = se.obj[[main.uv.variable]],

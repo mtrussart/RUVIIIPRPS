@@ -66,7 +66,7 @@ computeGenesVariableCorrelation <- function(
         remove.na = 'both',
         save.se.obj = TRUE,
         verbose = TRUE
-) {
+        ){
     printColoredMessage(message = '------------The computeGenesVariableCorrelation function starts:',
                         color = 'white',
                         verbose = verbose)
@@ -106,7 +106,7 @@ computeGenesVariableCorrelation <- function(
 
     # data transformation ####
     printColoredMessage(
-        message = '-- Data transformation:',
+        message = '-- Data log transformation:',
         color = 'magenta',
         verbose = verbose)
     all.assays <- lapply(
@@ -115,19 +115,19 @@ computeGenesVariableCorrelation <- function(
             # log transformation ####
             if (apply.log & !is.null(pseudo.count)) {
                 printColoredMessage(
-                    message = paste0('Apply log2 + ', pseudo.count,  ' (pseudo.count) on the ', x, ' assay.'),
+                    message = paste0('- Apply log2 + ', pseudo.count,  ' (pseudo.count) on the "', x, '" data.'),
                     color = 'blue',
                     verbose = verbose)
                 expr <- log2(assay(x = se.obj, i = x) + pseudo.count)
             } else if (apply.log & is.null(pseudo.count)){
                 printColoredMessage(
-                    message = paste0('Apply log2 transformation on the ', x, ' assay.'),
+                    message = paste0('- Apply log2 transformation on the "', x, '" data.'),
                     color = 'blue',
                     verbose = verbose)
                 expr <- log2(assay(x = se.obj, i = x))
             } else {
                 printColoredMessage(
-                    message = paste0('The ', x, ' assay will be used without log transformation.'),
+                    message = paste0('- The "', x, '" data will be used without log transformation.'),
                     color = 'blue',
                     verbose = verbose)
                 printColoredMessage(
@@ -140,16 +140,17 @@ computeGenesVariableCorrelation <- function(
     names(all.assays) <- levels(assay.names)
 
     # correlation analyses ####
-    printColoredMessage(message = '-- Correlation analyses:',
-                        color = 'magenta',
-                        verbose = verbose)
+    printColoredMessage(
+        message = paste0('Perform ' , method,' correlation between individual genes expression of the assay(s) and the "',
+                         variable, '" variable.'),
+        color = 'magenta',
+        verbose = verbose)
     cor.all <- lapply(
         levels(assay.names),
         function(x) {
             # correlation ####
             printColoredMessage(
-                message = paste0('Perform ' , method,' correlation between individual genes expression of the ',
-                        x, ' and the ', variable, '.'),
+                message = paste0('- Perform the correlation on the "', x, '" data and obtain the coefficients.'),
                 color = 'blue',
                 verbose = verbose)
             corr.genes.var <- correls(
@@ -160,7 +161,7 @@ computeGenesVariableCorrelation <- function(
                 rho = rho)
             row.names(corr.genes.var) <- row.names(se.obj)
             # round the correlation obtained to 2 digits ####
-            if (apply.round) {
+            if (isTRUE(apply.round)) {
                 corr.genes.var <- cbind(
                     round(x = corr.genes.var[, 1:4], digits = 2),
                     corr.genes.var[, 5, drop = FALSE])
@@ -168,13 +169,11 @@ computeGenesVariableCorrelation <- function(
             # plot highly affected genes ####
             if (isTRUE(plot.top.genes)) {
                 printColoredMessage(
-                    message = paste0('Plot top ' , nb.top.genes,
+                    message = paste0('- Plot top ' , nb.top.genes,
                         ' highly correlated (positive and negative) genes with the ', variable,'.'),
                     color = 'blue',
                     verbose = verbose)
-                temp.corr <- corr.genes.var[order(corr.genes.var[, 'correlation'],
-                                         decreasing = TRUE,
-                                         na.last = TRUE) , ]
+                temp.corr <- corr.genes.var[order(corr.genes.var[, 'correlation'], decreasing = TRUE, na.last = TRUE) , ]
                 ### positive correlation ####
                 p.pos <- as.data.frame(t(all.assays[[x]][row.names(temp.corr)[c(1:nb.top.genes)],]))
                 p.pos[, 'variable'] <- se.obj@colData[, variable]
@@ -242,7 +241,11 @@ computeGenesVariableCorrelation <- function(
         color = 'magenta',
         verbose = verbose)
     ## add results to the SummarizedExperiment object ####
-    if (save.se.obj == TRUE) {
+    if (isTRUE(save.se.obj)) {
+        printColoredMessage(
+            message = '- The correlation results for the indiviaul assay(s) are saved to the "metadata" of the SummarizedExperiment object.',
+            color = 'blue',
+            verbose = verbose)
         for (x in levels(assay.names)) {
             ## check if metadata metric already exist
             if (length(se.obj@metadata) == 0) {
@@ -269,23 +272,27 @@ computeGenesVariableCorrelation <- function(
                 cor.all[[x]][['corr.genes.var']][ , c('p-value', 'correlation')]
         }
         printColoredMessage(
-            message = 'The correlation results for indiviaul assay are saved to metadata@metric',
+            message = paste0('- The correlation results of all the assays are saved to the ',
+                             ' "se.obj@metadata$metric$AssayName$Correlation$', method, '$library.size" in the SummarizedExperiment object.'),
             color = 'blue',
             verbose = verbose)
+
         printColoredMessage(message = '------------The computeGenesVariableCorrelation function finished.',
                             color = 'white',
                             verbose = verbose)
         return(se.obj = se.obj)
 
         # return only the correlation result ####
-    } else if (save.se.obj == FALSE) {
+    }
+    if (isFALSE(save.se.obj)) {
         printColoredMessage(
             message = 'The correlation results for indiviaul assay are saved as list.',
             color = 'blue',
             verbose = verbose)
-        printColoredMessage(message = '------------The computeGenesVariableCorrelation function finished.',
-                            color = 'white',
-                            verbose = verbose)
+        printColoredMessage(
+            message = '------------The computeGenesVariableCorrelation function finished.',
+            color = 'white',
+            verbose = verbose)
         return(gene.corr.var = cor.all)
     }
 }

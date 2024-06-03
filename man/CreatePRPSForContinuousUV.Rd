@@ -10,7 +10,7 @@ createPrPsForContinuousUV(
   bio.variables,
   main.uv.variable,
   other.uv.variables,
-  min.sample.for.prps = 3,
+  min.sample.for.ps = 3,
   bio.clustering.method = "kmeans",
   nb.bio.clusters = 2,
   other.uv.clustering.method = "kmeans",
@@ -46,7 +46,7 @@ library size, ... within the SummarizedExperiment object. This can comprise a ve
 continuous, or a combination of both variables. These variable(s) will be considered when generating PRPS sets fo the
 main.uv.variable. The default is set to 'NULL'.}
 
-\item{min.sample.for.prps}{Numeric. Indicates the minimum number of biologically homogeneous samples to be averaged
+\item{min.sample.for.ps}{Numeric. Indicates the minimum number of biologically homogeneous samples to be averaged
 to create one pseudo-sample. The default it is set to 3.}
 
 \item{bio.clustering.method}{Symbol. A symbol indicating the clustering method used to group each continuous biological
@@ -101,9 +101,6 @@ The default is 'TRUE'.}
 of unwanted variation. The default is set to 'NULL'. The, the function creates a name based on paste0('prps_', uv.variable).}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
-
-\item{check.prps.connectedness}{Logical. Indicates whether to assess the connectedness between the PRPS sets or not.
-The default is set to 'TRUE'. See the details for more information.}
 }
 \value{
 SummarizedExperiment A SummarizedExperiment object containing the PRPS data or just PRPS data.

@@ -50,7 +50,7 @@ computePCVariableCorrelation <- function(
         nb.pcs = 10,
         save.se.obj = TRUE,
         verbose = TRUE
-) {
+        ) {
     printColoredMessage(message = '------------The computePCVariableCorrelation function starts:',
                         color = 'white',
                         verbose = verbose)
@@ -84,30 +84,31 @@ computePCVariableCorrelation <- function(
 
     # create dummy variables ####
     printColoredMessage(
-        message =  '-- Create dummy variables:',
+        message =  paste0('-- Create dummy variables for the "', variable, '" variable:'),
         color = 'magenta',
         verbose = verbose)
     catvar.dummies <- fastDummies::dummy_cols(se.obj@colData[[variable]])
     catvar.dummies <- catvar.dummies[, c(2:ncol(catvar.dummies))]
     printColoredMessage(
-        message =  paste0('-A design matrix with ', ncol(catvar.dummies), ' columns is created.'),
+        message =  paste0('- A data frame with ', ncol(catvar.dummies), ' binary columns is created.'),
         color = 'blue',
         verbose = verbose)
 
     # compute vector correlation ####
     printColoredMessage(
-        message =  '-- Compute vector correlation:',
+        message =  paste0('-- Compute vector correlation between the first ',
+                          nb.pcs, ' PCs (cumulatively) and the "', variable, 'variable:' ),
         color = 'magenta',
         verbose = verbose)
     all.vec.corr <- lapply(
         levels(assay.names),
         function(x) {
             printColoredMessage(
-                message = paste0('Compute vector correlation for ', x, ' data:'),
+                message = paste0('- Compute the vector correlation for the "', x, '" data:'),
                 color = 'blue',
                 verbose = verbose)
             printColoredMessage(
-                message = paste0('-Obtain the first ', nb.pcs, ' PCs.'),
+                message = paste0('- Obtain the first ', nb.pcs, ' computed PCs.'),
                 color = 'blue',
                 verbose = verbose)
             if (fast.pca) {
@@ -121,14 +122,14 @@ computePCVariableCorrelation <- function(
             }
             if(ncol(pca.data) < nb.pcs){
                 printColoredMessage(
-                    message = paste0('The number of PCs of the assay', x, 'are ', ncol(pca.data), '.'),
+                    message = paste0(' The number of PCs of the assay', x, 'are ', ncol(pca.data), '.'),
                     color = 'blue',
                     verbose = verbose)
                 stop(paste0('The number of PCs of the assay ', x, ' are less than', nb.pcs, '.',
                             'Re-run the computePCA function with nb.pcs = ', nb.pcs, '.'))
             }
             printColoredMessage(
-                message = '-Calculate vector correlation.',
+                message = '- Calculate the vector correlation.',
                 color = 'blue',
                 verbose = verbose)
             vector.corr <- sapply(
@@ -148,7 +149,7 @@ computePCVariableCorrelation <- function(
         verbose = verbose)
     if (save.se.obj == TRUE) {
         printColoredMessage(
-            message = '-Save the vector correlation results to the metadata of the SummarizedExperiment object.',
+            message = '- Save all the vector correlation results to the "metadata" in the SummarizedExperiment object.',
             color = 'blue',
             verbose = verbose)
         for (x in levels(assay.names)) {
@@ -177,7 +178,8 @@ computePCVariableCorrelation <- function(
             se.obj@metadata[['metric']][[x]][['VCA']][[variable]][['vec.cor']] <- all.vec.corr[[x]]
         }
         printColoredMessage(
-            message = 'The vector correlation for the individal assays are saved to metadata@metric',
+            message = paste0('- The vector correlation for the individal assay(s) are saved to the',
+                             ' "se.obj@metadata$metric$AssayName$VCA" in the SummarizedExperiment object.'),
             color = 'blue',
             verbose = verbose)
         printColoredMessage(message = '------------The computePCVariableCorrelations function finished.',

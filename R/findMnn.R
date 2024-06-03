@@ -12,7 +12,6 @@
 #' @param se.obj A summarized experiment object.
 #' @param assay.name Symbol. A symbol that indicates the name of the assay in the SummarizedExperiment object. This data
 #' should be the one that will be used as input for RUV-III normalization.
-
 #' @param uv.variable Symbol. A symbol that indicates the name of the column in the SummarizedExperiment object. The
 #' 'uv.variable' can be either categorical and continuous. If 'uv.variable' is a continuous variable, this will be
 #' divided into 'nb.clusters' groups using the 'clustering.method' methdo.

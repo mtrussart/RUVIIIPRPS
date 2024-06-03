@@ -10,7 +10,7 @@ createPrPsSupervised(
   bio.variables,
   uv.variables,
   apply.other.uv.variables = TRUE,
-  min.sample.for.prps = 3,
+  min.sample.for.ps = 3,
   bio.clustering.method = "kmeans",
   nb.bio.clusters = 2,
   other.uv.clustering.method = "kmeans",
@@ -46,7 +46,7 @@ continuous, or a combination of both variables.}
 \item{apply.other.uv.variables}{Logical. Determines whether to include other specified unwanted variables when generating
 PRPS sets for individual ones. The default is set to 'TRUE'.}
 
-\item{min.sample.for.prps}{Numeric. Indicates the minimum number of biologically homogeneous samples to be averaged
+\item{min.sample.for.ps}{Numeric. Indicates the minimum number of biologically homogeneous samples to be averaged
 to create one pseudo-sample. The default it is set to 3.}
 
 \item{bio.clustering.method}{Symbol. A symbol indicating the clustering method used to group each continuous biological

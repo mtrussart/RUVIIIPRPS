@@ -116,7 +116,7 @@ plotPCA <- function(
 
     # Obtain PCs from the SummarizedExperiment object ####
     printColoredMessage(
-        message = paste0('-- Obtain the first ', nb.pcs, ' PCs from the SummarizedExperiment object.'),
+        message = paste0('-- Obtain the first ', nb.pcs, ' computed PCs from the SummarizedExperiment object.'),
         color = 'magenta',
         verbose = verbose)
     pc.var <- NULL
@@ -144,7 +144,7 @@ plotPCA <- function(
             }
             if(ncol(pca.data) < nb.pcs){
                 printColoredMessage(
-                    message = paste0('The number of PCs of the assay', x, 'are ', ncol(pca.data), '.'),
+                    message = paste0('- The number of PCs of the assay', x, 'are ', ncol(pca.data), '.'),
                     color = 'blue',
                     verbose = verbose)
                 stop(paste0('The number of PCs of the assay ', x, ' are less than', nb.pcs, '.',
@@ -160,21 +160,18 @@ plotPCA <- function(
         ### scatter plots for individual assays  ####
         if(plot.type == 'scatter'){
             printColoredMessage(
-                message = '-- Create scatter PCA plots for the individual assay(s):',
+                message = paste0('-- Create scatter PCA plots colored by the "', variable, '" for the individual assay(s):'),
                 color = 'magenta',
                 verbose = verbose)
             all.scat.pca.plots <- lapply(
                 levels(assay.names),
                 function(x) {
-                    printColoredMessage(
-                        message = paste0('PCA plots of for ', x, ' data.'),
-                        color = 'blue',
-                        verbose = verbose)
                     pca.data <- all.pca.data[[x]]$pca.data[ , seq_len(nb.pcs)]
                     pair.pcs <- combn(x = ncol(pca.data), m = 2)
                     var <- colData(se.obj)[, variable]
                     printColoredMessage(
-                        message = paste0('-Create all possible pairwise scatter plots of the first ', nb.pcs, ' PCs.'),
+                        message = paste0(
+                            '- Create all possible pairwise scatter plots using the first ', nb.pcs, ' PCs for the ', x, ' data'),
                         color = 'blue',
                         verbose = verbose)
                     p.per.data <- lapply(
@@ -245,9 +242,10 @@ plotPCA <- function(
             names(all.scat.pca.plots) <- levels(assay.names)
 
             ## overall scatter plots for all assays  ####
-            printColoredMessage(message = '-- Put all the plots togather:',
-                                color = 'magenta',
-                                verbose = verbose)
+            printColoredMessage(
+                message = '-- Put all the plots togather:',
+                color = 'magenta',
+                verbose = verbose)
             all.scat.pca.plots.assay <- lapply(
                 levels(assay.names),
                 function(x) {
@@ -272,26 +270,27 @@ plotPCA <- function(
                     nrow = plot.nrow[1],
                     ncol = plot.ncol[1]
                     )
+                printColoredMessage(
+                    message = '- The individual assay plots are combined into one.',
+                    color = 'blue',
+                    verbose = verbose)
                 if(isTRUE(plot.output)) suppressMessages(print(overall.scat.pca.plot))
             }
         } else{
             printColoredMessage(
-                message = '-- Creat boxplot of PCA plots for individual assays:',
+                message = paste0('-- Creat boxplot of PCs acorss the "', variable, '" for the individual assay(s):'),
                 color = 'magenta',
                 verbose = verbose)
             all.boxplot.pca.plots <- lapply(
                 levels(assay.names),
                 function(x) {
-                    printColoredMessage(
-                        message = paste0('PCA plots of for ', x, ' data.'),
-                        color = 'blue',
-                        verbose = verbose)
                     var <- PC <- NULL
                     pca.data <- as.data.frame(all.pca.data[[x]]$pca.data[ , seq_len(nb.pcs)])
                     colnames(pca.data) <- paste0('PC', seq_len(nb.pcs), ' (',all.pca.data[[x]]$pc.var[seq_len(nb.pcs)], '%)')
                     pca.data$var <- colData(se.obj)[, variable]
                     printColoredMessage(
-                        message = paste0('-Create all possible boxplots of the first ', nb.pcs, ' PCs.'),
+                        message = paste0(
+                            '- Create all possible boxplots using the first ', nb.pcs, ' PCs for the ', x, ' data'),
                         color = 'blue',
                         verbose = verbose)
                     pca.data <- tidyr::pivot_longer(
@@ -330,7 +329,7 @@ plotPCA <- function(
             }
         }
     }
-    ### categorical variable ####
+    ### continuous variable ####
     if(class(colData(se.obj)[[variable]]) %in% c('numeric','integer')){
         #### scatter plots for individual assays ####
         all.scat.var.pca.plots <- lapply(
@@ -345,7 +344,7 @@ plotPCA <- function(
                 colnames(pca.data) <- paste0('PC', seq_len(nb.pcs), ' (', all.pca.data[[x]]$pc.var[seq_len(nb.pcs)], '%)')
                 pca.data$var <- colData(se.obj)[, variable]
                 printColoredMessage(
-                    message = paste0('-Create all possible scatter plots of the first ', nb.pcs, ' PCs.'),
+                    message = paste0('- Create all possible scatter plots of the first ', nb.pcs, ' PCs.'),
                     color = 'blue',
                     verbose = verbose)
                 pca.data <- tidyr::pivot_longer(
@@ -402,7 +401,7 @@ plotPCA <- function(
     ## add the pca plots to the SummarizedExperiment object ####
     if (isTRUE(save.se.obj)) {
         printColoredMessage(
-            message = '- The PCA plots of individual assays are saved to metadata@metric',
+            message = '- Save all the PCA plots to the "metadata" of the SummarizedExperiment object.',
             color = 'blue',
             verbose = verbose)
         if(class(colData(se.obj)[[variable]]) %in% c('character', 'factor')){
@@ -427,6 +426,14 @@ plotPCA <- function(
                 } else se.obj@metadata[['metric']][[x]][['PCA']][['pca']][['pca.plot']][[variable]][['pca.var.scat.plot']] <- all.scat.var.pca.plots[[x]]
             }
         }
+        if(isTRUE(fast.pca)){
+            svd.tech <- 'fast.pca'
+        } else svd.tech <- 'pca'
+        printColoredMessage(
+            message = paste0('- The PCA plots of individual assay (s) are saved to the',
+                             ' "se.obj@metadata$metric$AssayName$PCA$', svd.tech, '$pca.plot" in the SummarizedExperiment object.'),
+            color = 'blue',
+            verbose = verbose)
 
         ### overall pca plots ####
         if(length(assay.names) > 1){
@@ -501,15 +508,24 @@ plotPCA <- function(
                     }
                 }
             }
+            if(isTRUE(fast.pca)){
+                svd.tech <- 'fast.pca'
+            } else svd.tech <- 'pca'
+            printColoredMessage(
+                message = paste0('- The combined PCA plots  of all assays are saved to the',
+                                 ' "se.obj@metadata$plot$PCA$', svd.tech, ' in the SummarizedExperiment object.'),
+                color = 'blue',
+                verbose = verbose)
         }
         printColoredMessage(message = '------------The plotPCA function finished.',
                             color = 'white',
                             verbose = verbose)
         return(se.obj)
-    } else if (save.se.obj == FALSE) {
+    }
+    if (isFALSE(save.se.obj)) {
         ## return a list ####
         printColoredMessage(
-            message = 'The PCA plots are outputed as a list.',
+            message = '- The PCA plots are outputed as a list.',
             color = 'blue',
             verbose = verbose)
     }

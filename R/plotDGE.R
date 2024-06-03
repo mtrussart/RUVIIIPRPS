@@ -68,7 +68,7 @@ plotDGE <- function(
 
     # obtain tests ####
     printColoredMessage(
-        message = '-- Obtain p-values of the DGE analysis',
+        message = paste0('-- Obtain computed p-values of all contrasts of the DGE analysis for the "', variable, '" variable.') ,
         color = 'magenta',
         verbose = verbose
     )
@@ -76,7 +76,7 @@ plotDGE <- function(
         levels(assay.names),
         function(x) {
             printColoredMessage(
-                message = paste0('- Collect computed p-values of the DGE analysis for the ', x, ' data.'),
+                message = paste0('- Collect computed p-values of the DGE analysis for the "', x, '" data.'),
                 color = 'blue',
                 verbose = verbose
             )
@@ -88,6 +88,7 @@ plotDGE <- function(
             }
             de.results <- do.call(cbind, se.obj@metadata[['metric']][[x]][['DGE']][[variable]][['p.values']])
             de.results <- as.data.frame(de.results[ , seq(3, ncol(de.results), 3), drop = FALSE])
+            colnames(de.results) <- gsub('.pvalue', '', colnames(de.results))
             de.results
         })
     names(all.de.tests) <- levels(assay.names)
@@ -130,7 +131,7 @@ plotDGE <- function(
                         axis.title.x = element_text(size = 12),
                         axis.title.y = element_text(size = 12),
                         plot.title = element_text(size = 14),
-                        axis.text.x = element_text(size = 8),
+                        axis.text.x = element_text(size = 6),
                         axis.text.y = element_text(size = 8))
             } else {
                 pval.data <- all.de.tests[[x]] %>%
@@ -151,7 +152,7 @@ plotDGE <- function(
                         axis.title.x = element_text(size = 10),
                         axis.title.y = element_text(size = 10),
                         plot.title = element_text(size = 12),
-                        axis.text.x = element_text(size = 8),
+                        axis.text.x = element_text(size = 6),
                         axis.text.y = element_text(size = 8))
             }
             if(isTRUE(plot.output) & length(assay.names) == 1) print(pval.plot)
@@ -161,8 +162,8 @@ plotDGE <- function(
 
     # overall plots
     printColoredMessage(
-        message = '-Generate p-values histograms for all the datasets.' ,
-        color = 'blue',
+        message = '- Put all the p-values histograms together:' ,
+        color = 'magenta',
         verbose = verbose)
     overall.pvals.plots <- ggpubr::ggarrange(
         plotlist = all.pval.plots,
@@ -175,7 +176,7 @@ plotDGE <- function(
     if (isTRUE(save.se.obj)) {
         for (x in levels(assay.names)) {
             ## check if metadata metric already exist for this assay, this metric and this variable
-            if(!'p.values.plot' %in% se.obj@metadata[['metric']][[x]][['DGE']][[variable]])
+            if(!'p.values.plot' %in% names(se.obj@metadata[['metric']][[x]][['DGE']][[variable]]))
                 se.obj@metadata[['metric']][[x]][['DGE']][[variable]][['p.values.plot']] <- list()
             se.obj@metadata[['metric']][[x]][['DGE']][[variable]][['p.values.plot']] <- all.pval.plots[[x]]
         }

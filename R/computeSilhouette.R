@@ -51,7 +51,7 @@ computeSilhouette <- function(
         nb.pcs = 3,
         save.se.obj = TRUE,
         verbose = TRUE
-) {
+        ){
     printColoredMessage(message = '------------The computeSilhouette function starts:',
                         color = 'white',
                         verbose = verbose)
@@ -87,19 +87,19 @@ computeSilhouette <- function(
 
     # Silhouette coefficients on all assays ####
     printColoredMessage(
-        message = '-- Compute silhouette coefficient:',
+        message = paste0('-- Compute silhouette coefficient using the first ',
+                         nb.pcs, ' PCS for the ', variable, ' variable.') ,
         color = 'magenta',
         verbose = verbose)
     sil.coef <- lapply(
         levels(assay.names),
         function(x) {
             printColoredMessage(
-                message = paste0('- Compute silhouette coefficient for the ', x, ' data.'),
+                message = paste0('- Compute silhouette coefficient for the "', x, '" data.'),
                 color = 'blue',
                 verbose = verbose)
-
             printColoredMessage(
-                message = paste0('- Obtain the first ', nb.pcs,' PCs.'),
+                message = paste0('* obtain the first ', nb.pcs, ' computed PCs.'),
                 color = 'blue',
                 verbose = verbose)
             if (fast.pca) {
@@ -124,12 +124,12 @@ computeSilhouette <- function(
                 stop('The column names of the SummarizedExperiment object is not the same as row names of the PCA data.')
             }
             printColoredMessage(
-                message = '- Calculate the distance matrix on the PCs.',
+                message = '* calculate the distance matrix on the PCs.',
                 color = 'blue',
                 verbose = verbose)
             d.matrix <- as.matrix(dist(pca.data[, seq_len(nb.pcs)], method = dist.measure))
             printColoredMessage(
-                message = '- Calculate the average Silhouette coefficient.',
+                message = '* calculate the average Silhouette coefficient.',
                 color = 'blue',
                 verbose = verbose)
             avg.width <- summary(silhouette(as.numeric(as.factor(se.obj@colData[, variable])), d.matrix))$avg.width
@@ -139,13 +139,13 @@ computeSilhouette <- function(
 
     # Save the results ####
     printColoredMessage(
-        message = '-- Save all the Silhouette:',
+        message = '-- Save all the Silhouette coefficients :',
         color = 'magenta',
         verbose = verbose)
     ## add results to the SummarizedExperiment object ####
     if (isTRUE(save.se.obj)) {
         printColoredMessage(
-            message = '- Save the silhouette coefficients to the metadata of the SummarizedExperiment object.',
+            message = '- Save the silhouette coefficients of each assay(s) to the "metadata" in the SummarizedExperiment object:',
             color = 'blue',
             verbose = verbose)
 
@@ -174,7 +174,8 @@ computeSilhouette <- function(
             se.obj@metadata[['metric']][[x]][['Silhouette']][[paste0('sil.', dist.measure)]][[variable]]$sil.coef <- sil.coef[[x]]
         }
         printColoredMessage(
-            message = 'The silhouette coefficients for individual assays are saved to metadata@metric',
+            message = paste0('- The silhouette coefficients of the induvial assay(s) is saved to the .',
+                             ' ".se.obj@metadata$metric$RawCount$Silhouette" in the SummarizedExperiment objec.'),
             color = 'blue',
             verbose = verbose)
 

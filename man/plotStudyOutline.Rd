@@ -38,6 +38,20 @@ the checkSeObj function for more details.}
 
 \item{plot.output}{Logical. Determines whether to plot the study outline. The default is set to 'TRUE'.}
 
+\item{legend.font.size}{Numeric. A numeric value indicating the size of font in the plot.}
+
+\item{legend.ncol}{Numeric. A numeric value indicating the numer of columns of the legend of the heatmap. The default is set
+to 4.}
+
+\item{legend.direction}{Symbol. A symbol specifying the direction of the legend in the heatmap. The default is set to
+'horizontal'.}
+
+\item{heatmap.legend.side}{Symbol. A symbol indicating the side of the legend in the heatmap.  The default is set to
+'bottom'.}
+
+\item{column.names.rot}{Numeric. A numeric value showing the angel of the columns of the heatmap. The default is set to
+25.}
+
 \item{save.se.obj}{Logical. Indicates whether to save the study outline plot in the metadata of the SummarizedExperiment
 object or to output the result as a plot. The default is set to 'TRUE'.}
 

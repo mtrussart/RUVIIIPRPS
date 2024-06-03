@@ -35,7 +35,7 @@
 #' continuous, or a combination of both variables.
 #' @param apply.other.uv.variables Logical. Determines whether to include other specified unwanted variables when generating
 #' PRPS sets for individual ones. The default is set to 'TRUE'.
-#' @param min.sample.for.prps Numeric. Indicates the minimum number of biologically homogeneous samples to be averaged
+#' @param min.sample.for.ps Numeric. Indicates the minimum number of biologically homogeneous samples to be averaged
 #' to create one pseudo-sample. The default it is set to 3.
 #' @param bio.clustering.method Symbol. A symbol indicating the clustering method used to group each continuous biological
 #' variable. The option include 'kmeans', cut' and 'quantile'. The default is to 'kmeans'. We refer to the
@@ -92,7 +92,7 @@ createPrPsSupervised <- function(
         bio.variables,
         uv.variables,
         apply.other.uv.variables = TRUE,
-        min.sample.for.prps = 3,
+        min.sample.for.ps = 3,
         bio.clustering.method = 'kmeans',
         nb.bio.clusters = 2,
         other.uv.clustering.method = 'kmeans',
@@ -139,7 +139,7 @@ createPrPsSupervised <- function(
                         bio.variables = bio.variables,
                         main.uv.variable = x,
                         other.uv.variables = other.uv.variables,
-                        min.sample.for.prps = min.sample.for.prps,
+                        min.sample.for.ps = min.sample.for.ps,
                         bio.clustering.method = bio.clustering.method,
                         nb.bio.clusters = nb.bio.clusters,
                         other.uv.clustering.method = other.uv.clustering.method,
@@ -167,7 +167,7 @@ createPrPsSupervised <- function(
                     bio.variables = bio.variables,
                     main.uv.variable = x,
                     other.uv.variables = other.uv.variables,
-                    min.sample.for.prps = min.sample.for.prps,
+                    min.sample.for.ps = min.sample.for.ps,
                     bio.clustering.method = bio.clustering.method,
                     nb.bio.clusters = nb.bio.clusters,
                     other.uv.clustering.method = other.uv.clustering.method,
@@ -203,7 +203,7 @@ createPrPsSupervised <- function(
                         bio.variables = bio.variables,
                         main.uv.variable = x,
                         other.uv.variables = other.uv.variables,
-                        min.sample.for.prps = min.sample.for.prps,
+                        min.sample.for.ps = min.sample.for.ps,
                         bio.clustering.method = bio.clustering.method,
                         nb.bio.clusters = nb.bio.clusters,
                         other.uv.clustering.method = other.uv.clustering.method,
@@ -232,7 +232,7 @@ createPrPsSupervised <- function(
                     bio.variables = bio.variables,
                     main.uv.variable = x,
                     other.uv.variables = other.uv.variables,
-                    min.sample.for.prps = min.sample.for.prps,
+                    min.sample.for.ps = min.sample.for.ps,
                     bio.clustering.method = bio.clustering.method,
                     nb.bio.clusters = nb.bio.clusters,
                     other.uv.clustering.method = other.uv.clustering.method,

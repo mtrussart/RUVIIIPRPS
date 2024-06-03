@@ -49,7 +49,7 @@ computeDGE <- function(
         remove.na = 'none',
         save.se.obj = TRUE,
         verbose = TRUE
-){
+        ){
     printColoredMessage(message = '------------The computeDGE function starts:',
                         color = 'white',
                         verbose = verbose)
@@ -106,7 +106,7 @@ computeDGE <- function(
             # log transformation ####
             if (isTRUE(apply.log) & !is.null(pseudo.count)) {
                 printColoredMessage(
-                    message = paste0('- Apply log2 + ', pseudo.count,  ' (pseudo.count) on the ', x, ' data.'),
+                    message = paste0('- Apply log2 + ', pseudo.count,  ' (pseudo.count) on the "', x, '" data.'),
                     color = 'blue',
                     verbose = verbose)
                 expr.data <- log2(assay(x = se.obj, i = x) + pseudo.count)
@@ -132,7 +132,7 @@ computeDGE <- function(
 
     # Apply Wilcoxon test ####
     printColoredMessage(
-        message = '-- Perform Wilcoxon test:',
+        message = paste0('-- Perform Wilcoxon test between all possible contrasts () of the', variable, 'variable.') ,
         color = 'magenta',
         verbose = verbose)
     all.contrasts <- combn(
@@ -142,14 +142,14 @@ computeDGE <- function(
         levels(assay.names),
         function(x){
             printColoredMessage(
-                message = paste0('- Apply the Wilcoxon test on the ', x, ' data:'),
+                message = paste0('- Apply the Wilcoxon test on the "', x, '" data:'),
                 color = 'blue',
                 verbose = verbose)
             de.results <- lapply(
                 1:ncol(all.contrasts),
                 function(i){
                     printColoredMessage(
-                        message = paste0('- Wilcoxon test between the ', all.contrasts[1 , i], ' and ', all.contrasts[2 , i],'.'),
+                        message = paste0('* Wilcoxon test between the ', all.contrasts[1 , i], ' and ', all.contrasts[2 , i],'.'),
                         color = 'blue',
                         verbose = verbose)
                     data1 <- all.log.data[[x]][ , colData(se.obj)[[variable]] == all.contrasts[1 , i] ]
@@ -171,6 +171,11 @@ computeDGE <- function(
         verbose = verbose)
     ## add results to the SummarizedExperiment object ####
     if (isTRUE(save.se.obj)) {
+        printColoredMessage(
+            message = '- Save all the Wilcoxon test results in the "metadata" in the SummarizedExperiment object.',
+            color = 'blue',
+            verbose = verbose
+        )
         for (x in levels(assay.names)) {
             ## check if metadata metric already exist
             if (length(se.obj@metadata) == 0) {
@@ -192,7 +197,8 @@ computeDGE <- function(
             se.obj@metadata[['metric']][[x]][['DGE']][[variable]][['p.values']] <- all.wilcoxon.tests[[x]]
         }
         printColoredMessage(
-            message = 'The Wilcoxon results for indiviaul assay are saved to metadata@metric.',
+            message = paste0('- All the Wilcoxon results for indiviaul assay(s) are saved to the .',
+                             ' "se.obj@metadata$metric$AssayName$DGE" in the SummarizedExperiment object.'),
             color = 'blue',
             verbose = verbose)
 

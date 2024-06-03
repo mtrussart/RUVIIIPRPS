@@ -16,6 +16,15 @@
 #' The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
 #' the checkSeObj function for more details.
 #' @param plot.output Logical. Determines whether to plot the study outline. The default is set to 'TRUE'.
+#' @param legend.font.size Numeric. A numeric value indicating the size of font in the plot.
+#' @param legend.ncol Numeric. A numeric value indicating the numer of columns of the legend of the heatmap. The default is set
+#' to 4.
+#' @param legend.direction Symbol. A symbol specifying the direction of the legend in the heatmap. The default is set to
+#' 'horizontal'.
+#' @param heatmap.legend.side Symbol. A symbol indicating the side of the legend in the heatmap.  The default is set to
+#' 'bottom'.
+#' @param column.names.rot Numeric. A numeric value showing the angel of the columns of the heatmap. The default is set to
+#' 25.
 #' @param save.se.obj Logical. Indicates whether to save the study outline plot in the metadata of the SummarizedExperiment
 #' object or to output the result as a plot. The default is set to 'TRUE'.
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
