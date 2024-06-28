@@ -15,7 +15,7 @@ findKnn(
   svd.bsparam = bsparam(),
   clustering.method = "kmeans",
   nb.clusters = 3,
-  k.nn = 4,
+  k.nn = 3,
   hvg = NULL,
   normalization = "CPM",
   regress.out.bio.variables = NULL,
@@ -24,6 +24,7 @@ findKnn(
   assess.se.obj = TRUE,
   remove.na = "both",
   output.name = NULL,
+  prps.group = NULL,
   save.se.obj = TRUE,
   verbose = TRUE
 )
@@ -61,7 +62,7 @@ if a continuous variable is provided. Options include 'kmeans', 'cut', and 'quan
 \item{nb.clusters}{Numeric. A numeric value indicating how many clusters should be found if the 'uv.variable' is a
 continuous variable. The default is 3.}
 
-\item{k.nn}{Numeric.The maximum number of nearest neighbors to compute. The default is set 3.}
+\item{k.nn}{Numeric. The maximum number of nearest neighbors to compute. The default is set 3.}
 
 \item{hvg}{Vector. A vector of the names of the highly variable genes. These genes will be used to select the input
 data. The default is NULL.}
@@ -86,7 +87,11 @@ function for more details.}
 The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
 the checkSeObj function for more details.}
 
-\item{output.name}{TTTT}
+\item{output.name}{Symbol. A symbol specifying the name of output file. If is 'NULL', the function will select a name
+based on "paste0(uv.variable, '|' , assay.name)".}
+
+\item{prps.group}{Symbol. A symbol specifying the name of the PRPS group. If is 'NULL', the function will select a name
+based on "paste0('prps|mnn|', uv.variable)".}
 
 \item{save.se.obj}{Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object
 or to output the result as list. By default it is set to TRUE.}

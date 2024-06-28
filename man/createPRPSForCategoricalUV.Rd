@@ -25,7 +25,8 @@ createPrPsForCategoricalUV(
   cont.cor.coef = c(0.95, 0.95),
   plot.prps.map = TRUE,
   save.se.obj = TRUE,
-  prps.name = NULL,
+  output.name = NULL,
+  prps.group = NULL,
   verbose = TRUE
 )
 }
@@ -101,8 +102,10 @@ The default is 'TRUE'.}
 \item{save.se.obj}{Logical. Indicates whether to save the results in the metadata of the SummarizedExperiment object
 or to output the result as list. The default by is set to 'TRUE'.}
 
-\item{prps.name}{Symbol. A symbol to specify the name of all PRPS sets that will be created for all specified source(s)
+\item{output.name}{Symbol. A symbol to specify the name of all PRPS sets that will be created for all specified source(s)
 of unwanted variation. The default is set to 'NULL'. The, the function creates a name based on paste0('prps_', uv.variable).}
+
+\item{prps.group}{TTTT}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }

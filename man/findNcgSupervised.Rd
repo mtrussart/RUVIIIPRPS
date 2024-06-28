@@ -48,6 +48,8 @@ findNcgSupervised(
   remove.na = "none",
   save.se.obj = TRUE,
   output.name = NULL,
+  ncg.group = NULL,
+  plot.output = TRUE,
   use.imf = FALSE,
   save.imf = FALSE,
   imf.name = NULL,
@@ -70,8 +72,8 @@ object. These unwanted variables can be categorical or continuous. Continuous va
 'nb.uv.clusters' groups based on a clustering method selected in the 'uv.clustering.method' argument. This argument
 cannot be empty.}
 
-\item{approach}{Symbols. Indicats which NCGs selection method should be used. The options are 'AnovaCorr.PerBatchPerBio',
-'AnovaCorr.AcrossAllSamples' and'TwoWayAnova'. The default is set to 'TwoWayAnova'. Refer to details for more information.}
+\item{approach}{Symbols. Indicats which NCGs selection method should be used. The options are 'AnovaCorr.PerBatchPerBiology',
+'AnovaCorr.AcrossAllSamples' and 'TwoWayAnova'. The default is set to 'TwoWayAnova'. Refer to details for more information.}
 
 \item{ncg.selection.method}{Symbol. Indicating how to summarize F-statistics obtained from two-way ANOVA and select a
 set genes as negative control genes. The options are 'prod', 'average', 'sum', 'non.overlap', 'auto' and 'quantile'.
@@ -216,6 +218,10 @@ to output the result as a logical vector. The default it is set to 'TRUE'. The f
 \item{output.name}{Symbol. A representation for the output s name. If set to 'NULL', the function will choose a name
 automatically. In this case, the file name will be constructed as paste0(sum(ncg.selected),'|', paste0(bio.variables,
 collapse = '&'), '|', paste0(uv.variables, collapse = '&'),'|TWAnova:', ncg.selection.method, '|', assay.name).}
+
+\item{ncg.group}{Symbol. A symbol indicating the name of the group of NCG.}
+
+\item{plot.output}{TTTT}
 
 \item{use.imf}{Logical. Indicating whether to use the intermediate file or not. The default is set to 'FALSE'.}
 

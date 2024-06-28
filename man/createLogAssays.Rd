@@ -9,6 +9,7 @@ createLogAssays(
   assay.names = "all",
   pseudo.count = 1,
   replace.assays = FALSE,
+  new.name = "Log.",
   apply.round = FALSE,
   verbose = TRUE
 )
@@ -24,6 +25,9 @@ be selected.}
 applying log-transformation. This helps prevent -Inf values for measurements equal to 0. The default is 1.}
 
 \item{replace.assays}{Logical. When set to 'TRUE', the assay(s) will be substituted with the log transformation.}
+
+\item{new.name}{Symbol. A symbol to add to the current assay name for the log transformed data. The default is set to
+'log.' .}
 
 \item{apply.round}{If 'TRUE', the measurements of individual assays will be rounded to two decimal points. The default
 is 'TRUE'.}

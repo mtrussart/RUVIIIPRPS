@@ -34,6 +34,8 @@ findNcgByTwoWayAnova(
   remove.na = "none",
   save.se.obj = TRUE,
   output.name = NULL,
+  ncg.group = NULL,
+  plot.output = TRUE,
   save.imf = FALSE,
   imf.name = NULL,
   use.imf = FALSE,
@@ -149,6 +151,10 @@ to output the result as a logical vector. The default it is set to 'TRUE'. The f
 \item{output.name}{Symbol. A representation for the output s name. If set to 'NULL', the function will choose a name
 automatically. In this case, the file name will be constructed as paste0(sum(ncg.selected),'|', paste0(bio.variables,
 collapse = '&'), '|', paste0(uv.variables, collapse = '&'),'|TWAnova:', ncg.selection.method, '|', assay.name).}
+
+\item{ncg.group}{Symbol. A symbol indicating the name of the group of NCG.}
+
+\item{plot.output}{TTT}
 
 \item{save.imf}{Logical. Indicating whether to save the intermediate file in the SummarizedExperiment object or not.
 If set to 'TRUE', the function saves the results of the two-way ANOVA. Subsequently, if users wish to adjust parameters

@@ -11,6 +11,7 @@ findMnn(
   hvg = NULL,
   clustering.method = "kmeans",
   nb.clusters = 3,
+  mnn = 1,
   normalization = "CPM",
   regress.out.bio.variables = NULL,
   apply.log = TRUE,
@@ -18,8 +19,9 @@ findMnn(
   mnn.bpparam = SerialParam(),
   assess.se.obj = TRUE,
   remove.na = "both",
-  output.name = NULL,
   plot.output = TRUE,
+  output.name = NULL,
+  prps.group = NULL,
   save.se.obj = TRUE,
   verbose = TRUE
 )
@@ -43,6 +45,8 @@ if a continuous variable is provided. Options include 'kmeans', 'cut', and 'quan
 
 \item{nb.clusters}{Numeric. A numeric value indicating how many clusters should be found if the 'uv.variable' is a
 continuous variable. The default is 3.}
+
+\item{mnn}{Numeric. The maximum number of nearest neighbors to compute. The default is set 1.}
 
 \item{normalization}{Symbol. A Symbol that indicates which normalization methods should be applied before finding the
 knn. The option are 'CPM', 'TMM', 'VST'. The default is 'CPM'. Refer to the 'applyOtherNormalization' for more details.}
@@ -68,9 +72,12 @@ function for more details.}
 The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
 the checkSeObj function for more details.}
 
-\item{output.name}{TTTT}
+\item{plot.output}{Logical. If 'TRUE', the function plots the distribution of MNN across the batches.}
 
-\item{plot.output}{TTTT}
+\item{output.name}{Symbol. A symbol specifying the name of output file. If is 'NULL', the function will select a name
+based on "paste0(uv.variable, '||' , assay.name)".}
+
+\item{prps.group}{TT}
 
 \item{save.se.obj}{Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object
 or to output the result as list. By default it is set to TRUE.}

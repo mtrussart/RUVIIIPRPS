@@ -8,7 +8,7 @@ createHomogeneousBioGroups(
   se.obj,
   bio.variables,
   clustering.method = "kmeans",
-  nb.clusters,
+  nb.clusters = 3,
   assess.variables = TRUE,
   cat.cor.coef = c(0.9, 0.9),
   cont.cor.coef = c(0.9, 0.9),

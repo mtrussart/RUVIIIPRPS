@@ -2,7 +2,7 @@
 % Please edit documentation in R/findBioGenes.R
 \name{findBioGenes}
 \alias{findBioGenes}
-\title{Find biological genes.}
+\title{Find highly variable genes.}
 \usage{
 findBioGenes(
   se.obj,
@@ -19,6 +19,7 @@ findBioGenes(
   apply.log = TRUE,
   pseudo.count = 1,
   normalization = "CPM",
+  grid.nb = 20,
   regress.out.uv.variables = NULL,
   assess.bio.genes = TRUE,
   variables.to.assess.bio.genes = NULL,
@@ -96,6 +97,8 @@ default is 1.}
 \item{normalization}{Symbol. Indicates which normalization method should be applied to the data before finding genes
 that are affected by biological variation. The default is set to 'CPM'. If is 'NULL', no normalization will be applied.
 Refer to the 'applyOtherNormalizations' function for more details.}
+
+\item{grid.nb}{XXX}
 
 \item{regress.out.uv.variables}{Symbols. Indicates the columns names that contain unwanted variation variables in the
 SummarizedExperiment object. These variables will be regressed out from the data before finding genes that are highly
@@ -188,8 +191,8 @@ Either the SummarizedExperiment object containing the a set of biological genes 
 logical vector of the selected biological genes
 }
 \description{
-This function uses different approaches to find genes that highly affected by biological variables or highly
-variable genes. Refer to the details for
+This function uses different approaches to find genes that are highly affected by biological variables or highly
+variable genes. Refer to the details for more information.
 }
 \details{
 Additional details...

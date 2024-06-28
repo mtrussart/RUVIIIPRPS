@@ -42,6 +42,8 @@ findNcgsUnSupervised(
   save.se.obj = TRUE,
   remove.na = "both",
   output.name = NULL,
+  ncg.group = NULL,
+  plot.output = TRUE,
   use.imf = FALSE,
   save.imf = FALSE,
   imf.name = NULL,
@@ -162,15 +164,21 @@ Correlation is computed using the ContCoef function from the DescTools R package
 variables exceeds the cut-off, only the variable with the highest variance will be retained, and the other will be
 excluded from further analysis. By default, both values are set to 0.9.}
 
-\item{save.se.obj}{Logical. Indicates whether to save the result of the function in the metadata of the SummarizedExperiment object or
-to output the result. The default is TRUE.}
+\item{save.se.obj}{Logical. Indicates whether to save the result of the function in the metadata of the
+SummarizedExperiment object or to output the result. The default is TRUE.}
 
 \item{remove.na}{Symbol. Indicates whether to remove NA or missing values from either the 'assays', the 'sample.annotation',
-'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If 'sample.annotation' is selected, the
-samples that contains NA or missing values for any 'uv.variables' will be excluded. By default, it is set to both'.}
+'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If
+'sample.annotation' is selected, the samples that contains NA or missing values for any 'uv.variables' will be excluded.
+By default, it is set to both'.}
 
-\item{output.name}{Symbol. Indicates the name of the output in the meta data of the SummarizedExperiment object. The
-default is 'NULL'. This means the function will create a name based the specified argument.}
+\item{output.name}{Symbol. A symbol indicating the name of the output in the meta data of the SummarizedExperiment
+object. The default is 'NULL'. This means the function will create a name based the specified argument.}
+
+\item{ncg.group}{Symbol. A symbol indicating the name of a group of NCGs. If 'NULL', the function will select a name
+based on " ncg.group <- paste0('ncg|unsupervised')".}
+
+\item{plot.output}{Logical.}
 
 \item{use.imf}{Logical. Indicates whether to use the intermediate file or not. The default is set to 'FALSE'.}
 

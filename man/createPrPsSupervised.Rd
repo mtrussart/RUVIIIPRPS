@@ -25,7 +25,8 @@ createPrPsSupervised(
   remove.na = "both",
   save.se.obj = TRUE,
   plot.output = TRUE,
-  prps.name = NULL,
+  output.name = NULL,
+  prps.group = NULL,
   verbose = TRUE
 )
 }
@@ -100,8 +101,10 @@ or to output the result as list. The default by is set to 'TRUE'.}
 \item{plot.output}{Logical. Indicates whether to generate the PRPS map plot for individual sources of unwanted variation.
 The default is 'TRUE'.}
 
-\item{prps.name}{Symbol. A symbol to specify the name of all PRPS sets that will be created for all specified source(s)
+\item{output.name}{Symbol. A symbol to specify the name of all PRPS sets that will be created for all specified source(s)
 of unwanted variation. The default is set to 'NULL'. The, the function creates a name based on paste0('prps_', uv.variable).}
+
+\item{prps.group}{TTT}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }

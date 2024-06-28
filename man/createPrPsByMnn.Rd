@@ -18,6 +18,7 @@ createPrPsByMnn(
   clustering.method = "kmeans",
   nb.clusters = 3,
   k.nn = 2,
+  mnn = 1,
   hvg = NULL,
   normalization = "CPM",
   regress.out.bio.variables = NULL,
@@ -27,14 +28,15 @@ createPrPsByMnn(
   assess.se.obj = TRUE,
   remove.na = "both",
   save.se.obj = TRUE,
-  prps.name = NULL,
+  output.name = NULL,
+  prps.group = NULL,
   verbose = TRUE
 )
 }
 \arguments{
 \item{se.obj}{A summarized experiment object.}
 
-\item{assay.name}{Symbol. A symbol indicates the name of the assay in the SummarizedExperiment object. This assay will
+\item{assay.name}{Symbol. A symbol indicating the name of the assay in the SummarizedExperiment object. This assay will
 be used to first find k nearest neighbors and them mutual nearest neighbors data. This data must the one that will be
 used for the RUV-III normalization.}
 
@@ -46,12 +48,15 @@ divided into 'nb.clusters' groups using the 'clustering.method'.}
 include: 'expr' and 'pcs'. If 'pcs' is selected, the first PCs of the data will be used as input. If 'expr' is selected,
 the data will be selected as input.}
 
-\item{filter.prps.sets}{TTTT}
+\item{filter.prps.sets}{Logical. If 'TRUE', the number of PRPS sets across each pair of batches will be filtered if they are
+higher than the 'max.prps.sets' value. The default is 'TRUE'. The high number of PRPS sets will just increase the
+computational time for the RUV-III normalization.}
 
-\item{max.prps.sets}{TTTT}
+\item{max.prps.sets}{Numeric. A numeric value specifying the maximum number for PRPS set across each pair of batches.
+The default is set to 20.}
 
-\item{nb.pcs}{Numeric. Indicates the number PCs should be used as data input for finding the k nearest neighbors. The
-'nb.pcs' must be set when the "data.input = PCs". The default is 2.}
+\item{nb.pcs}{Numeric. A numeric value indicating the number PCs should be used as data input for finding the k nearest
+neighbors. The nb.pcs' must be set when the "data.input = PCs". The default is 2.}
 
 \item{center}{Logical. Indicates whether to scale the data or not. If center is TRUE, then centering is done by
 subtracting the column means of the assay from their corresponding columns. The default is TRUE.}
@@ -69,7 +74,9 @@ if a continuous variable is provided. Options include 'kmeans', 'cut', and 'quan
 \item{nb.clusters}{Numeric. A numeric value indicating how many clusters should be found if the 'uv.variable' is a
 continuous variable. The default is 3.}
 
-\item{k.nn}{Numeric.The maximum number of nearest neighbors to compute. The default is set 3.}
+\item{k.nn}{Numeric. The maximum number of nearest neighbors to compute. The default is set 3.}
+
+\item{mnn}{Numeric. The maximum number of nearest neighbors to compute. The default is set 1.}
 
 \item{hvg}{Vector. A vector of the names of the highly variable genes. These genes will be used to find the anchors
 samples across the batches. The default is NULL.}
@@ -100,9 +107,16 @@ the checkSeObj function for more details.}
 \item{save.se.obj}{Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object
 or to output the result as list. By default it is set to TRUE.}
 
-\item{prps.name}{Symbol. A symbol that ...}
+\item{output.name}{TTTT}
+
+\item{prps.group}{Symbol. A symbol specifying the name of the output file. If is 'NULL', the function will select a name
+based on "paste0('prps_mnn_', uv.variable)".}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
+}
+\value{
+The SummarizedExperiment object that contain all the PPRS data, knn, mnn and plot results in the metadata, or
+a list of the results.
 }
 \description{
 This function uses the k and mutual nearest neighbors approaches to create PRPS in the RNA-seq data. This function
