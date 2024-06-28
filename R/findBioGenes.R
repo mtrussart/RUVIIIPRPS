@@ -1,10 +1,10 @@
-#' Find biological genes.
+#' Find highly variable genes.
 
 #' @author Ramyar Molania
 
 #' @description
-#' This function uses different approaches to find genes that highly affected by biological variables or highly
-#' variable genes. Refer to the details for
+#' This function uses different approaches to find genes that are highly affected by biological variables or highly
+#' variable genes. Refer to the details for more information.
 
 #' @details
 #' Additional details...
@@ -64,6 +64,7 @@
 #' @param normalization Symbol. Indicates which normalization method should be applied to the data before finding genes
 #' that are affected by biological variation. The default is set to 'CPM'. If is 'NULL', no normalization will be applied.
 #' Refer to the 'applyOtherNormalizations' function for more details.
+#' @param grid.nb XXX
 #' @param regress.out.uv.variables Symbols. Indicates the columns names that contain unwanted variation variables in the
 #' SummarizedExperiment object. These variables will be regressed out from the data before finding genes that are highly
 #' affected by biological variation. The default is NULL, indicates the regression will not be applied.
@@ -149,6 +150,7 @@ findBioGenes <- function(
         apply.log = TRUE,
         pseudo.count = 1,
         normalization = 'CPM',
+        grid.nb = 20,
         regress.out.uv.variables = NULL,
         assess.bio.genes = TRUE,
         variables.to.assess.bio.genes = NULL,
@@ -222,11 +224,10 @@ findBioGenes <- function(
                 stop('All or some of "variables.to.assess.bio.genes" cannot be found in the SummarizedExperiment object.')
         }
     }
-
-    # check inputs ####
     if(!approach %in% c('AnovaCorr.PerBatchPerBio', 'AnovaCorr.AcrossAllSamples', 'TwoWayAnova', 'mad.unsupervised')){
         stop('The approach must be one of the "AnovaCorr.PerBatchPerBio", "AnovaCorr.AcrossAllSamples", "TwoWayAnova" or "mad.unsupervised".')
     }
+
     # Check the SummarizedExperiment object ####
     if (isTRUE(assess.se.obj)) {
         se.obj <- checkSeObj(
@@ -239,33 +240,20 @@ findBioGenes <- function(
 
     # Two-way anova approach ####
     if(approach == 'TwoWayAnova'){
-        if (isFALSE(use.imf)){
+        if(isFALSE(use.imf)){
             ## Data transformation ####
             printColoredMessage(
-                message = '-- Data transformation:',
+                message = '-- Data log transformation:',
                 color = 'magenta',
                 verbose = verbose)
             ### apply log ####
-            if (isTRUE(apply.log) & !is.null(pseudo.count)){
-                printColoredMessage(
-                    message = paste0('Applying log2 + ', pseudo.count, ' (pseudo.count) on the ', assay.name, ' data.'),
-                    color = 'blue',
-                    verbose = verbose)
-                expr.data <- log2(assay(x = se.obj, i = assay.name) + pseudo.count)
-            } else if (isTRUE(apply.log) & is.null(pseudo.count)){
-                printColoredMessage(
-                    message = paste0('Applying log2 on the ', assay.name, ' data.'),
-                    color = 'blue',
-                    verbose = verbose)
-                expr.data <- log2(assay(x = se.obj, i = assay.name))
-            } else if (isFALSE(apply.log)) {
-                printColoredMessage(
-                    message = paste0('The ', assay.name, ' data will be used without any log transformation.'),
-                    color = 'blue',
-                    verbose = verbose)
-                expr.data <- assay(x = se.obj, i = assay.name)
-            }
-
+            expr.data <- applyLog(
+                se.obj = se.obj,
+                assay.names = assay.name,
+                apply.log = apply.log,
+                pseudo.count = pseudo.count,
+                assessment = ' two-way ANOVA'
+                )[[assay.name]]
             ## Create all possible homogeneous sample groups ####
             ### biological groups ####
             printColoredMessage(
@@ -283,7 +271,8 @@ findBioGenes <- function(
                 assess.se.obj = FALSE,
                 save.se.obj = FALSE,
                 remove.na = 'none',
-                verbose = verbose)
+                verbose = verbose
+                )
 
             ### unwanted groups ####
             printColoredMessage(
@@ -303,7 +292,7 @@ findBioGenes <- function(
 
             ## Two_way ANOVA ####
             printColoredMessage(
-                message = '-- Two_way ANOVA:',
+                message = '-- Apply Two_way ANOVA:',
                 color = 'magenta',
                 verbose = verbose)
             ## Perform gene level two_way ANOVA ####
@@ -317,24 +306,24 @@ findBioGenes <- function(
                     color = 'blue',
                     verbose = verbose)
                 ### two_way ANOVA ####
-                all.aov <- aov(t(expr.data) ~ all.bio.groups + all.uv.groups)
-                all.aov <- summary(all.aov)
-                all.aov <- as.data.frame(t(sapply(
+                two.way.anova <- aov(t(expr.data) ~ all.bio.groups + all.uv.groups)
+                two.way.anova <- summary(two.way.anova)
+                two.way.anova <- as.data.frame(t(sapply(
                     c(1:nrow(se.obj)),
-                    function(x) all.aov[[x]]$`F value`[1:2]
+                    function(x) two.way.anova[[x]]$`F value`[1:2]
                 )))
-                all.aov <- round(x = all.aov, digits = 1)
-                colnames(all.aov) <- c('Biology', 'UV')
-                row.names(all.aov) <- row.names(se.obj)
+                two.way.anova <- round(x = two.way.anova, digits = 1)
+                colnames(two.way.anova) <- c('Biology', 'UV')
+                row.names(two.way.anova) <- row.names(se.obj)
                 ## rank the F-statistics ####
                 bio.rank <- uv.rank <- Biology <- UV <- NULL
                 set.seed(2190)
-                all.aov$bio.rank <- rank(x = -all.aov$Biology, ties.method = 'random')
+                two.way.anova$bio.rank <- rank(x = -two.way.anova$Biology, ties.method = 'random')
         }
         ## Read the intermediate file ####
         if (isTRUE(use.imf)){
             printColoredMessage(
-                message = paste0('- Retrieve the results of two-way ANOVA from the the SummarizedExperiment object .'),
+                message = paste0('- Retrieve the results of two-way ANOVA from the the SummarizedExperiment object.'),
                 color = 'blue',
                 verbose = verbose)
             if(is.null(imf.name)){
@@ -342,7 +331,7 @@ findBioGenes <- function(
             }
             if(is.null(se.obj@metadata$IMF$BioGenes[[imf.name]]))
                 stop('The intermediate file cannot be found in the metadata of the SummarizedExperiment object.')
-            all.aov <- se.obj@metadata$IMF$NCG[[imf.name]]
+            two.way.anova <- se.obj@metadata$IMF$NCG[[imf.name]]
         }
         ## Save the intermediate file ####
         if(isTRUE(save.imf)){
@@ -366,10 +355,10 @@ findBioGenes <- function(
             if(!imf.name %in% names(se.obj@metadata[['IMF']][['BioGenes']])){
                 se.obj@metadata[['IMF']][['BioGenes']][[imf.name]] <- list()
             }
-            se.obj@metadata[['IMF']][['BioGenes']][[imf.name]] <- all.aov
+            se.obj@metadata[['IMF']][['BioGenes']][[imf.name]] <- two.way.anova
         }
         selected.bio.genes <- round(x = nb.bio.genes * nrow(se.obj) , digits = 0)
-        selected.bio.genes <- row.names(all.aov)[all.aov$bio.rank < selected.bio.genes]
+        selected.bio.genes <- row.names(two.way.anova)[two.way.anova$bio.rank < selected.bio.genes]
         selected.bio.genes <- row.names(se.obj) %in% selected.bio.genes
     }
 
@@ -381,33 +370,22 @@ findBioGenes <- function(
                                 color = 'magenta',
                                 verbose = verbose)
             ### apply log ####
-            if (isTRUE(apply.log) & !is.null(pseudo.count)){
-                printColoredMessage(
-                    message = paste0('- apply log2 + ', pseudo.count, ' (pseudo.count) on the ', assay.name,' data.'),
-                    color = 'blue',
-                    verbose = verbose)
-                expr.data <- log2(assay(x = se.obj, i = assay.name) + pseudo.count)
-            } else if (isTRUE(apply.log) & is.null(pseudo.count)){
-                printColoredMessage(
-                    message = paste0('- Apply log2 on the ', assay.name,' data.'),
-                    color = 'blue',
-                    verbose = verbose)
-                expr.data <- log2(assay(x = se.obj, i = assay.name))
-            } else if (isFALSE(apply.log)) {
-                printColoredMessage(
-                    message = paste0('The ', assay.name, ' data will be used without any log transformation.'),
-                    color = 'blue',
-                    verbose = verbose)
-                expr.data <- assay(x = se.obj, i = assay.name)
+            if(is.null(normalization)){
+                expr.data <- applyLog(
+                    se.obj = se.obj,
+                    assay.names = assay.name,
+                    apply.log = apply.log,
+                    pseudo.count = pseudo.count,
+                    assessment = ' two-way ANOVA'
+                )[[assay.name]]
             }
-
             ### normalization ####
             if (!is.null(normalization)) {
                 printColoredMessage(
                     message = '-- Data normalization:',
                     color = 'magenta',
                     verbose = verbose)
-                expr.data.nor <- applyOtherNormalizations(
+                expr.data <- applyOtherNormalizations(
                     se.obj = se.obj,
                     assay.name = assay.name,
                     method = normalization,
@@ -424,36 +402,32 @@ findBioGenes <- function(
                 printColoredMessage(
                     message = '- Regress out unwanted variables:',
                     color = 'blue',
-                    verbose = verbose)
-                if(!is.null(normalization)){
-                    expr.data.reg.uv <- expr.data.nor
-                } else expr.data.reg.uv <- expr.data
+                    verbose = verbose
+                    )
                 printColoredMessage(
-                    message = paste0('The ', paste0(regress.out.uv.variables, collapse = ' & '),
+                    message = paste0('- The ', paste0(regress.out.uv.variables, collapse = ' & '),
                                      ' will be regressed out from the data,',
                                      ' please make sure your data is log transformed.'),
                     color = 'blue',
                     verbose = verbose)
                 printColoredMessage(
                     message = paste0(
-                        'We do not recommend regressing out ',
-                        paste0(regress.out.uv.variables, collapse = ' & '),
-                        ' if they are largely associated with the ',
-                        paste0(bio.variables, collapse = ' & '),
-                        ' variables.'),
+                        'We do not recommend regressing out ', paste0(regress.out.uv.variables, collapse = ' & '),
+                        ' if they are largely associated with the ', paste0(bio.variables, collapse = ' & '), ' variables.'),
                     color = 'red',
-                    verbose = verbose)
-                expr.data.reg.uv <- t(expr.data.reg.uv)
+                    verbose = verbose
+                    )
+                expr.data <- t(expr.data)
                 uv.variables.all <- paste('se.obj', regress.out.uv.variables, sep = '$')
-                expr.data.reg.uv <- lm(as.formula(paste(
-                    'expr.data.reg.uv',
+                expr.data <- lm(as.formula(paste(
+                    'expr.data',
                     paste0(uv.variables.all, collapse = '+') ,
                     sep = '~')))
-                expr.data.reg.uv <- t(expr.data.reg.uv$residuals)
-                colnames(expr.data.reg.uv) <- colnames(se.obj)
-                row.names(expr.data.reg.uv) <- row.names(se.obj)
+                expr.data <- t(expr.data$residuals)
+                colnames(expr.data) <- colnames(se.obj)
+                row.names(expr.data) <- row.names(se.obj)
             }
-            ## Statistical analyses ####
+            ## statistical analyses ####
             printColoredMessage(
                 message = '-- Find biological genes:',
                 color = 'magenta',
@@ -461,7 +435,7 @@ findBioGenes <- function(
 
             ## select genes that are highly affected by biological variation  ####
             printColoredMessage(
-                message = '-- Select genes that are highly affected by each source(s) of biological variation:',
+                message = '- Select genes that are highly affected by each source(s) of biological variation:',
                 color = 'blue',
                 verbose = verbose)
             printColoredMessage(
@@ -473,43 +447,27 @@ findBioGenes <- function(
                 message = '- reate all possible major groups with respect to sources of unwanted variation:',
                 color = 'blue',
                 verbose = verbose)
-            if(is.null(uv.groups)){
-                printColoredMessage(
-                    message = paste0(
-                        'The ',
-                        paste0(uv.variables, collapse = ' & '),
-                        ' variables will be used as a major sources of unwanted variation',
-                        ' to find all possible groups.'),
-                    color = 'blue',
-                    verbose = verbose)
-                all.uv.groups <- createHomogeneousUVGroups(
-                    se.obj = se.obj,
-                    uv.variables = uv.variables,
-                    nb.clusters = nb.uv.clusters,
-                    clustering.method = uv.clustering.method,
-                    assess.se.obj = FALSE,
-                    assess.variables = assess.variables,
-                    save.se.obj = FALSE,
-                    verbose = verbose)
-            } else if(!is.null(uv.groups)){
-                printColoredMessage(
-                    message = paste0(
-                        'The ',
-                        paste0(uv.groups, collapse = ' & '),
-                        ' variables will be used as a major sources of unwanted variation',
-                        ' to find all possible groups.'),
-                    color = 'blue',
-                    verbose = verbose)
-                all.uv.groups <- createHomogeneousUVGroups(
-                    se.obj = se.obj,
-                    uv.variables = uv.groups,
-                    nb.clusters = nb.uv.clusters,
-                    clustering.method = uv.clustering.method,
-                    assess.se.obj = FALSE,
-                    assess.variables = assess.variables,
-                    save.se.obj = FALSE,
-                    verbose = verbose)
-            }
+            if(!is.null(uv.groups)) uv.variables <- uv.groups
+            printColoredMessage(
+                message = paste0(
+                    'The ',
+                    paste0(uv.variables, collapse = ' & '),
+                    ' variables will be used as a major sources of unwanted variation',
+                    ' to find all possible groups.'),
+                color = 'blue',
+                verbose = verbose
+            )
+            all.uv.groups <- createHomogeneousUVGroups(
+                se.obj = se.obj,
+                uv.variables = uv.variables,
+                nb.clusters = nb.uv.clusters,
+                clustering.method = uv.clustering.method,
+                assess.se.obj = FALSE,
+                assess.variables = assess.variables,
+                save.se.obj = FALSE,
+                verbose = verbose
+                )
+
             ### correlation between gene expression and all continuous source of biological variation with each uv groups ####
             bio.var.class <- unlist(lapply(
                 bio.variables,
@@ -521,30 +479,21 @@ findBioGenes <- function(
                                     verbose = verbose)
                 selected.uv.groups <- findRepeatingPatterns(
                     vec = all.uv.groups,
-                    n.repeat = min.sample.for.correlation)
+                    n.repeat = min.sample.for.correlation
+                    )
                 if (length(selected.uv.groups) > 0) {
                     if (length(selected.uv.groups) == 1) {
                         group = 'group has'
                     } else group = 'groups have'
                     printColoredMessage(
-                        message = paste0(
-                            length(selected.uv.groups),
+                        message = paste0( '- ', length(selected.uv.groups),
                             ' homogeneous groups with respect to the sources of unwanted variation ',
-                            group,
-                            ' at least ',
-                            min.sample.for.correlation,
+                            group, ' at least ', min.sample.for.correlation,
                             ' (min.sample.for.correlation) samples to pefrom correlation between gene-level',
                             'expression and all the continuous sources of bioloical variation.'),
                         color = 'blue',
                         verbose = verbose
                     )
-                    if (is.null(regress.out.uv.variables) & is.null(normalization)) {
-                        data.to.use <- expr.data
-                    } else if (!is.null(regress.out.uv.variables) & !is.null(normalization)) {
-                        data.to.use <- expr.data.reg.uv
-                    } else if (is.null(regress.out.uv.variables) & !is.null(normalization)) {
-                        data.to.use <- expr.data.nor
-                    }
                     corr.genes.bio <- lapply(
                         continuous.bio,
                         function(x) {
@@ -555,16 +504,16 @@ findBioGenes <- function(
                                     corr.genes <-
                                         as.data.frame(correls(
                                             y = se.obj@colData[, x][selected.samples],
-                                            x = t(data.to.use[, selected.samples]),
+                                            x = t(expr.data[, selected.samples]),
                                             type = corr.method,
                                             a = a ,
                                             rho = rho
-                                        ))
+                                            ))
                                     corr.genes <- cbind(round(x = corr.genes[, 1:4], digits = 3),
                                                         corr.genes[, 5, drop = FALSE])
                                     set.seed(2233)
                                     corr.genes$ranked.genes <- rank(-abs(corr.genes[, 'correlation']), ties.method = 'random')
-                                    row.names(corr.genes) <- row.names(data.to.use)
+                                    row.names(corr.genes) <- row.names(expr.data)
                                     corr.genes
                                 })
                             names(all.corr) <- selected.uv.groups
@@ -594,13 +543,12 @@ findBioGenes <- function(
                         cover.sample.groups <- rowSums(bio.batch >= min.sample.for.aov) == length(unique(se.obj[[x]]))
                         if (isTRUE(sum(cover.sample.groups) > 0)) {
                             printColoredMessage(
-                                message = paste0(
-                                    sum(cover.sample.groups),
-                                    ' homogeneous unwanted group(s) have at least ',
-                                    min.sample.for.aov,
+                                message = paste0( '- ',  sum(cover.sample.groups),
+                                    ' homogeneous unwanted group(s) have at least ', min.sample.for.aov,
                                     ' (min.sample.for.aov) samples within individual groups of the ', x, ' variable.'),
                                 color = 'blue',
-                                verbose = verbose)
+                                verbose = verbose
+                                )
                         }
                         if (isTRUE(sum(cover.sample.groups) == 0)){
                             printColoredMessage(
@@ -608,7 +556,8 @@ findBioGenes <- function(
                                                  min.sample.for.aov , ' (min.sample.for.aov) samples within each batches of the ',
                                                  x,' variable. This may result in unsatisfactory NCG selection.'),
                                 color = 'red',
-                                verbose = verbose)
+                                verbose = verbose
+                                )
                         }
                         selected.uv.groups <- names(which(rowSums(bio.batch >= min.sample.for.aov) > 1))
                         if (length(selected.uv.groups) == 0) {
@@ -616,20 +565,13 @@ findBioGenes <- function(
                                 'It seems there is complete association between ',x,
                                 ' homogeneous groups with respect to unwanted variation.'))
                         }
-                        if (is.null(regress.out.uv.variables) &is.null(normalization)) {
-                            data.to.use <- expr.data
-                        } else if (!is.null(regress.out.uv.variables) & !is.null(normalization)) {
-                            data.to.use <- expr.data.reg.uv
-                        } else if (is.null(regress.out.uv.variables) & !is.null(normalization)) {
-                            data.to.use <- expr.data.nor
-                        }
                         all.anova <- lapply(
                             selected.uv.groups,
                             function(i) {
                                 selected.samples <- all.uv.groups == i
                                 anova.gene.bio <- as.data.frame(
                                     row_oneway_equalvar(
-                                        x = data.to.use[, selected.samples],
+                                        x = expr.data[, selected.samples],
                                         g = se.obj@colData[, x][selected.samples]))
                                 set.seed(2233)
                                 anova.gene.bio$ranked.genes <- rank(-anova.gene.bio[, 'statistic'], ties.method = 'random')
@@ -649,7 +591,7 @@ findBioGenes <- function(
                 imf.name <- paste0(assay.name, '|PerBiologyPerBatch|')
             }
             if(is.null(se.obj@metadata$IMF$BioGenes[[imf.name]]))
-                stop('The intermediate file cannot be found in the metadata of the SummarizedExperiment object.')
+                stop('The intermediate file cannot be found in the "metadata" of the SummarizedExperiment object.')
             all.tests <- se.obj@metadata$IMF$BioGenes[[imf.name]]
             anova.genes.bio <- all.tests$anova.genes.bio
             corr.genes.bio <- all.tests$corr.genes.bio
@@ -674,7 +616,7 @@ findBioGenes <- function(
                 corr.genes.bio = corr.genes.bio)
         }
         ### select genes affected by biological variation ####
-        selected.bio.genes <- round(x = nb.bio.genes * nrow(se.obj) , digits = 0)
+        nb.bio.genes <- round(x = nb.bio.genes * nrow(se.obj) , digits = 0)
         all.bio.tests <- c('anova.genes.bio', 'corr.genes.bio')
         selected.bio.genes <- unique(unlist(lapply(
             all.bio.tests,
@@ -689,12 +631,46 @@ findBioGenes <- function(
                                 function(z) temp.data[[y]][[z]]$ranked.genes)
                             set.seed(2233)
                             all.ranks <- rank(x = rowMeans(all.ranks), ties.method = 'random')
-                            row.names(se.obj)[all.ranks < selected.bio.genes]
+                            row.names(se.obj)[all.ranks < nb.bio.genes]
                         })))
                 }
             })))
+        selection.ranges <- round(x = 0.01 *nb.bio.genes, digits = 0)
+        if(length(selected.bio.genes) > c(nb.bio.genes + selection.ranges)){
+            con <- parse(text = paste0("length(selected.bio.genes)", ">", "nb.bio.genes"))
+            printColoredMessage(
+                message = paste0(
+                    '- The number of selected genes ', length(selected.bio.genes),
+                    ' is larger than the number (', nb.bio.genes ,') of specified genes ',
+                    'by "bio.genes". A grid search will be performed.'),
+                color = 'blue',
+                verbose = verbose
+                )
+            pro.bar <- progress_estimated(round(nb.bio.genes/grid.nb, digits = 0) + 2)
+            nb.bio.genes.update <- nb.bio.genes
+            while(eval(con)){
+                pro.bar$pause(0.1)$tick()$print()
+                nb.bio.genes.update <- nb.bio.genes.update - grid.nb
+                selected.bio.genes <- unique(unlist(lapply(
+                    all.bio.tests,
+                    function(x) {
+                        if (isTRUE(!is.null(x))) {
+                            temp.data <- get(x)
+                            ranks.data <- unique(unlist(lapply(
+                                names(temp.data),
+                                function(y) {
+                                    all.ranks <- sapply(
+                                        names(temp.data[[y]]),
+                                        function(z) temp.data[[y]][[z]]$ranked.genes)
+                                    set.seed(2233)
+                                    all.ranks <- rank(x = rowMeans(all.ranks), ties.method = 'random')
+                                    row.names(se.obj)[all.ranks < nb.bio.genes.update]
+                                })))
+                        }
+                    })))
+            }
+        }
         selected.bio.genes <- row.names(se.obj) %in% selected.bio.genes
-
     }
     # Across all samples ####
     if( approach == 'AnovaCorr.AcrossAllSamples'){
@@ -705,28 +681,18 @@ findBioGenes <- function(
                 color = 'magenta',
                 verbose = verbose)
             ## apply log ####
-            if (isTRUE(apply.log) & !is.null(pseudo.count)){
-                printColoredMessage(
-                    message = paste0('Applying log2 + ', pseudo.count, ' (pseudo.count) on the ', assay.name, ' data.'),
-                    color = 'blue',
-                    verbose = verbose)
-                expr.data <- log2(assay(x = se.obj, i = assay.name) + pseudo.count)
-            } else if (isTRUE(apply.log) & is.null(pseudo.count)){
-                printColoredMessage(
-                    message = paste0('Applying log2 on the ', assay.name,' data.'),
-                    color = 'blue',
-                    verbose = verbose)
-                expr.data <- log2(assay(x = se.obj, i = assay.name))
-            } else if (isFALSE(apply.log)) {
-                printColoredMessage(
-                    message = paste0('The ', assay.name, ' data will be used without any log transformation.'),
-                    color = 'blue',
-                    verbose = verbose)
-                expr.data <- assay(x = se.obj, i = assay.name)
+            if(is.null(normalization)){
+                expr.data <- applyLog(
+                    se.obj = se.obj,
+                    assay.names = assay.name,
+                    apply.log = apply.log,
+                    pseudo.count = pseudo.count,
+                    assessment = ' two-way ANOVA'
+                )[[assay.name]]
             }
             ## normalization ####
             if(!is.null(normalization)){
-                expr.data.nor <- applyOtherNormalizations(
+                expr.data <- applyOtherNormalizations(
                     se.obj = se.obj,
                     assay.name = assay.name,
                     method = normalization,
@@ -735,10 +701,11 @@ findBioGenes <- function(
                     assess.se.obj = FALSE,
                     save.se.obj = FALSE,
                     remove.na = 'none',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
             }
             ## regress out unwanted variables ####
-            if(!is.null(regress.out.uv.variables) & !is.null(normalization)){
+            if(!is.null(regress.out.uv.variables)){
                 printColoredMessage(
                     message = paste0(
                         'The ',
@@ -756,46 +723,18 @@ findBioGenes <- function(
                         '.'),
                     color = 'red',
                     verbose = verbose)
-                expr.data.reg.uv <- t(expr.data.nor)
+                expr.data <- t(expr.data)
                 uv.variables.all <- paste('se.obj', regress.out.uv.variables, sep = '$')
-                expr.data.reg.uv <- lm(as.formula(paste(
-                    'expr.data.reg.uv',
+                expr.data <- lm(as.formula(paste(
+                    'expr.data',
                     paste0(uv.variables.all, collapse = '+') ,
                     sep = '~')))
-                expr.data.reg.uv <- t(expr.data.reg.uv$residuals)
-                colnames(expr.data.reg.uv) <- colnames(se.obj)
-                row.names(expr.data.reg.uv) <- row.names(se.obj)
-            }
-            if(!is.null(regress.out.uv.variables) & is.null(normalization)){
-                printColoredMessage(
-                    message = paste0(
-                        'The',
-                        paste0(regress.out.uv.variables, collapse = ' & '),
-                        ' will be regressed out from the data,',
-                        ' please make sure your data is log transformed.'),
-                    color = 'blue',
-                    verbose = verbose)
-                printColoredMessage(
-                    message = paste0(
-                        'Note: we do not recommend regressing out ',
-                        paste0(regress.out.uv.variables, collapse = ' & '),
-                        'if they are largely associated with the ',
-                        paste0(bio.variables, collapse = ' & '), '.'),
-                    color = 'red',
-                    verbose = verbose)
-                expr.data.reg.uv <- t(expr.data)
-                uv.variables.all <- paste('se.obj', regress.out.uv.variables, sep = '$')
-                expr.data.reg.uv <- lm(as.formula(paste(
-                    'expr.data.reg.uv',
-                    paste0(uv.variables.all, collapse = '+') ,
-                    sep = '~'
-                )))
-                expr.data.reg.uv <- t(expr.data.reg.uv$residuals)
-                colnames(expr.data.reg.uv) <- colnames(se.obj)
-                row.names(expr.data.reg.uv) <- row.names(se.obj)
+                expr.data <- t(expr.data$residuals)
+                colnames(expr.data) <- colnames(se.obj)
+                row.names(expr.data) <- row.names(se.obj)
             }
 
-            ## Gene-level ANOVA and correlation analyses  ####
+            ## gene-level ANOVA and correlation analyses  ####
             ## select genes that are not highly affected by biology ####
             printColoredMessage(
                 message = '-- Find genes that are not highly affected by sources of biological variation:',
@@ -808,15 +747,6 @@ findBioGenes <- function(
             categorical.bio <- bio.variables[bio.var.class %in% c('factor', 'character')]
             ### anova between genes and categorical sources of biological variation ####
             if(length(categorical.bio) > 0 ){
-                if(!is.null(normalization) & is.null(regress.out.uv.variables)){
-                    data.to.use <- expr.data.nor
-                } else if(!is.null(regress.out.uv.variables) & !is.null(normalization)){
-                    data.to.use <- expr.data.reg.uv
-                } else if(!is.null(regress.out.uv.variables) & is.null(normalization)){
-                    data.to.use <- expr.data.reg.uv
-                } else if (!is.null(regress.out.uv.variables) & !is.null(normalization)){
-                    data.to.use <- expr.data
-                }
                 printColoredMessage(
                     message = paste0(
                         '- Perform ANOVA between individual gene-level ',
@@ -831,7 +761,8 @@ findBioGenes <- function(
                     function(x) {
                         keep.samples <- findRepeatingPatterns(
                             vec = colData(se.obj)[[x]],
-                            n.repeat = min.sample.for.aov)
+                            n.repeat = min.sample.for.aov
+                            )
                         if(length(keep.samples) == 0){
                             stop(paste0(
                                 'There are not enough samples to perfrom ANOVA between individual genes expression and the ',
@@ -861,11 +792,11 @@ findBioGenes <- function(
                         keep.samples <- colData(se.obj)[[x]] %in% keep.samples
                         if(anova.method == 'aov'){
                             anova.genes <- as.data.frame(row_oneway_equalvar(
-                                x = data.to.use[ , keep.samples],
+                                x = expr.data[ , keep.samples],
                                 g = se.obj@colData[, x][keep.samples]))
                         } else if(anova.method == 'welch.correction'){
                             anova.genes <- as.data.frame(row_oneway_equalvar(
-                                x = data.to.use[ , keep.samples],
+                                x = expr.data[ , keep.samples],
                                 g = se.obj@colData[, x][keep.samples]))
                         }
                         set.seed(2233)
@@ -873,19 +804,10 @@ findBioGenes <- function(
                         anova.genes
                     })
                 names(anova.genes.bio) <- categorical.bio
-                rm(data.to.use)
+                rm(expr.data)
             } else anova.genes.bio <- NULL
             ### correlation between genes and continuous sources of biological variation ####
             if(length(continuous.bio) > 0 ){
-                if(!is.null(normalization) & is.null(regress.out.uv.variables)){
-                    data.to.use <- expr.data.nor
-                } else if(!is.null(regress.out.uv.variables) & !is.null(normalization)){
-                    data.to.use <- expr.data.reg.uv
-                } else if(!is.null(regress.out.uv.variables) & is.null(normalization)){
-                    data.to.use <- expr.data.reg.uv
-                } else if (!is.null(regress.out.uv.variables) & !is.null(normalization)){
-                    data.to.use <- expr.data
-                }
                 ### gene-batch anova
                 printColoredMessage(
                     message = paste0(
@@ -908,14 +830,14 @@ findBioGenes <- function(
                     function(x) {
                         corr.genes.var <- as.data.frame(correls(
                             y = se.obj@colData[, x],
-                            x = t(data.to.use),
+                            x = t(expr.data),
                             type = corr.method,
                             a = a ,
                             rho = rho))
                         corr.genes.var <- cbind(
                             round(x = corr.genes.var[, 1:4], digits = 3),
                             corr.genes.var[, 5, drop = FALSE])
-                        row.names(corr.genes.var) <- row.names(data.to.use)
+                        row.names(corr.genes.var) <- row.names(expr.data)
                         set.seed(2233)
                         colnames(corr.genes.var)[colnames(corr.genes.var) == 'correlation' ] <- 'statistic'
                         corr.genes.var$ranked.genes <- rank(
@@ -968,7 +890,7 @@ findBioGenes <- function(
                 corr.genes.bio = corr.genes.bio)
         }
         ### select genes affected by biological variation ####
-        selected.bio.genes <- round(x = nb.bio.genes * nrow(se.obj) , digits = 0)
+        nb.bio.genes <- round(x = nb.bio.genes * nrow(se.obj) , digits = 0)
         all.bio.tests <- c('anova.genes.bio', 'corr.genes.bio')
         selected.bio.genes <- unique(unlist(lapply(
             all.bio.tests,
@@ -978,15 +900,45 @@ findBioGenes <- function(
                     ranks.data <- unique(unlist(lapply(
                         names(temp.data),
                         function(y){
-                            index <- temp.data[[y]]$ranked.genes < selected.bio.genes
+                            index <- temp.data[[y]]$ranked.genes < nb.bio.genes
                             row.names(temp.data[[y]])[index] })))
                 }
             })))
+        selection.ranges <- round(x = 0.01 *nb.bio.genes, digits = 0)
+        if(length(selected.bio.genes) > c(nb.bio.genes + selection.ranges)){
+            con <- parse(text = paste0("length(selected.bio.genes)", ">", "nb.bio.genes"))
+            printColoredMessage(
+                message = paste0(
+                    '- The number of selected genes ', length(selected.bio.genes),
+                    ' is larger than the number (', nb.bio.genes ,') of specified genes ',
+                    'by "bio.genes". A grid search will be performed.'),
+                color = 'blue',
+                verbose = verbose
+            )
+            pro.bar <- progress_estimated(round(nb.bio.genes/grid.nb, digits = 0) + 2)
+            nb.bio.genes.update <- nb.bio.genes
+            while(eval(con)){
+                pro.bar$pause(0.1)$tick()$print()
+                nb.bio.genes.update <- nb.bio.genes.update - grid.nb
+                selected.bio.genes <- unique(unlist(lapply(
+                    all.bio.tests,
+                    function(x){
+                        if(!is.null(x)){
+                            temp.data <- get(x)
+                            ranks.data <- unique(unlist(lapply(
+                                names(temp.data),
+                                function(y){
+                                    index <- temp.data[[y]]$ranked.genes < nb.bio.genes
+                                    row.names(temp.data[[y]])[index] })))
+                        }
+                    })))
+            }
+        }
         selected.bio.genes <- row.names(se.obj) %in% selected.bio.genes
     }
     # Unsupervised approach ####
     if(approach == 'mad.unsupervised'){
-        ## Finding negative control genes ####
+        ## Finding biological genes ####
         if(isFALSE(use.imf)){
             # Data transformation and normalization ####
             printColoredMessage(
@@ -994,29 +946,18 @@ findBioGenes <- function(
                 color = 'magenta',
                 verbose = verbose)
             ## apply log ####
-            if (isTRUE(apply.log) & !is.null(pseudo.count)){
-                printColoredMessage(
-                    message = paste0('Applying log2 + ', pseudo.count,' (pseudo.count) on the ', assay.name, ' data.'),
-                    color = 'blue',
-                    verbose = verbose)
-                expr.data <- log2(assay(x = se.obj, i = assay.name) + pseudo.count)
-            } else if (isTRUE(apply.log) & is.null(pseudo.count)){
-                printColoredMessage(
-                    message = paste0('Applying log2 on the ', assay.name,' data.'),
-                    color = 'blue',
-                    verbose = verbose)
-                expr.data <- log2(assay(x = se.obj, i = assay.name))
-            } else if (isFALSE(apply.log)) {
-                printColoredMessage(
-                    message = paste0('The ', assay.name, ' data will be used without any transformation.'),
-                    color = 'blue',
-                    verbose = verbose)
-                expr.data <- assay(x = se.obj, i = assay.name)
+            if(is.null(normalization)){
+                expr.data <- applyLog(
+                    se.obj = se.obj,
+                    assay.names = assay.name,
+                    apply.log = apply.log,
+                    pseudo.count = pseudo.count,
+                    assessment = ' two-way ANOVA'
+                )[[assay.name]]
             }
-
             ## normalization ####
             if(!is.null(normalization)){
-                expr.data.nor <- applyOtherNormalizations(
+                expr.data <- applyOtherNormalizations(
                     se.obj = se.obj,
                     assay.name = assay.name,
                     method = normalization,
@@ -1032,10 +973,6 @@ findBioGenes <- function(
                 color = 'magenta',
                 verbose = verbose)
             ## find genes that are not highly affected by biology ####
-            if (!is.null(normalization)) {
-                data.to.use <- expr.data.nor
-            } else data.to.use <- expr.data
-
             #### regress out variables ####
             if(!is.null(regress.out.uv.variables)){
                 printColoredMessage(
@@ -1046,12 +983,12 @@ findBioGenes <- function(
                         ' please make sure your data is log transformed.'),
                     color = 'blue',
                     verbose = verbose)
-                data.to.use <- t(data.to.use)
+                expr.data <- t(expr.data)
                 lm.formula <- paste('se.obj', regress.out.uv.variables, sep = '$')
-                adjusted.data <- lm(as.formula(paste('data.to.use', paste0(lm.formula, collapse = '+') , sep = '~')))
-                data.to.use <- t(adjusted.data$residuals)
-                colnames(data.to.use) <- colnames(se.obj)
-                row.names(data.to.use) <- row.names(se.obj)
+                adjusted.data <- lm(as.formula(paste('expr.data', paste0(lm.formula, collapse = '+') , sep = '~')))
+                expr.data <- t(adjusted.data$residuals)
+                colnames(expr.data) <- colnames(se.obj)
+                row.names(expr.data) <- row.names(se.obj)
             }
             ### apply mad within each homogeneous sample groups with respect to the unwanted variable ####
             printColoredMessage(
@@ -1071,18 +1008,20 @@ findBioGenes <- function(
                 cont.cor.coef = cont.cor.coef,
                 assess.se.obj = FALSE,
                 save.se.obj = FALSE,
-                verbose = verbose)
+                verbose = verbose
+                )
             #### apply mad  ####
             homo.uv.groups <- findRepeatingPatterns(
                 vec = homo.uv.groups,
-                n.repeat = min.sample.for.mad)
+                n.repeat = min.sample.for.mad
+                )
             groups <- unique(homo.uv.groups)
             if(isTRUE(length(groups) > 0)){
                 bio.genes <- sapply(
                     groups,
                     function(x){
                         index.samples <- homo.uv.groups == x
-                        matrixStats::rowMads(x = data.to.use[ , index.samples, drop = FALSE])
+                        matrixStats::rowMads(x = expr.data[ , index.samples, drop = FALSE])
                     })
                 bio.genes <- matrixStats::rowMaxs(bio.genes)
                 bio.genes <- data.frame(bio.mad = bio.genes)
@@ -1123,6 +1062,7 @@ findBioGenes <- function(
         ### select genes affected by biological variation ####
         selected.bio.genes <- round(x = nb.bio.genes * nrow(se.obj) , digits = 0)
         selected.bio.genes <- row.names(bio.genes)[bio.genes$bio.ranks < selected.bio.genes]
+        selected.bio.genes <- row.names(se.obj) %in% selected.bio.genes
     }
     printColoredMessage(
         message = paste0('- ', sum(selected.bio.genes), ' genes are selected as negative control genes.'),
@@ -1210,47 +1150,40 @@ findBioGenes <- function(
     }
     # Save results ####
     ### add results to the SummarizedExperiment object ####
-    if(is.null(output.name)){
-        output.name <- paste0(
-            sum(selected.bio.genes),
-            '|',
-            paste0(bio.variables, collapse = '&'),
-            '|',
-            paste0(uv.variables, collapse = '&'),
-            '|',
-            approach,
-            '|',
-            assay.name)}
-
     if(isTRUE(save.se.obj)){
         printColoredMessage(
             message = '-- Save the selected bio genes to the metadata of the SummarizedExperiment object.',
             color = 'magenta',
-            verbose = verbose)
-        ## check if metadata metric already exist
-        if (!'metric' %in% names(se.obj@metadata)) {
-            se.obj@metadata[['metric']] <- list()
-        }
-        ## check if metadata metric already exist for this assay
-        if (!assay.name %in% names(se.obj@metadata[['metric']])) {
-            se.obj@metadata[['metric']][[assay.name]] <- list()
-        }
-        ## check if metadata metric already exist for this assay and this metric
-        if (!'BioGenes' %in% names(se.obj@metadata[['metric']][[assay.name]])) {
-            se.obj@metadata[['metric']][[assay.name]][['BioGenes']] <- list()
-        }
-        ## check if metadata metric already exist for this assay and this metric
-        if (!'genes' %in% names(se.obj@metadata[['metric']][[assay.name]][['BioGenes']])) {
-            se.obj@metadata[['metric']][[assay.name]][['BioGenes']][['genes']] <- list()
-        }
+            verbose = verbose
+            )
+        selected.bio.genes <- list(gene.list = selected.bio.genes)
+        names(selected.bio.genes) <- assay.name
+        se.obj <- addMetricToSeObj(
+            se.obj = se.obj,
+            assay.names = assay.name,
+            slot = 'Metrics',
+            assessment = 'BioGenes',
+            assessment.type = 'gene.level',
+            method = approach,
+            file.name = 'gene.list',
+            variables = 'general',
+            results.data = selected.bio.genes
+        )
         if(isTRUE(assess.bio.genes)){
-            if (!'assessment' %in% names(se.obj@metadata[['metric']][[assay.name]][['BioGenes']])) {
-                se.obj@metadata[['metric']][[assay.name]][['BioGenes']][['assessment']] <- list()
-            }
-            se.obj@metadata[['metric']][[assay.name]][['BioGenes']][['assessment']] <- plot.assess.bio.genes
+            plot.assess.bio.genes <- list(plot = plot.assess.bio.genes)
+            names(plot.assess.bio.genes) <- assay.name
+            se.obj <- addMetricToSeObj(
+                se.obj = se.obj,
+                assay.names = assay.name,
+                slot = 'Metrics',
+                assessment = 'BioGenes',
+                assessment.type = 'gene.level',
+                method = approach,
+                file.name = 'plot',
+                variables = 'general',
+                results.data = plot.assess.bio.genes
+            )
         }
-        se.obj@metadata[['metric']][[assay.name]][['BioGenes']][['genes']] <- selected.bio.genes
-
         printColoredMessage(
             message = '- The bio genes are saved to metadata of the SummarizedExperiment object.',
             color = 'blue',
