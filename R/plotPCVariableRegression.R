@@ -1,4 +1,4 @@
-#' plot the regression analysis.
+#' Generate line-dot plot of the PC variable regression analysis.
 
 #' @author Ramyar Molania
 
@@ -7,23 +7,23 @@
 #' from the regression analysis. An ideal normalization should results a low R squared with unwanted variation
 #' variables and high R squared with known biology.
 
-
 #' @param se.obj A SummarizedExperiment object.
-#' @param assay.names Optional string or list of strings for the selection of the name(s)
-#' of the assay(s) of the SummarizedExperiment class object to compute the correlation. By default
-#  all the assays of the SummarizedExperiment class object will be selected.
-#' @param variable String of the label of a categorical variable such as
-#' sample types or batches from colData(se.obj).
+#' @param assay.names Symbol. A symbol or vector of symbols for the selection of the name(s) of the assay(s) in the
+#' SummarizedExperiment object to generate a vector correlation. The default is "all, which indicates all
+#' the assays of the SummarizedExperiment object will be selected.
+#' @param variable Symbol. A symbol indicating the name of the column in the sample annotation of the SummarizedExperiment object.
+#' The variable must be a continuous variable such as library size, tumor purity, ... .
 #' @param fast.pca Logical. Indicates whether to use the PCA calculated using a specific number of PCs instead of the
 #' full range to speed up the process, by default is set to 'TRUE'.
-#' @param nb.pcs Numeric. The number of few first cumulative PCs, by default is set to 10.
+#' @param nb.pcs Numeric. A numeric value specifying the number of first PCs to be used to plot the r squared.
+#' The default is set to 10.
 #' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
 #' object 'se.obj' or to output the result. By default it is set to TRUE.
 #' @param plot.output Logical. Indicates whether to plot the correlation statistics, by default it is set to TRUE.
 #' @param verbose Logical. If TRUE, displaying process messages is enabled.
 
-#' @return A SummarizedExperiment object containing the computed correlation for
-#' the continuous variable and if requested the associated plot.
+#' @return A SummarizedExperiment object containing the line-dot plots for the continuous variable and if requested
+#'  the associated plot.
 
 #' @importFrom tidyr pivot_longer
 #' @import ggplot2
@@ -37,12 +37,13 @@ plotPCVariableRegression <- function(
         nb.pcs = 10,
         save.se.obj = TRUE,
         plot.output = TRUE,
-        verbose = TRUE) {
+        verbose = TRUE
+        ){
     printColoredMessage(message = '------------The plotPCVariableRegression function starts:',
                         color = 'white',
                         verbose = verbose)
 
-    # check the inputs ####
+    # Check the inputs ####
     if (is.null(assay.names)) {
         stop('The "assay.names" cannot be empty')
     } else if (is.list(assay.names)){
@@ -51,7 +52,7 @@ plotPCVariableRegression <- function(
         stop('The "variable" cannot be empty')
     }
 
-    # assays ####
+    # Check the assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else  assay.names <- factor(x = assay.names , levels = assay.names)
@@ -59,55 +60,40 @@ plotPCVariableRegression <- function(
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
-    # select colors ####
+    # Select colors ####
     if(length(levels(assay.names)) < 9 ){
         data.sets.colors <- RColorBrewer::brewer.pal(8, 'Dark2')[1:length(levels(assay.names))]
         names(data.sets.colors) <- levels(assay.names)
-    } else{
+    } else {
         colfunc <- grDevices::colorRampPalette( RColorBrewer::brewer.pal(8, 'Dark2'))
         data.sets.colors <- colfunc(n = length(levels(assay.names)))
         names(data.sets.colors) <- levels(assay.names)
     }
 
-    # check metric ####
-    m.out <- lapply(
-        levels(assay.names),
-        function(x) {
-            if (!x %in% names(se.obj@metadata[['metric']]))
-                stop(paste0('Any PCA analysis has not been computed yet on the  ', x, 'assay.'))
-        })
 
-    # obtain regression r squared ####
+    # Obtain regression r squared ####
     printColoredMessage(
         message = '-- Obtain the computed R squared of linear regressiob for each assay(s) from the SummarizedExperiment object:',
         color = 'magenta',
         verbose = verbose
     )
-    all.reg.rseq <- lapply(
-        levels(assay.names),
-        function(x) {
-            printColoredMessage(
-                message = paste0('- Obtain the  R squared for the "', x , '" data.'),
-                color = 'blue',
-                verbose = verbose
-            )
-            if (!'LRA' %in% names(se.obj@metadata[['metric']][[x]])) {
-                stop(paste0('Any  "LRA" has not been computed yet for the ', x, ' assay.'))
-            }
-            if (!variable %in% names(se.obj@metadata[['metric']][[x]][['LRA']])) {
-                stop(paste0('LRA has not been computed yet for the ', variable, ' variable and the ', x, ' assay.'))
-            }
-            reg.rseq <- se.obj@metadata[['metric']][[x]][['LRA']][[variable]][['rseq']]
-            if(length(reg.rseq) < nb.pcs){
-                stop(paste0('The number of vector correlations of the assay ',
-                            x, ' for the ', variable, ' variable are less than', nb.pcs, '.',
-                            'Re-run the "PCVariableCorrelation" function with nb.pcs = ', nb.pcs, '.'))
-            }
-            reg.rseq[1:nb.pcs]
-        })
-    names(all.reg.rseq) <- levels(assay.names)
-
-    # individual plots ####
+    if(isTRUE(fast.pca)){
+        method = 'fast.svd'
+    } else method = 'svd'
+    all.reg.rseq <- getMetricFromSeObj(
+        se.obj = se.obj,
+        slot = 'Metrics',
+        assay.names = assay.names,
+        assessment = 'LRA',
+        assessment.type = 'global.level',
+        method = method,
+        variables = variable,
+        file.name = 'r.squared',
+        sub.file.name = NULL,
+        required.function = 'computePCVariableRegression',
+        message.to.print = 'computed R squared'
+        )
+    # Gene individual line-dot plots ####
     printColoredMessage(
         message = paste0('-- Generate the R squared vs. PCs line-dot plot for each assay(s):'),
         color = 'magenta',
@@ -126,9 +112,9 @@ plotPCVariableRegression <- function(
             reg.plot <- ggplot(to.plot, aes(x = pcs, y = rseq, group = 1)) +
                 geom_line(color = 'gray80', size = 1) +
                 geom_point(color = 'gray40', size = 3) +
-                xlab('Cumulative PCs') +
-                ylab(expression('R'[2])) +
                 ggtitle(variable) +
+                xlab('Cumulative PCs') +
+                ylab(expression(R^2)) +
                 scale_x_continuous(breaks = seq_len(nb.pcs), labels = c('PC1', paste0('PC1:', 2:nb.pcs)) ) +
                 scale_y_continuous(breaks = scales::pretty_breaks(n = 5), limits = c(0,1)) +
                 theme(
@@ -176,6 +162,21 @@ plotPCVariableRegression <- function(
                 axis.title.y = element_text(size = 14),
                 axis.text.x = element_text(size = 12, angle = 35, vjust = 1, hjust = 1),
                 axis.text.y = element_text(size = 12))
+        overall.reg.plot <- annotate_figure(
+            p = overall.reg.plot,
+            top = text_grob(
+                label = "Linear regression analysis",
+                color = "orange",
+                face = "bold",
+                size = 18),
+            bottom = text_grob(
+                label = paste0(
+                    'Analysis: ', 'linear regression analysis between the first ', nb.pcs, ' PCs and the ', variable, ' variable.'),
+                color = "black",
+                hjust = 1,
+                x = 1,
+                size = 10)
+        )
         printColoredMessage(
             message = '- The individual assay the R squared vs. PCs line-dot plots are combined into one.',
             color = 'blue',
@@ -184,27 +185,29 @@ plotPCVariableRegression <- function(
             suppressMessages(print(overall.reg.plot))
     }
 
-    # save the plots ####
+    # Save the plots ####
     printColoredMessage(
         message = '-- Save all the R squared vs. PCs line-dot plots:',
         color = 'magenta',
         verbose = verbose)
-    if (save.se.obj == TRUE) {
+    if (isTRUE(save.se.obj)) {
         printColoredMessage(
             message = '- Save all the R squared vs. PCs line-dot plot(s) to the "metadata" of the SummarizedExperiment object.',
             color = 'blue',
             verbose = verbose)
         ## add vector correlation plots of individual assays ####
-        ### check the metadata of the SummarizedExperiment object ####
-        ### for each assays ####s
-        for (x in levels(assay.names)) {
-            ## check if metadata metric already exist for this assay and this metric and the variable
-            if (!'vect.corr.plot' %in% names(se.obj@metadata[['metric']][[x]][['LRA']][[variable]])) {
-                se.obj@metadata[['metric']][[x]][['LRA']][[variable]][['lra.plot']] <- list()
-            }
-            ## check if metadata metric already exist for this assay, this metric and this variable
-            se.obj@metadata[['metric']][[x]][['LRA']][[variable]][['lra.plot']] <- all.reg.plots[[x]]
-        }
+        se.obj <- addMetricToSeObj(
+            se.obj = se.obj,
+            slot = 'Metrics',
+            assay.names = assay.names,
+            assessment.type = 'global.level',
+            assessment = 'LRA',
+            method = method,
+            variables = variable,
+            file.name = 'plot',
+            results.data = all.reg.plots
+        )
+
         printColoredMessage(
             message = paste0('- The R squared vs. PCs line-dot plot for the individal assay(s) is saved to the ',
                              ' "se.obj@metadata$metric$AssayName$LRA$VariableName$lra.plot" in the SummarizedExperiment object.'),
@@ -213,16 +216,16 @@ plotPCVariableRegression <- function(
 
         ## add overall vector correlation plot of all assays ####
         if(length(assay.names) > 1){
-            if (!'plot' %in%  names(se.obj@metadata)) {
-                se.obj@metadata[['plot']] <- list()
-            }
-            if (!'LRA' %in%  names(se.obj@metadata[['plot']])) {
-                se.obj@metadata[['plot']][['LRA']] <- list()
-            }
-            if (!variable %in%  names(se.obj@metadata[['plot']][['LRA']])) {
-                se.obj@metadata[['plot']][['LRA']][[variable]] <- list()
-            }
-            se.obj@metadata[['plot']][['LRA']][[variable]] <- overall.reg.plot
+            se.obj <- addOverallPlotToSeObj(
+                se.obj = se.obj,
+                slot = 'Plots',
+                assessment.type = 'global.level',
+                assessment = 'LRA',
+                method = method,
+                variables = variable,
+                file.name = 'line.dotplot',
+                plot.data = overall.reg.plot
+            )
             printColoredMessage(
                 message = paste0('- The combined R squared vs. PCs line-dot plots of all the assays are saved to the',
                                  ' "se.obj@metadata$plot$LRA$VaribleName" in the SummarizedExperiment object.'),
@@ -235,7 +238,8 @@ plotPCVariableRegression <- function(
                             verbose = verbose)
         return(se.obj = se.obj)
         ## Return only the correlation result
-    } else if (save.se.obj == FALSE) {
+    }
+    if (isFALSE(save.se.obj)) {
         printColoredMessage(
             message = '-- Save the plots as a list.',
             color = 'blue',
