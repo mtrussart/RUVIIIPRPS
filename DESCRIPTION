@@ -18,6 +18,7 @@ Imports:
     singscore,
     ComplexHeatmap,
     NbClust,
+    ggjoy,
     Rcpp,
     SummarizedExperiment,
     BiocSingular,
