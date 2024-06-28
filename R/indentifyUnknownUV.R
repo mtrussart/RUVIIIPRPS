@@ -21,9 +21,10 @@
 #' unknown sources of unwanted variation.
 
 #' @references
-#' Gandolfo L. C. & Speed, T. P., RLE plots: visualizing unwanted variation in high dimensional data. PLoS ONE, 2018.\
-#' Molania R., ..., Speed, T. P., Removing unwanted variation from large-scale RNA sequencing data with PRPS,
+#' 1. Gandolfo L. C. & Speed, T. P., RLE plots: visualizing unwanted variation in high dimensional data. PLoS ONE, 2018.
+#' 2. Molania R., ..., Speed, T. P., Removing unwanted variation from large-scale RNA sequencing data with PRPS,
 #' Nature Biotechnology, 2023
+
 
 #' @param se.obj A SummarizedExperiment object.
 #' @param assay.name Symbol. A symbol for the selection of the name of the assay in the SummarizedExperiment object to be
@@ -147,7 +148,7 @@ identifyUnknownUV <- function(
     printColoredMessage(message = '------------The indentifyUnknownUV function starts:',
                         color = 'white',
                         verbose = verbose)
-    # check inputs ####
+    # Check inputs ####
     if (is.null(assay.name)){
         stop('The "assay.name" cannot be empty.')
     } else if (length(assay.name) > 1) {
@@ -238,7 +239,7 @@ identifyUnknownUV <- function(
         if(nb.pcs == 0 | is.null(max.samples.per.batch))
             stop('The value of "nb.pcs" should be more than 0 when the arroach is equal to pca.')
     }
-    if(apply.log){
+    if(isTRUE(apply.log)){
         if (pseudo.count < 0)
             stop('The valuse of pseudo.count cannot be negative.')
     }
@@ -254,88 +255,74 @@ identifyUnknownUV <- function(
         stop('The "output.name" should be eitehr NULL or a character.')
     }
 
-    # remove current estimates for the assay ####
-    printColoredMessage(
-        message = paste0('The current estimated unknown batches:'),
-        color = 'magenta',
-        verbose = verbose)
+    # Remove current estimates for the assay ####
     if(isTRUE(remove.current.estimates)){
-        if (!'UknownUV' %in%  names(se.obj@metadata)) {
+        printColoredMessage(
+            message = paste0('The current estimated unknown batches:'),
+            color = 'magenta',
+            verbose = verbose
+        )
+        if (!'UnKnownUV' %in%  names(se.obj@metadata)) {
             printColoredMessage(
-                message = paste0('There is not any estimated unknown batches for the SummarizedExperiment object.'),
+                message = paste0('- There is not any estimated unknown batches in the SummarizedExperiment object.'),
                 color = 'blue',
                 verbose = verbose)
-        } else  if (assay.name %in% names(se.obj@metadata[['UknownUV']])) {
+        } else  if (assay.name %in% names(se.obj@metadata[['UnKnownUV']])) {
             printColoredMessage(
-                message = paste0('The current estimated unknown batches for the  ', assay.name, ' data is removed.'),
+                message = paste0('- The current estimated unknown batches for the  ', assay.name, ' data is removed.'),
                 color = 'blue',
                 verbose = verbose)
-            se.obj@metadata[['UknownUV']][[assay.name]] <- list()
-        } else{
+            se.obj@metadata[['UnKnownUV']][[assay.name]] <- list()
+        } else {
             printColoredMessage(
-                message = paste0('There is not any estimated unknown batches for the  ', assay.name, ' data.'),
+                message = paste0('- There is not any estimated unknown batches for the  ', assay.name, ' data.'),
                 color = 'blue',
                 verbose = verbose)
         }
     }
     # Check the SummarizedExperiment object ####
-    if (assess.se.obj) {
+    if (isTRUE(assess.se.obj)) {
         se.obj <- checkSeObj(
             se.obj = se.obj,
             assay.names = assay.name,
             variables = c(regress.out.bio.variables),
             remove.na = remove.na,
-            verbose = verbose)
+            verbose = verbose
+            )
     }
-
     # Data transformation ####
-    printColoredMessage(message = '-- Data transformation:',
+    printColoredMessage(message = '-- Data log transformation:',
         color = 'magenta',
         verbose = verbose)
-    if (isTRUE(apply.log) & !is.null(pseudo.count)) {
-        printColoredMessage(
-            message = paste0('Apply log2 + ', pseudo.count,  ' (pseudo.count) on the ', assay.name, ' data.'),
-            color = 'blue',
-            verbose = verbose)
-        temp.data <- log2(assay(x = se.obj, i = assay.name) + pseudo.count)
-    } else if (isTRUE(apply.log) & is.null(pseudo.count)){
-        printColoredMessage(
-            message = paste0('Apply log2 on the ', assay.name, ' data.'),
-            color = 'blue',
-            verbose = verbose)
-        temp.data <- log2(assay(x = se.obj, i = assay.name))
-    } else {
-        printColoredMessage(
-            message = paste0('The ', assay.name, ' data will be used without log transformation.'),
-            color = 'blue',
-            verbose = verbose)
-        printColoredMessage(
-            message = 'Please note, the assay should be in log scale before computing RLE or PCA.',
-            color = 'red',
-            verbose = verbose)
-        temp.data <- assay(x = se.obj, i = assay.name)
-    }
-
+    expr.data <- applyLog(
+        se.obj = se.obj,
+        assay.names = assay.name,
+        apply.log = apply.log,
+        pseudo.count = pseudo.count,
+        assessment = 'RLE or PCA'
+        )[[assay.name]]
     # Regress out bio variables and bio gene sets ####
     if(!is.null(regress.out.bio.variables) | !is.null(regress.out.bio.gene.sets)){
         printColoredMessage(
             message = '-- Regress out "regress.out.bio.variables" and "regress.out.bio.gene.sets" from the data:',
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         printColoredMessage(
             message = paste0(
-                'We do not recommend regressing out any biological variation',
-                'if they may be largely associated with the unwanted variation.'),
+                '- Note, we do not recommend regressing out any biological variation, ',
+                'if they are largely associated with the unwanted variation.'),
             color = 'red',
-            verbose = verbose)
-
-        # sample scoring for regress.out.bio.gene.sets ####
+            verbose = verbose
+            )
+        ## sample scoring for regress.out.bio.gene.sets ####
         if(!is.null(regress.out.bio.gene.sets)){
             printColoredMessage(
-                message = '-Calculate sample scores for individual gene sets of the "regress.out.bio.gene.sets".',
+                message = '- Calculate sample scores for individual gene sets of the "regress.out.bio.gene.sets" list.',
                 color = 'blue',
-                verbose = verbose)
-            ranked.data <- rankGenes(temp.data)
+                verbose = verbose
+                )
+            ranked.data <- rankGenes(expr.data)
             regress.out.bio.gene.sets <- sapply(
                 regress.out.bio.gene.sets,
                 function(x) singscore::simpleScore(
@@ -344,41 +331,43 @@ identifyUnknownUV <- function(
             rm(ranked.data)
         }
         if(!is.null(regress.out.bio.variables) & is.null(regress.out.bio.gene.sets)){
-            ## regress out regress.out.bio.variables ####
+            ## regress out bio variables ####
             printColoredMessage(
                 message = paste0(
-                    'The ',
+                    '- The ',
                     paste0(regress.out.bio.variables, collapse = ' & '),
                     ' variables will be regressed out from the data,',
                     ' please make sure your data is log transformed.'),
                 color = 'blue',
-                verbose = verbose)
-            temp.data <- t(temp.data)
+                verbose = verbose
+                )
+            expr.data <- t(expr.data)
             lm.formula <- paste('se.obj', regress.out.bio.variables, sep = '$')
-            adjusted.data <- lm(as.formula(paste('temp.data', paste0(lm.formula, collapse = '+') , sep = '~')))
-            temp.data <- t(adjusted.data$residuals)
-            colnames(temp.data) <- colnames(se.obj)
-            row.names(temp.data) <- row.names(se.obj)
+            adjusted.data <- lm(as.formula(paste('expr.data', paste0(lm.formula, collapse = '+') , sep = '~')))
+            expr.data <- t(adjusted.data$residuals)
+            colnames(expr.data) <- colnames(se.obj)
+            row.names(expr.data) <- row.names(se.obj)
         } else if(is.null(regress.out.bio.variables) & !is.null(regress.out.bio.gene.sets)){
-            ## regress out regress.out.bio.gene.sets ####
+            ## regress out gene sets ####
             printColoredMessage(
                 message = paste0(
-                    'The sample scores of individual gene list of ',
+                    '- The sample scores of individual gene list of ',
                     'regress.out.bio.gene.sets',
                     ' will be regressed out from the data,',
                     ' please make sure your data is log transformed.'),
                 color = 'blue',
                 verbose = verbose)
-            temp.data <- t(temp.data)
-            adjusted.data <- lm(temp.data~ regress.out.bio.gene.sets)
-            temp.data <- t(adjusted.data$residuals)
-            colnames(temp.data) <- colnames(se.obj)
-            row.names(temp.data) <- row.names(se.obj)
+            expr.data <- t(expr.data)
+            adjusted.data <- lm(expr.data~ regress.out.bio.gene.sets)
+            expr.data <- t(adjusted.data$residuals)
+            colnames(expr.data) <- colnames(se.obj)
+            row.names(expr.data) <- row.names(se.obj)
         } else if (!is.null(regress.out.bio.variables) & !is.null(regress.out.bio.gene.sets)){
+            ## regress out both variable and gene sets  ####
             printColoredMessage(
                 message = paste0(
-                    'The sample scores of individual gene list of ',
-                    'regress.out.bio.gene.sets and the ',
+                    '- The sample scores of individual gene list of ',
+                    ' "regress.out.bio.gene.sets" and the ',
                     paste0(regress.out.bio.variables, collapse = ' & '),
                     ' variables will be regressed out from the data,',
                     ' please make sure your data is log transformed.'),
@@ -388,11 +377,11 @@ identifyUnknownUV <- function(
                 regress.out.bio.gene.sets,
                 as.data.frame(colData(se.obj)[, regress.out.bio.variables, drop = FALSE])))
             lm.formula <- paste('all.variables', colnames(all.variables), sep = '$')
-            temp.data <- t(temp.data)
-            adjusted.data <- lm(as.formula(paste('temp.data', paste0(lm.formula, collapse = '+') , sep = '~')))
-            temp.data <- t(adjusted.data$residuals)
-            colnames(temp.data) <- colnames(se.obj)
-            row.names(temp.data) <- row.names(se.obj)
+            expr.data <- t(expr.data)
+            adjusted.data <- lm(as.formula(paste('expr.data', paste0(lm.formula, collapse = '+') , sep = '~')))
+            expr.data <- t(adjusted.data$residuals)
+            colnames(expr.data) <- colnames(se.obj)
+            row.names(expr.data) <- row.names(se.obj)
         }
     }
 
@@ -400,6 +389,7 @@ identifyUnknownUV <- function(
     printColoredMessage( message = '-- Select input data for clustering:',
         color = 'magenta',
         verbose = verbose)
+    ## pca all genes ####
     if(approach == 'pca' & is.null(ncg)){
         printColoredMessage(
             message = paste0(
@@ -410,17 +400,20 @@ identifyUnknownUV <- function(
             verbose = verbose)
         set.seed(2233)
         sv.dec <- runSVD(
-            x = t(temp.data),
+            x = t(expr.data),
             k = nb.pcs,
             BSPARAM = svd.bsparam,
             center = center,
-            scale = scale)
-        input.data = sv.dec$u
+            scale = scale
+            )
+        input.data <- sv.dec$u
         colnames(input.data) <- c(paste0('PC', 1:ncol(input.data)))
         if(clustering.methods == 'nbClust'){
             input.data.name <- paste0(approach, '|AllGenes_nbClust.', nbClust.method, 'Clustering')
         } else input.data.name <- paste0(approach, '|AllGenes|', clustering.methods, 'Clustering')
-    } else if (approach == 'pca' & !is.null(ncg)){
+    }
+    ## pca on ncg ####
+    if (approach == 'pca' & !is.null(ncg)){
         printColoredMessage(
             message = paste0(
                 '- Apply PCA on the data using the "ncg" gene only, and use the first ',
@@ -430,7 +423,7 @@ identifyUnknownUV <- function(
             verbose = verbose)
         set.seed(2233)
         sv.dec <- runSVD(
-            x = t(temp.data[ncg , ]),
+            x = t(expr.data[ncg , ]),
             k = nb.pcs,
             BSPARAM = svd.bsparam,
             center = center,
@@ -439,32 +432,47 @@ identifyUnknownUV <- function(
         if(clustering.methods == 'nbClust'){
             input.data.name <- paste0(approach, '|NCG|nbClust.', nbClust.method, 'Clustering')
         } else input.data.name <- paste0(approach, '|NCG|', clustering.methods, 'Clustering')
-    } else if (approach == 'rle'){
+    }
+    ## rle ####
+    if (approach == 'rle'){
         if(is.null(ncg)){
             printColoredMessage(
                 message = paste0('- Apply RLE on the data.'),
                 color = 'blue',
                 verbose = verbose)
-            rle.data <- temp.data - rowMedians(temp.data)
+            rle.data <- expr.data - rowMedians(expr.data)
             if(clustering.methods == 'nbClust'){
                 input.data.name <- paste0(approach, '.',rle.comp, '|AllGenes|nbClust.', nbClust.method, 'Clustering')
             } else input.data.name <- paste0(approach, '.', rle.comp,'|AllGenes|', clustering.methods, 'Clustering')
         } else if (!is.null(ncg)){
             printColoredMessage(
-                message = paste0('-Apply RLE on the data using only "ncg" genes.'),
+                message = '- Apply RLE on the data using only "ncg" genes.',
                 color = 'blue',
-                verbose = verbose)
-            rle.data <- temp.data[ncg , ] - rowMedians(temp.data[ncg , ])
+                verbose = verbose
+                )
+            rle.data <- expr.data[ncg , ] - rowMedians(expr.data[ncg , ])
             if(clustering.methods == 'nbClust'){
                 input.data.name <- paste0(approach, '.', rle.comp, '|NCG|nbClust.', nbClust.method, 'Clustering')
             } else input.data.name <- paste0(approach, '.', rle.comp,'|NCG|', clustering.methods, 'Clustering')
         }
         if(rle.comp == 'median'){
+            printColoredMessage(
+                message = '- Use the RLE medians as input data.',
+                color = 'blue',
+                verbose = verbose
+            )
             input.data <- colMedians(rle.data)
         } else if (rle.comp == 'iqr'){
+            printColoredMessage(
+                message = '- Use the RLE IQRs as input data.',
+                color = 'blue',
+                verbose = verbose
+            )
             input.data <- colIQRs(rle.data)
         }
-    } else if(approach == 'sample.scoring'){
+    }
+    ## sample scoring ####
+    if(approach == 'sample.scoring'){
         if(is.null(uv.gene.sets)){
             all.uv.gene.sets <- list(ncg = ncg)
         } else if (!is.null(uv.gene.sets) & !is.null(ncg)){
@@ -473,16 +481,17 @@ identifyUnknownUV <- function(
             all.uv.gene.sets <- uv.gene.sets
         }
         printColoredMessage(
-            message = 'Calculate sample scores for individual gene sets of the uv.gene.sets and use the scores as input for clustering.',
+            message = '- Calculate sample scores for individual gene sets of the uv.gene.sets and use the scores as input for clustering.',
             color = 'blue',
-            verbose = verbose)
-        ranked.data <- rankGenes(temp.data)
-        input.data <- lapply(
+            verbose = verbose
+            )
+        ranked.data <- rankGenes(expr.data)
+        input.data <- sapply(
             names(all.uv.gene.sets),
             function(x) singscore::simpleScore(
                 rankData = ranked.data,
                 upSet = all.uv.gene.sets[[x]])$TotalScore)
-        names(input.data) <- names(all.uv.gene.sets)
+        # names(input.data) <- names(all.uv.gene.sets)
         rm(ranked.data)
         if(clustering.methods == 'nbClust'){
             input.data.name <- paste0(approach, '|nbClust.', nbClust.method, 'Clustering')
@@ -490,40 +499,45 @@ identifyUnknownUV <- function(
     }
 
     # Clustering ####
-    printColoredMessage(message = '- Cluster the data',
+    printColoredMessage(message = '- Cluster the inpute data',
         color = 'magenta',
         verbose = verbose)
+    ## kmeans ####
     if(clustering.methods == 'kmeans'){
         printColoredMessage(
             message = paste0('- Apply kmeans with centers = ', nb.clusters, ' on the data'),
             color = 'blue',
-            verbose = verbose)
-        ## kmeans ####
+            verbose = verbose
+            )
         set.seed(3344)
         groups <- kmeans(
             x = input.data,
             centers = nb.clusters,
             iter.max = 10000)$cluster
         uv.sources <- paste0('Batch' , groups)
-    } else if (clustering.methods == 'cut'){
+    }
+    ## cut ####
+    if (clustering.methods == 'cut'){
         printColoredMessage(
             message = paste0('- Apply the cut method with breaks = ', nb.clusters, ' on the data'),
             color = 'blue',
-            verbose = verbose)
-        ## cut ####
+            verbose = verbose
+            )
         groups <- as.numeric(cut(
                 x = input.data,
                 breaks = nb.clusters,
                 include.lowest = TRUE
             ))
         uv.sources <- paste0('Batch' , groups)
-    } else if(clustering.methods == 'quantile'){
+    }
+    ## quantile ####
+    if(clustering.methods == 'quantile'){
         printColoredMessage(
             message = paste0('- Apply the quantile method with probs = ',
                              paste0(round(seq(0, 1, 1/nb.clusters), digits = 2)), ' on the data'),
             color = 'blue',
-            verbose = verbose)
-        ## quantile ####
+            verbose = verbose
+            )
         quantiles <- quantile(x = input.data, probs = seq(0, 1, 1 / nb.clusters))
         groups <- as.numeric(cut(
                 x = input.data,
@@ -531,12 +545,13 @@ identifyUnknownUV <- function(
                 include.lowest = TRUE
             ))
         uv.sources <- paste0('Batch' , groups)
-    } else if(clustering.methods == 'nbClust'){
+    }
+    ## nbClust ####
+    if(clustering.methods == 'nbClust'){
         printColoredMessage(
             message = '- Apply the nbClust method on the data.',
             color = 'blue',
             verbose = verbose)
-        ## nbClust ####
         initial.clusters <- NbClust(
             data = input.data,
             diss = nbClust.diss,
@@ -585,7 +600,8 @@ identifyUnknownUV <- function(
         }
         uv.sources <- paste0('Batch', as.numeric(as.factor(batch.samples$batch)))
     }
-    # number of possible batches ####
+
+    # Number of possible batches ####
     printColoredMessage(
         message = paste0(
             length(unique(uv.sources)),
@@ -626,18 +642,20 @@ identifyUnknownUV <- function(
         data.to.plot$samples <- c(1:ncol(se.obj))
         p <- ggplot(data = data.to.plot, aes(x = samples, y = input.data, color = batches)) +
             geom_point() +
-            ggtitle('Possible sources of batches') +
-            scale_color_manual(values = colors.selected, name = 'Batch') +
+            xlab('Samples') +
+            ylab(paste0('Input data (', approach, ')')) +
+            ggtitle('Possible sources of unknown batches') +
+            scale_color_manual(values = colors.selected, name = 'Batches') +
             theme(
                 panel.background = element_blank(),
                 legend.key = element_blank(),
                 legend.text = element_text(size = 12),
                 legend.title = element_text(size = 14),
                 axis.line = element_line(colour = 'black', linewidth = 1),
-                axis.title.x = element_text(size = 12),
-                axis.title.y = element_text(size = 12),
-                axis.text.x = element_text(size = 9),
-                axis.text.y = element_text(size = 9)
+                axis.title.x = element_text(size = 14),
+                axis.title.y = element_text(size = 14),
+                axis.text.x = element_text(size = 12),
+                axis.text.y = element_text(size = 12)
             ) +
             guides(colour = guide_legend(override.aes = list(size = 5)))
         if (isTRUE(plot.output))
@@ -678,7 +696,7 @@ identifyUnknownUV <- function(
             if (isTRUE(plot.output))
                 print(p)
 
-        } else{
+        } else {
             data.to.plot <- as.data.frame(input.data)
             data.to.plot$batches <- factor(x = paste0('Batch', as.numeric(as.factor(uv.sources))),
                                            levels = paste0('Batch', sort(unique(
@@ -715,30 +733,29 @@ identifyUnknownUV <- function(
         }
     }
 
+    # Saving the results ####
+    printColoredMessage(message = '- Save the the results:',
+                        color = 'magenta',
+                        verbose = verbose)
     # out put name ####
     if(is.null(output.name)){
         input.data.name <- paste0(length(unique(uv.sources)), 'batches|', input.data.name)
     } else input.data.name <- output.name
 
-
-    # saving the data results ####
-    printColoredMessage(message = '- Save the the results:',
-                        color = 'magenta',
-                        verbose = verbose)
     if(isTRUE(save.se.obj)){
-        if (!'UknownUV' %in%  names(se.obj@metadata)) {
-            se.obj@metadata[['UknownUV']] <- list()
+        if (!'UnKnownUV' %in%  names(se.obj@metadata)) {
+            se.obj@metadata[['UnKnownUV']] <- list()
         }
-        if (!assay.name %in%  names(se.obj@metadata[['UknownUV']])){
-            se.obj@metadata[['UknownUV']][[assay.name]] <- list()
+        if (!assay.name %in%  names(se.obj@metadata[['UnKnownUV']])){
+            se.obj@metadata[['UnKnownUV']][[assay.name]] <- list()
         }
-        if (!input.data.name %in%  names(se.obj@metadata[['UknownUV']][[assay.name]])){
-            se.obj@metadata[['UknownUV']][[assay.name]][[input.data.name]] <- list()
+        if (!input.data.name %in%  names(se.obj@metadata[['UnKnownUV']][[assay.name]])){
+            se.obj@metadata[['UnKnownUV']][[assay.name]][[input.data.name]] <- list()
         }
-        se.obj@metadata[['UknownUV']][[assay.name]][[input.data.name]][['batches']] <-
+        se.obj@metadata[['UnKnownUV']][[assay.name]][[input.data.name]][['batches']] <-
             paste0('Batch', as.numeric(as.factor(uv.sources)))
-        se.obj@metadata[['UknownUV']][[assay.name]][[input.data.name]][['input.data']] <- input.data
-        se.obj@metadata[['UknownUV']][[assay.name]][[input.data.name]][['plot']] <- p
+        se.obj@metadata[['UnKnownUV']][[assay.name]][[input.data.name]][['input.data']] <- input.data
+        se.obj@metadata[['UnKnownUV']][[assay.name]][[input.data.name]][['plot']] <- p
         printColoredMessage(
             message = 'The potentail unknow sources of variation are saved to the metadata of the SummarizedExperiment object',
             color = 'blue',
@@ -748,22 +765,24 @@ identifyUnknownUV <- function(
             color = 'white',
             verbose = verbose)
         return(se.obj)
-    } else {
+    }
+    if(isFALSE(save.se.obj)) {
         printColoredMessage(
             message = 'The results are outputed as list.',
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         printColoredMessage(
             message = '------------The indentifyUnknownUV function finished.',
             color = 'white',
-            verbose = verbose)
+            verbose = verbose
+            )
         return(list(
             batches = paste0('Batch', as.numeric(as.factor(uv.sources))),
             input.data = input.data,
-            plot = p ))
+            plot = p )
+            )
     }
 }
-
-
 
 

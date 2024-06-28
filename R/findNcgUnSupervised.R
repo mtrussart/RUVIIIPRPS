@@ -94,12 +94,16 @@
 #' variables exceeds the cut-off, only the variable with the highest variance will be retained, and the other will be
 #' excluded from further analysis. By default, both values are set to 0.9.
 #' @param remove.na Symbol. Indicates whether to remove NA or missing values from either the 'assays', the 'sample.annotation',
-#' 'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If 'sample.annotation' is selected, the
-#' samples that contains NA or missing values for any 'uv.variables' will be excluded. By default, it is set to both'.
-#' @param save.se.obj Logical. Indicates whether to save the result of the function in the metadata of the SummarizedExperiment object or
-#' to output the result. The default is TRUE.
-#' @param output.name Symbol. Indicates the name of the output in the meta data of the SummarizedExperiment object. The
-#' default is 'NULL'. This means the function will create a name based the specified argument.
+#' 'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If
+#' 'sample.annotation' is selected, the samples that contains NA or missing values for any 'uv.variables' will be excluded.
+#' By default, it is set to both'.
+#' @param save.se.obj Logical. Indicates whether to save the result of the function in the metadata of the
+#' SummarizedExperiment object or to output the result. The default is TRUE.
+#' @param output.name Symbol. A symbol indicating the name of the output in the meta data of the SummarizedExperiment
+#' object. The default is 'NULL'. This means the function will create a name based the specified argument.
+#' @param ncg.group Symbol. A symbol indicating the name of a group of NCGs. If 'NULL', the function will select a name
+#' based on " ncg.group <- paste0('ncg|unsupervised')".
+#' @param plot.output Logical.
 #' @param use.imf Logical. Indicates whether to use the intermediate file or not. The default is set to 'FALSE'.
 #' @param save.imf Logical. Indicates whether to save the intermediate file or not. If 'TRUE', the function save the results
 #' of two-way ANOVA. Then, if users want to change the parameters including 'nb.ncg', 'ncg.selection.method',
@@ -162,6 +166,8 @@ findNcgsUnSupervised <- function(
         save.se.obj = TRUE,
         remove.na = 'both',
         output.name = NULL,
+        ncg.group = NULL,
+        plot.output = TRUE,
         use.imf = FALSE,
         save.imf = FALSE,
         imf.name = NULL,
@@ -252,9 +258,23 @@ findNcgsUnSupervised <- function(
     }
     # Data transformation and normalization ####
     printColoredMessage(
-        message = '-- Data transformation and normalization:',
+        message = '-- Data normalization and transformation:',
         color = 'magenta',
-        verbose = verbose)
+        verbose = verbose
+        )
+    ## normalization ####
+    if(!is.null(normalization)){
+        expr.data.nor <- applyOtherNormalizations(
+            se.obj = se.obj,
+            assay.name = assay.name,
+            method = normalization,
+            pseudo.count = pseudo.count,
+            apply.log = apply.log,
+            assess.se.obj = FALSE,
+            save.se.obj = FALSE,
+            remove.na = 'none',
+            verbose = verbose)
+    }
     ## apply log ####
     if (isTRUE(apply.log) & !is.null(pseudo.count)){
         printColoredMessage(
@@ -276,20 +296,6 @@ findNcgsUnSupervised <- function(
         expr.data <- assay(x = se.obj, i = assay.name)
     }
 
-    ## normalization ####
-    if(!is.null(normalization)){
-        expr.data.nor <- applyOtherNormalizations(
-            se.obj = se.obj,
-            assay.name = assay.name,
-            method = normalization,
-            pseudo.count = pseudo.count,
-            apply.log = apply.log,
-            assess.se.obj = FALSE,
-            save.se.obj = FALSE,
-            remove.na = 'none',
-            verbose = verbose)
-    }
-
     # Finding negative control genes ####
     if(isFALSE(use.imf)){
         printColoredMessage(
@@ -299,8 +305,9 @@ findNcgsUnSupervised <- function(
         ## find genes that are highly affected by unwanted variation ####
         printColoredMessage(
             message = '-- Find genes that are highly affected by each sources of unwnated variation:',
-            color = 'blue',
-            verbose = verbose)
+            color = 'orange',
+            verbose = verbose
+            )
         uv.var.class <- unlist(lapply(
             uv.variables,
             function(x) class(colData(se.obj)[[x]])))
@@ -320,7 +327,8 @@ findNcgsUnSupervised <- function(
                 function(x) {
                     keep.samples <- findRepeatingPatterns(
                         vec = colData(se.obj)[[x]],
-                        n.repeat = min.sample.for.aov)
+                        n.repeat = min.sample.for.aov
+                        )
                     if(isTRUE(length(keep.samples) == 0)){
                         stop(paste0(
                             'There are not enough samples to perfrom ANOVA between individual gene expression and the ',
@@ -341,9 +349,9 @@ findNcgsUnSupervised <- function(
                     } else if(isTRUE(length(keep.samples) != length(unique(colData(se.obj)[[x]])))){
                         not.coverd <- unique(colData(se.obj)[[x]])[!unique(colData(se.obj)[[x]]) %in% keep.samples]
                         printColoredMessage(
-                            message = paste0('Note, the ',
-                                             paste0(not.coverd, collapse = '&'),
-                                             ' batches do not have enough samples for the ANOVA analysis.'),
+                            message = paste0(
+                                'Note, the ', paste0(not.coverd, collapse = '&'),
+                                ' batches do not have enough samples for the ANOVA analysis.'),
                             color = 'red',
                             verbose = verbose)
                     }
@@ -359,8 +367,9 @@ findNcgsUnSupervised <- function(
                     }
                     set.seed(2233)
                     anova.gene.batch$ranked.genes <- rank(
-                        -anova.gene.batch[, 'statistic'],
-                        ties.method = 'random')
+                        -anova.gene.batch[ , 'statistic'],
+                        ties.method = 'random'
+                        )
                     anova.gene.batch
                 })
             names(anova.genes.uv) <- categorical.uv
@@ -403,7 +412,12 @@ findNcgsUnSupervised <- function(
             names(corr.genes.uv) <- continuous.uv
         } else corr.genes.uv <- NULL
 
-        ## find genes that are not highly affected by biology ####
+        ## find genes that are not highly affected by possible biological variation ####
+        printColoredMessage(
+            message = '-- Find genes that are potentially highly affected by biological variation:',
+            color = 'orange',
+            verbose = verbose
+        )
         if (!is.null(normalization)) {
             data.to.use <- expr.data.nor
         } else data.to.use <- expr.data
@@ -430,7 +444,7 @@ findNcgsUnSupervised <- function(
             message = paste0(
                 '- Perform MAD on individual gene expression',
                 ' within each homogeneous sample groups with respect to the unwanted variables.'),
-            color = 'blue',
+            color = 'orange',
             verbose = verbose)
         #### find all possible sample groups with respect to the unwanted variables ####
         homo.uv.groups <- createHomogeneousUVGroups(
@@ -447,7 +461,8 @@ findNcgsUnSupervised <- function(
         #### apply mad  ####
         homo.uv.groups <- findRepeatingPatterns(
             vec = homo.uv.groups,
-            n.repeat = min.sample.for.mad)
+            n.repeat = min.sample.for.mad
+            )
         groups <- unique(homo.uv.groups)
         if(isTRUE(length(groups) > 0)){
             bio.genes <- sapply(
@@ -496,38 +511,6 @@ findNcgsUnSupervised <- function(
             anova.genes.uv = anova.genes.uv,
             corr.genes.uv = corr.genes.uv)
     }
-    # if(!is.null(anova.genes.uv)){
-    #     anova.genes.uv.rank <- lapply(
-    #         names(anova.genes.uv),
-    #         function(x){
-    #             temp <- anova.genes.uv[[x]][ , c('ranked.genes'), drop = FALSE]
-    #             temp$ranked.genes1 <- rank(x = -temp$ranked.genes, ties.method = 'random')
-    #             colnames(temp) <- x
-    #             temp
-    #         })
-    #     anova.genes.uv.rank <- do.call(cbind, anova.genes.uv.rank)
-    # } else anova.genes.uv <- NULL
-    # if(!is.null(corr.genes.uv)){
-    #     corr.genes.uv.rank <- lapply(
-    #         names(corr.genes.uv),
-    #         function(x){
-    #             temp <- corr.genes.uv[[x]][ , c('ranked.genes'), drop = FALSE]
-    #             temp$ranked.genes <- rank(x = -temp$ranked.genes, ties.method = 'random')
-    #             colnames(temp) <- x
-    #             temp
-    #         })
-    #     corr.genes.uv.rank <- do.call(cbind, corr.genes.uv.rank)
-    # } else corr.genes.uv.rank <- NULL
-    # all.ranks <- cbind(bio.genes.rank, corr.genes.uv.rank, anova.genes.uv.rank)
-    # all.ranks <- all.ranks[ , c('biology', uv.variables )]
-    # all.ranks <- all.ranks[order(all.ranks[['biology']]) , ]
-    # p <- ComplexHeatmap::Heatmap(
-    #     matrix = all.ranks,
-    #     cluster_rows = FALSE,
-    #     cluster_columns = FALSE,
-    #     show_row_names = FALSE,
-    #     col = c('grey90', 'grey50', 'cyan', 'darkgreen', 'orange', 'red')
-    #     )
 
     # Selection of NCG ####
     printColoredMessage(message = '-- Selection a set of genes as NCG:',
@@ -592,22 +575,35 @@ findNcgsUnSupervised <- function(
     if (ncg.selection.method == 'non.overlap'){
         printColoredMessage(
             message = '- A set of genes will be selected as NCGs based on the "non.overlap" approach.',
-            color = 'blue',
-            verbose = verbose)
+            color = 'orange',
+            verbose = verbose
+            )
         printColoredMessage(
             message = paste0(
-                '- Select top ',
-                top.rank.uv.genes * 100,
-                '% of highly affected genes by the unwanted variation, and then exclude all top ',
+                '*1: select top ',
                 top.rank.bio.genes *100,
-                '% of highly affected genes by the bioloigcal variation.'),
+                '% of highly affected genes by possible bioloigcal variation.'),
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+        )
         ### select genes affected by biological variation ####
         top.rank.bio.genes.nb <- round(c(1 - top.rank.bio.genes) * nrow(se.obj), digits = 0)
         top.bio.genes <- row.names(bio.genes)[bio.genes$bio.ranks > top.rank.bio.genes.nb]
+        printColoredMessage(
+            message = paste0('- ', length(top.bio.genes), ' genes are selected.'),
+            color = 'blue',
+            verbose = verbose
+        )
 
         ## select genes affected by unwanted variation ####
+        printColoredMessage(
+            message = paste0(
+                '*2: select top ',
+                top.rank.uv.genes * 100,
+                '% of highly affected genes by each unwanted variation.'),
+            color = 'blue',
+            verbose = verbose
+        )
         top.rank.uv.genes.nb <- round(top.rank.uv.genes * nrow(se.obj), digits = 0)
         all.uv.tests <- c('anova.genes.uv', 'corr.genes.uv')
         top.uv.genes <- unique(unlist(lapply(
@@ -622,7 +618,17 @@ findNcgsUnSupervised <- function(
                             row.names(temp.data[[y]])[index] })))
                 }
             })))
+        printColoredMessage(
+            message = paste0('- ', length(top.uv.genes), ' genes are selected.'),
+            color = 'blue',
+            verbose = verbose
+        )
         ## select of NCGS ####
+        printColoredMessage(
+            message = '- all genes found in 1 will be excluded from ones found in 2.',
+            color = 'blue',
+            verbose = verbose
+        )
         ncg.selected <- top.uv.genes[!top.uv.genes %in% top.bio.genes]
         if(isTRUE(length(ncg.selected) == 0)) stop('NCGs cannot be found based on the current parameters.')
         ncg.selected <- row.names(se.obj) %in% ncg.selected
@@ -978,7 +984,7 @@ findNcgsUnSupervised <- function(
                     color = 'blue',
                     verbose = verbose)
             }
-        }
+        } else ncg.selected <- row.names(se.obj) %in% ncg.selected
     }
 
     printColoredMessage(
@@ -988,7 +994,7 @@ findNcgsUnSupervised <- function(
 
     # Performance assessment of the selected NCG ####
     ## pca ####
-    if(assess.ncg){
+    if(isTRUE(assess.ncg)){
         printColoredMessage(
             message = '-- Assess the performance of the selected NCG set:',
             color = 'magenta',
@@ -1040,7 +1046,7 @@ findNcgsUnSupervised <- function(
                 -pcs,
                 names_to = 'Groups',
                 values_to = 'ls')
-        pca.ncg <- ggplot(pca.ncg, aes(x = pcs, y = ls, group = Groups)) +
+        p.assess.ncg <- ggplot(pca.ncg, aes(x = pcs, y = ls, group = Groups)) +
             geom_line(aes(color = Groups), size = 1) +
             geom_point(aes(color = Groups), size = 2) +
             xlab('PCs') +
@@ -1060,7 +1066,7 @@ findNcgsUnSupervised <- function(
                 strip.text.x = element_text(size = 10),
                 plot.title = element_text(size = 16)
             )
-        if(verbose) print(pca.ncg)
+        if(isTRUE(plot.output)) print(p.assess.ncg)
     }
     # Save the NCGs ####
     ## add results to the SummarizedExperiment object ####
@@ -1068,6 +1074,9 @@ findNcgsUnSupervised <- function(
         message = '-- Save the selected NCGs:',
         color = 'magenta',
         verbose = verbose)
+    if(is.null(ncg.group)){
+        ncg.group <- paste0('ncg|unsupervised')
+    }
     if(is.null(output.name)){
         output.name <- paste0(
             sum(ncg.selected),
@@ -1084,23 +1093,44 @@ findNcgsUnSupervised <- function(
             message = '- Save the selected set of NCG to the metadata of the SummarizedExperiment object.',
             color = 'blue',
             verbose = verbose)
-        ## Check if metadata NCG already exists
+        ## Check
         if (!'NCG' %in% names(se.obj@metadata)) {
             se.obj@metadata[['NCG']] <- list()
         }
-        ## check if supervised already exists in the PRPS slot
+        ## check
         if (!'un.supervised' %in% names(se.obj@metadata[['NCG']])) {
             se.obj@metadata[['NCG']][['un.supervised']] <- list()
         }
-        ## check if prps.set.name already exists in the PRPS$supervised slot
-        if (!output.name %in% names(se.obj@metadata[['NCG']][['un.supervised']])) {
-            se.obj@metadata[['NCG']][['un.supervised']][[output.name]] <- list()
+        ## check
+        if (!ncg.group %in% names(se.obj@metadata[['NCG']][['un.supervised']])) {
+            se.obj@metadata[['NCG']][['un.supervised']][[ncg.group]] <- list()
         }
-        se.obj@metadata[['NCG']][['un.supervised']][[output.name]] <- ncg.selected
+        ## check
+        if (!'ncg.set' %in% names(se.obj@metadata[['NCG']][['un.supervised']][[ncg.group]])) {
+            se.obj@metadata[['NCG']][['un.supervised']][[ncg.group]][['ncg.set']] <- list()
+        }
+        ## check
+        if (!output.name %in% names(se.obj@metadata[['NCG']][['un.supervised']][[ncg.group]][['ncg.set']])) {
+            se.obj@metadata[['NCG']][['un.supervised']][[ncg.group]][['ncg.set']][[output.name]] <- list()
+        }
+        se.obj@metadata[['NCG']][['un.supervised']][[ncg.group]][['ncg.set']][[output.name]] <- ncg.selected
+
+        if (isTRUE(assess.ncg)){
+            ## check
+            if (!'assessment.plot' %in% names(se.obj@metadata[['NCG']][['un.supervised']][[ncg.group]])) {
+                se.obj@metadata[['NCG']][['un.supervised']][[ncg.group]][['assessment.plot']] <- list()
+            }
+            if (!output.name %in% names(se.obj@metadata[['NCG']][['un.supervised']][[ncg.group]][['assessment.plot']])) {
+                se.obj@metadata[['NCG']][['un.supervised']][[ncg.group]][['assessment.plot']][[output.name]] <- list()
+            }
+            se.obj@metadata[['NCG']][['un.supervised']][[ncg.group]][['assessment.plot']][[output.name]] <- p.assess.ncg
+        }
+
         printColoredMessage(
             message = '- The NCGs are saved to metadata of the SummarizedExperiment object.',
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         printColoredMessage(
             message = '------------The findNcgsUnSupervised function finished.',
             color = 'white',

@@ -14,21 +14,21 @@
 #'
 #' @return A list of all possible assessment metrics for the variables.
 
-#' @importFrom SummarizedExperiment colData
-#' @importFrom tibble tibble
 #' @importFrom igraph vertex_attr layout_as_tree graph_from_data_frame
 #' @importFrom ggpubr ggarrange annotate_figure text_grob
+#' @importFrom SummarizedExperiment colData
+#' @importFrom tibble tibble
+#' @export
 
 getAssessmentMetrics <- function(
-        se.obj,
+        se.obj ,
         variables,
         plot.output = TRUE,
         save.se.obj = TRUE) {
     categorical.var <- continuous.var <- NULL
 
-    if(sum(variables %in% colnames(colData(se.obj))) != length(variables)){
+    if(sum(variables %in% colnames(colData(se.obj))) != length(variables))
         stop('All or some "variables" cannot be found in the SummarizedExperiment object.')
-    }
 
     if (!is.null(variables)) {
         var.class <- sapply(
@@ -56,50 +56,70 @@ getAssessmentMetrics <- function(
     names(cont.char) <- continuous.var
     all.var.char <- c(cat.char, cont.char)
 
-    # general plots #####
-    general.plot <- data.frame(
+    # general assessment #####
+    general.rle.med <- data.frame(
         Variables = 'General',
         Metrics = 'RLE',
         Factors = 'General',
         PlotTypes = 'rlePlot',
-        Assessments = 'rleMed||rleIqr')
-    bio.genes <- data.frame(
-        Variables = 'bioGenes',
-        Metrics = 'CorrelationAnova',
-        Factors = 'geneCorrGeneAnova',
-        PlotTypes = 'barplot',
-        Assessments = 'geneNumbers')
-
+        Assessments = 'rleMed',
+        AssessmentTypes = 'globalLevel'
+        )
+    general.rle.iqr <- data.frame(
+        Variables = 'General',
+        Metrics = 'RLE',
+        Factors = 'General',
+        PlotTypes = 'rlePlot',
+        Assessments = 'rleIqr',
+        AssessmentTypes = 'globalLevel'
+        )
     # possible metrics for continuous variables #####
     if(length(continuous.var) > 0){
         metrics.for.cont.var <- c(
-            'rleMedians||scatterPlot||RLE_CorrCoeff',
-            'rleIqr||scatterPlot||RLE_CorrCoeff',
-            'pcs||scatterPlot||PCA_DA',
-            'pcs||lineDotPlot||LRA_AverageRseq',
-            'geneCorr||boxPlot||Correlation_CorrCoeff||PvalDis||qVal')
+            'rleMedians||scatterPlot||RLE_corrCoeff||globalLevel',
+            'rleIqr||scatterPlot||RLE_corrCoeff||globalLevel',
+            'pcs||scatterPlot||PCA_averageCorrCoeff||globalLevel',
+            'pcs.rseq||lineDotPlot||LRA_averageRseq||globalLevel',
+            'corrCoeff||boxPlot||Correlation_corrCoeff||geneLevel',
+            'corrCoeff||pvalHist||Correlation_pvalueDis||geneLevel',
+            'corrCoeff||pvalHist||Correlation_pvalueNull||geneLevel',
+            'corrCoeff||scatterPlot||PartialCorrelation_DA||geneLevel',
+            'corrCoeff||barPlot||PartialCorrelation_corrCoeffDiff||geneLevel',
+            'corrCoeff||histogram||PartialCorrelation_corrCoeff||geneLevel',
+            'corrCoeff||scatterPlot||GeneSetScore_corrCoeff||globalLevel'
+            )
         metrics.for.cont.var <- expand.grid(
             continuous.var,
             metrics.for.cont.var)
         colnames(metrics.for.cont.var) <- c('Variables', 'MetricsPlotsAssessment')
         metrics.for.cont.var <- metrics.for.cont.var[order(metrics.for.cont.var$Variables), ]
+
+        # Metrics
         metrics.for.cont.var$Metrics <- unlist(lapply(
             metrics.for.cont.var$MetricsPlotsAssessment,
             function(x){
                 d <- strsplit(x = as.character(x), split = '\\|\\|')[[1]][3]
-                strsplit(x = d, split = '_')[[1]][1]
-            }
-            ))
+                strsplit(x = d, split = '_')[[1]][1]}))
+        # Assessment types
+        metrics.for.cont.var$AssessmentTypes <- unlist(lapply(
+            metrics.for.cont.var$MetricsPlotsAssessment,
+            function(x) strsplit(x = as.character(x), split = '\\|\\|')[[1]][4]))
+        # Plot types
         metrics.for.cont.var$PlotTypes <- unlist(lapply(
             metrics.for.cont.var$MetricsPlotsAssessment,
             function(x) strsplit(x = as.character(x), split = '\\|\\|')[[1]][2]))
+        # Factors
         metrics.for.cont.var$Factors <- unlist(lapply(
             metrics.for.cont.var$MetricsPlots,
             function(x) strsplit(x = as.character(x), split = '\\|\\|')[[1]][1]))
+        # Assessments
         metrics.for.cont.var$Assessments <- unlist(lapply(
             metrics.for.cont.var$MetricsPlotsAssessment,
-            function(x) strsplit(x = as.character(x), split = '_')[[1]][2]))
-        metrics.for.cont.var.table <- metrics.for.cont.var[,c(1,3,5,4,6)]
+            function(x){
+                d <- strsplit(x = as.character(x), split = '_')[[1]][2]
+                strsplit(x = d, split = '\\|\\|')[[1]][1]}))
+        # Final table
+        metrics.for.cont.var.table <- metrics.for.cont.var[,c(1,3,4,6,5,7)]
         metrics.for.cont.var.list <- paste0(
             metrics.for.cont.var$Variables,
             '_',
@@ -110,41 +130,54 @@ getAssessmentMetrics <- function(
         metrics.for.cont.var.list <- NULL
     }
 
-    # possible metrics for categorica variables #####
+    # possible metrics for categorical variables #####
     if(length(categorical.var) > 0){
         metrics.for.cat.var <- c(
-            'rle||coloredRLEplot||RLE_DA',
-            'rleMedians||boxPlot||RLE_rleMed',
-            'rleIqr||boxPlot||RLE_rleIqr',
-            'pcs||boxPlot||PCA_DA',
-            'pcs||scatterPlot||PCA_DA',
-            'pcs||lineDotPlot||VCA_AverageCorr',
-            'ariCoeff||barPlot||ARI_ARI',
-            'silhouetteCoeff||barPlot||Silhouette_Silhouette',
-            'geneAnova||boxPlot||ANOVA_Fstat||Pval||qVal',
-            'pvalue||pvalHist||DGE_PvalDis||qVal')
+            'rle||coloredRLEplot||RLE_DA||globalLevel',
+            'rleMedians||boxPlot||RLE_rleMed||globalLevel',
+            'rleIqr||boxPlot||RLE_rleIqr||globalLevel',
+            'pcs||boxPlot||PCA_DA||globalLevel',
+            'pcs||scatterPlot||PCA_DA||globalLevel',
+            'pcs.corr||lineDotPlot||VCA_averageCorr||globalLevel',
+            'ariCoeff||barPlot||ARI_ari||globalLevel',
+            'silhouetteCoeff||barPlot||Silhouette_silhouetteCoeff||globalLevel',
+            'fStat||boxPlot||ANOVA_fStat||geneLevel',
+            'fStat||pvalHist||ANOVA_pvalueDis||geneLevel',
+            'fStat||pvalHist||ANOVA_pvalueNull||geneLevel',
+            'pValue||pvalHist||DGE_pvalueNull||geneLevel',
+            'pValue||pvalHist||DGE_pvalueDis||geneLevel')
         metrics.for.cat.var <- expand.grid(
             categorical.var,
             metrics.for.cat.var)
         colnames(metrics.for.cat.var) <- c('Variables', 'MetricsPlotsAssessments')
         metrics.for.cat.var <- metrics.for.cat.var[order(metrics.for.cat.var$Variables), ]
+        # Metrics
         metrics.for.cat.var$Metrics <- unlist(lapply(
             metrics.for.cat.var$MetricsPlotsAssessment,
             function(x){
                 d <- strsplit(x = as.character(x), split = '\\|\\|')[[1]][3]
-                strsplit(x = d, split = '_')[[1]][1]
-            }
-        ))
+                strsplit(x = d, split = '_')[[1]][1]}))
+        # Assessment types
+        metrics.for.cat.var$AssessmentTypes <- unlist(lapply(
+            metrics.for.cat.var$MetricsPlotsAssessment,
+            function(x) strsplit(x = as.character(x), split = '\\|\\|')[[1]][4]))
+        # Plot types
         metrics.for.cat.var$PlotTypes <- unlist(lapply(
             metrics.for.cat.var$MetricsPlotsAssessments,
             function(x) strsplit(x = as.character(x), split = '\\|\\|')[[1]][2]))
+        # Factors
         metrics.for.cat.var$Factors <- unlist(lapply(
             metrics.for.cat.var$MetricsPlotsAssessments,
             function(x) strsplit(x = as.character(x), split = '\\|\\|')[[1]][1]))
+        # Assessments
         metrics.for.cat.var$Assessments <- unlist(lapply(
             metrics.for.cat.var$MetricsPlotsAssessment,
-            function(x) strsplit(x = as.character(x), split = '_')[[1]][2]))
-        metrics.for.cat.var.table <- metrics.for.cat.var[,c(1,3,5,4,6)]
+            function(x){
+                d <- strsplit(x = as.character(x), split = '_')[[1]][2]
+                strsplit(d, split = '\\|\\|')[[1]][1]}))
+
+        # Final table
+        metrics.for.cat.var.table <- metrics.for.cat.var[,c(1,3,4,6,5,7)]
         metrics.for.cat.var.list <- paste0(
             metrics.for.cat.var$Variables,
             '_',
@@ -183,6 +216,7 @@ getAssessmentMetrics <- function(
         metrics.for.two.cat.var.table <- metrics.for.two.cat.var[,c(1,5,4,3)]
         metrics.for.two.cat.var.table$Assessments <- 'DA'
         metrics.for.two.cat.var.table <- metrics.for.two.cat.var.table[,c(1,4,2,3,5)]
+        metrics.for.two.cat.var.table$AssessmentTypes <- 'globalLevel'
         metrics.for.two.cat.var.list <- paste0(
             metrics.for.two.cat.var$Variables,
             '_',
@@ -219,36 +253,52 @@ getAssessmentMetrics <- function(
         }
     }
     final.metrics.table.toplot <- final.metrics.table
-    final.metrics.table <- rbind(final.metrics.table , general.plot, bio.genes)
+    final.metrics.table <- rbind(
+        final.metrics.table ,
+        general.rle.med,
+        general.rle.iqr
+        )
     final.metrics.table$Code <- paste0('PA', 1:nrow(final.metrics.table))
+
     # plot ####
     steps <- y <- label <- xmin <- xmax <- type <- s_e <- ymin <- ymax <- id <- NULL
     plot.metrics <- lapply(
         variables,
         function(x){
-            sub.final.metrics.table.toplot <- final.metrics.table.toplot[final.metrics.table.toplot$Variables == x, ]
+            sub.final.metrics.table.toplot <- final.metrics.table[final.metrics.table$Variables == x, ]
+            new.order <- mixedorder(x = sub.final.metrics.table.toplot$Code, decreasing = TRUE)
+            sub.final.metrics.table.toplot <- sub.final.metrics.table.toplot[new.order , ]
             metrics.tree <- tibble::tibble(
                 from = sub.final.metrics.table.toplot$Variables,
                 to = paste(
                     paste0('M: ', sub.final.metrics.table.toplot$Metrics),
                     paste0('V: ', sub.final.metrics.table.toplot$Factors),
                     paste0('P: ', sub.final.metrics.table.toplot$PlotTypes),
-                    sep = '\n'))
-            g <- igraph::graph_from_data_frame(metrics.tree, directed = TRUE)
-            coords <- igraph::layout_as_tree(g)
+                    paste0('A: ', sub.final.metrics.table.toplot$Assessments),
+                    paste0('T: ', sub.final.metrics.table.toplot$AssessmentTypes),
+                    paste0('C: ', sub.final.metrics.table.toplot$Code),
+                    sep = '\n')
+            )
+            graph.tree <- igraph::graph_from_data_frame(metrics.tree, directed = TRUE)
+            coords <- igraph::layout_as_tree(graph = graph.tree)
             colnames(coords) <- c("x", "y")
             output.df <- tibble::as_tibble(coords) %>%
                 mutate(
-                    steps = igraph::vertex_attr(g, "name"),
-                    label = gsub("\\d+$", "", steps),
+                    steps = igraph::vertex_attr(graph.tree, "name"),
+                    label = steps,
                     x = x * -1,
-                    type = factor(1))
-            plot.nodes = output.df %>%
+                    type = factor(1)
+                )
+            plot.nodes <- output.df %>%
                 mutate(
-                    xmin = x - 0.45,
-                    xmax = x + 0.45,
-                    ymin = y - 0.1,
-                    ymax = y + 0.1)
+                    xmin = x - 0.48,
+                    xmax = x + 0.48
+                )
+            plot.nodes$ymax <- 0.4
+            plot.nodes$ymin <- 0.1
+            index.even.rows <- seq(from = 2, to = nrow(plot.nodes), 2)
+            plot.nodes$ymax[index.even.rows] <-  0.3
+            plot.nodes$ymin[index.even.rows] <- 0
             plot.edges <- metrics.tree %>%
                 dplyr::mutate(id = dplyr::row_number()) %>%
                 pivot_longer(
@@ -263,79 +313,87 @@ getAssessmentMetrics <- function(
             plot.nodes$ymin[1] <- 0
             plot.nodes$xmax[1] <- 0
             plot.nodes$ymax[1] <- 0
-            plot.nodes$ymin <- plot.nodes$ymin - .1
-            plot.nodes$ymax <- plot.nodes$ymax + .1
-            mm <- seq(from = 2, to = nrow(plot.nodes), 2)
-            for(i in mm){
-                plot.nodes[i, c(8)] <- plot.nodes[i, c(8)] + .4
-                plot.nodes[i, c(9)] <- plot.nodes[i, c(9)] + .4
-                plot.nodes$y[i] <- 0.4
-            }
-            p <- ggplot() + geom_rect(
-                data = plot.nodes,
-                mapping = aes(
-                    xmin = xmin,
-                    ymin = ymin,
-                    xmax = xmax,
-                    ymax = ymax,
-                    fill = type),
-                alpha = 0.5,
-                fill = 'orange3')
-            p <- p + geom_text(
-                data = plot.nodes[1,],
-                mapping = aes(x = x, y = y, label = label),
-                color = "black",
-                size = 6
-            )
+            p <- ggplot() +
+                ylim(0,0.5) +
+                geom_rect(
+                    data = plot.nodes,
+                    mapping = aes(
+                        xmin = xmin,
+                        ymin = ymin,
+                        xmax = xmax,
+                        ymax = ymax,
+                        fill = type),
+                    alpha = 0.5,
+                    fill = 'grey80'
+                )
+            x2 <- y2 <- NULL
+            plot.nodes$y2 <- c(plot.nodes$ymin + plot.nodes$ymax)/2
+            plot.nodes$x2 <- c(plot.nodes$xmin + plot.nodes$xmax)/2
             p <- p + geom_text(
                 data = plot.nodes[-1,],
-                mapping = aes(x = x, y = y, label = label),
-                color = "black", size = 3,
-            )
-            mm <- seq(2, nrow(plot.edges), 4)
-            plot.edges$y[mm] <- plot.edges$y[mm] + .55
-            mm <- seq(2, nrow(plot.edges), 2)
-            plot.edges$y[mm] <- plot.edges$y[mm] + .02
-            p <- p + geom_path(
-                data = plot.edges,
-                mapping = aes(x = x, y = y, group = id),
-                colour = "gray",
-                arrow = arrow(length = unit(0.1, "cm"), type = "closed")
-            )
-            p <- p + theme(
-                panel.background = element_blank(),
-                axis.text = element_blank(),
-                axis.title = element_blank(),
-                axis.ticks.x = element_blank(),
-                axis.ticks.y = element_blank(),
-                legend.position = 'none')
+                mapping = aes(x = x2, y = y2, label = label),
+                color = "black", size = 3, stat = "identity", hjust = 0.5, vjust = 0.5
+            ) +
+                theme(
+                    panel.background = element_blank(),
+                    axis.text = element_blank(),
+                    axis.title = element_blank(),
+                    axis.ticks.x = element_blank(),
+                    axis.ticks.y = element_blank(),
+                    plot.margin = unit(c(0,-.5,0,-.5), 'lines'),
+                    legend.position = 'none') +
+                geom_rect(
+                    mapping = aes(
+                        xmin = min(plot.nodes$xmin),
+                        xmax = max(plot.nodes$xmax),
+                        ymin = min(plot.nodes$y),
+                        ymax = 0.5
+                    ),
+                    alpha = 0.005,
+                    fill = 'grey',
+                    color = 'black',
+                    size = 1,
+                ) + geom_text(
+                    data = plot.nodes[1,],
+                    mapping = aes(x = 0, y = 0.45, label = label),
+                    hjust = 0.5,
+                    vjust = 0.5,
+                    color = "black",
+                    size = 6,
+                    fontface = 'bold'
+                )
+            p
         })
     plot.caption <- expression(atop(
-        scriptstyle("M: metrics | V: variable | P: plot type"))
+        scriptstyle("M: metrics | V: variable | P: plot type | A: assessment | T: type | C: Code" ))
         )
-    all.plots <- ggpubr::ggarrange(plotlist = plot.metrics, common.legend = TRUE, ncol = 1)
+    all.plots <- ggpubr::ggarrange(
+        plotlist = plot.metrics,
+        common.legend = TRUE,
+        ncol = 1
+        )
     all.plots <- ggpubr::annotate_figure(
         p = all.plots,
-        bottom = ggpubr::text_grob(label = plot.caption, size = 20))
-
+        bottom = ggpubr::text_grob(label = plot.caption, size = 20)
+        )
     if(isTRUE(plot.output)) print(all.plots)
     # save plot
     if(isTRUE(save.se.obj)){
         if(!'AssessmentMetrics' %in% names(se.obj@metadata)){
             se.obj@metadata[['AssessmentMetrics']] <- list()
         }
-        if(!'plot' %in% se.obj@metadata[['AssessmentMetrics']]){
+        if(!'plot' %in% names(se.obj@metadata[['AssessmentMetrics']])){
             se.obj@metadata[['AssessmentMetrics']][['plot']] <- list()
-            se.obj@metadata[['AssessmentMetrics']][['plot']] <- all.plots
         }
-        if(!'metrics.list' %in% se.obj@metadata[['AssessmentMetrics']]){
+        se.obj@metadata[['AssessmentMetrics']][['plot']] <- all.plots
+        if(!'metrics.list' %in% names(se.obj@metadata[['AssessmentMetrics']])){
             se.obj@metadata[['AssessmentMetrics']][['metrics.list']] <- list()
-            se.obj@metadata[['AssessmentMetrics']][['metrics.list']] <- unlist(final.metrics.list)
         }
-        if(!'metrics.table' %in% se.obj@metadata[['AssessmentMetrics']]){
+        se.obj@metadata[['AssessmentMetrics']][['metrics.list']] <- unlist(final.metrics.list)
+        if(!'metrics.table' %in% names(se.obj@metadata[['AssessmentMetrics']])){
             se.obj@metadata[['AssessmentMetrics']][['metrics.table']] <- list()
-            se.obj@metadata[['AssessmentMetrics']][['metrics.table']] <- final.metrics.table
         }
+        se.obj@metadata[['AssessmentMetrics']][['metrics.table']] <- final.metrics.table
         return(se.obj)
 
     }else {
@@ -343,6 +401,6 @@ getAssessmentMetrics <- function(
             final.metrics.list = unlist(final.metrics.list),
             final.metrics.table = final.metrics.table))
     }
-
 }
+
 

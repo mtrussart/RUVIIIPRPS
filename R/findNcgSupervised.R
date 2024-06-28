@@ -18,8 +18,8 @@
 #' object. These unwanted variables can be categorical or continuous. Continuous variables will be divided into
 #' 'nb.uv.clusters' groups based on a clustering method selected in the 'uv.clustering.method' argument. This argument
 #' cannot be empty.
-#' @param approach Symbols. Indicats which NCGs selection method should be used. The options are 'AnovaCorr.PerBatchPerBio',
-#' 'AnovaCorr.AcrossAllSamples' and'TwoWayAnova'. The default is set to 'TwoWayAnova'. Refer to details for more information.
+#' @param approach Symbols. Indicats which NCGs selection method should be used. The options are 'AnovaCorr.PerBatchPerBiology',
+#' 'AnovaCorr.AcrossAllSamples' and 'TwoWayAnova'. The default is set to 'TwoWayAnova'. Refer to details for more information.
 #' @param ncg.selection.method Symbol. Indicating how to summarize F-statistics obtained from two-way ANOVA and select a
 #' set genes as negative control genes. The options are 'prod', 'average', 'sum', 'non.overlap', 'auto' and 'quantile'.
 #' The default is set to non.overlap'. For more information, refer to the details of the function.
@@ -126,6 +126,8 @@
 #' @param output.name Symbol. A representation for the output s name. If set to 'NULL', the function will choose a name
 #' automatically. In this case, the file name will be constructed as paste0(sum(ncg.selected),'|', paste0(bio.variables,
 #' collapse = '&'), '|', paste0(uv.variables, collapse = '&'),'|TWAnova:', ncg.selection.method, '|', assay.name).
+#' @param ncg.group Symbol. A symbol indicating the name of the group of NCG.
+#' @param plot.output TTTT
 #' @param use.imf Logical. Indicating whether to use the intermediate file or not. The default is set to 'FALSE'.
 #' @param save.imf Logical. Indicating whether to save the intermediate file in the SummarizedExperiment object or not.
 #' If set to 'TRUE', the function saves the results of the two-way ANOVA. Subsequently, if users wish to adjust parameters
@@ -186,6 +188,8 @@ findNcgSupervised <- function(
         remove.na = 'none',
         save.se.obj = TRUE,
         output.name = NULL,
+        ncg.group = NULL,
+        plot.output = TRUE,
         use.imf = FALSE,
         save.imf = FALSE,
         imf.name = NULL,
@@ -195,7 +199,7 @@ findNcgSupervised <- function(
                         color = 'white',
                         verbose = verbose)
     # check inputs ####
-    if(!approach %in% c('AnovaCorr.PerBatchPerBio', 'AnovaCorr.AcrossAllSamples', 'TwoWayAnova')){
+    if(!approach %in% c('AnovaCorr.PerBatchPerBiology', 'AnovaCorr.AcrossAllSamples', 'TwoWayAnova')){
         stop('The approach must be one of the "AnovaCorr.PerBatchPerBiology", "AnovaCorr.AcrossAllSamples" or "TwoWayAnova".')
     }
 
@@ -243,6 +247,8 @@ findNcgSupervised <- function(
             remove.na = remove.na,
             save.se.obj = save.se.obj,
             output.name = output.name,
+            ncg.group = ncg.group,
+            plot.output = plot.output,
             save.imf = save.imf,
             imf.name = imf.name,
             use.imf = use.imf,
@@ -285,6 +291,8 @@ findNcgSupervised <- function(
             remove.na = remove.na,
             save.se.obj = save.se.obj,
             output.name = output.name,
+            ncg.group = ncg.group,
+            plot.output = plot.output,
             save.imf = save.imf,
             imf.name = imf.name,
             use.imf = use.imf,
@@ -323,6 +331,8 @@ findNcgSupervised <- function(
             remove.na = remove.na,
             save.se.obj = save.se.obj,
             output.name = output.name,
+            ncg.group = ncg.group,
+            plot.output = plot.output,
             save.imf = save.imf,
             imf.name = imf.name,
             use.imf = use.imf,
