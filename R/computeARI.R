@@ -56,12 +56,12 @@ computeARI <- function(
         nb.pcs = 3,
         save.se.obj = TRUE,
         verbose = TRUE
-) {
+        ){
     printColoredMessage(message = '------------The computeARI function starts:',
                         color = 'white',
                         verbose = verbose)
 
-    # check the inputs ####
+    # Check the inputs ####
     if (is.null(assay.names)) {
         stop('The "assay.names" cannot be empty.')
     } else if (is.list(assay.names)){
@@ -118,8 +118,7 @@ computeARI <- function(
                     ', then "computePCA"-->"computeARI".'))
     }
 
-
-    # assays ####
+    # Check the assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else  assay.names <- factor(x = assay.names , levels = assay.names)
@@ -127,33 +126,44 @@ computeARI <- function(
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
-    # ari on all assays ####
+    # Compute ARI on all the assays ####
     printColoredMessage(
         message = paste0('-- Compute adjusted rand index (ARI) using the first ',
                          nb.pcs, ' PCS for the ', variable, ' variable.') ,
         color = 'magenta',
         verbose = verbose)
+    if(isTRUE(fast.pca)){
+        method = 'fast.svd'
+    } else method = 'svd'
+
+    ## obtain the PCA data from SummarizedExperiment ####
+    all.pca.data <- getMetricFromSeObj(
+        se.obj = se.obj,
+        assay.names = assay.names,
+        slot = 'Metrics',
+        assessment = 'PCA',
+        assessment.type = 'global.level',
+        method = method,
+        variables = 'general',
+        file.name = 'data',
+        sub.file.name = 'svd',
+        required.function = 'computePCA',
+        message.to.print = 'PCs'
+    )
+
+    ## compute ARI for all assay(s)  ####
     all.ari <- lapply(
         levels(assay.names),
         function(x) {
             printColoredMessage(
                 message = paste0('- Compute the ARI for the "', x, '" data:'),
-                color = 'blue',
+                color = 'orange',
                 verbose = verbose)
             printColoredMessage(
                 message = paste0('* obtain the first ', nb.pcs, ' computed PCs.'),
                 color = 'blue',
                 verbose = verbose)
-            if (fast.pca) {
-                if (!'fast.pca' %in% names(se.obj@metadata[['metric']][[x]][['PCA']])) {
-                    stop('To compute the ARI the fast PCA must be computed first on the assay ', x, ' .')
-                }
-                pca.data <- se.obj@metadata[['metric']][[x]][['PCA']][['fast.pca']][['pca.data']]$svd$u
-            } else {
-                if(!'pca' %in% names(se.obj@metadata[['metric']][[x]][['PCA']]))
-                    stop('To compute the ARI the PCA must be computed first on the assay ', x, ' .')
-                pca.data <- se.obj@metadata[['metric']][[x]][['PCA']][['pca']][['pca.data']]$svd$u
-            }
+            pca.data <- all.pca.data[[x]]$u
             if(ncol(pca.data) < nb.pcs){
                 printColoredMessage(
                     message = paste0('The number of PCs of the assay', x, 'are ', ncol(pca.data), '.'),
@@ -173,7 +183,7 @@ computeARI <- function(
                     color = 'blue',
                     verbose = verbose)
                 bic <- mclustBIC(data = pca.data)
-                mod <- Mclust(data = pca.data, x = bic, G = length(unique(se.obj@colData[, variable])) )
+                mod <- Mclust(data = pca.data, x = bic, G = length(unique(se.obj@colData[[variable]])) )
                 printColoredMessage(
                     message = '* calculate the adjusted rand index.',
                     color = 'blue',
@@ -208,29 +218,20 @@ computeARI <- function(
             message = '- Save the ARIs of each assay(s) to the "metadata" in the SummarizedExperiment object:',
             color = 'blue',
             verbose = verbose)
-
-        for (x in levels(assay.names)) {
-            ## check if metadata metric already exist
-            if (length(se.obj@metadata) == 0) {
-                se.obj@metadata[['metric']] <- list()
-            }
-            ## check if metadata metric already exist for this assay
-            if (!'metric' %in% names(se.obj@metadata)) {
-                se.obj@metadata[['metric']] <- list()
-            }
-            ## check if metadata metric already exist for this assay
-            if (!x %in% names(se.obj@metadata[['metric']])) {
-                se.obj@metadata[['metric']][[x]] <- list()
-            }
-            ## check if metadata metric already exist for this assay and this metric
-            if (!'ARI' %in% names(se.obj@metadata[['metric']][[x]])) {
-                se.obj@metadata[['metric']][[x]][['ARI']] <- list()
-            }
-            if(clustering.method == 'mclust'){
-                out.put.name <- 'mclust'
-            } else out.put.name <- paste0('hclust.', hclust.method, '.', hclust.dist.measure)
-            se.obj@metadata[['metric']][[x]][['ARI']][[out.put.name]][[variable]][['ari']] <- all.ari[[x]]
-        }
+        if(clustering.method == 'mclust'){
+            method <- 'mclust'
+        } else method <- paste0('hclust.', hclust.method, '.', hclust.dist.measure)
+        se.obj <- addMetricToSeObj(
+            se.obj = se.obj,
+            slot = 'Metrics',
+            assay.names = assay.names,
+            assessment.type = 'global.level',
+            assessment = 'ARI',
+            method = method,
+            variables = variable,
+            file.name = 'ari',
+            results.data = all.ari
+            )
         printColoredMessage(
             message = paste0('- The ARI of induvial assay(s) is saved to the .',
                              ' ".se.obj@metadata$metric$RawCount$ARI" in the SummarizedExperiment objec.'),
