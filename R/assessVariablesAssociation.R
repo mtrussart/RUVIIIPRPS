@@ -1,4 +1,4 @@
-#' assess the association between variables.
+#' Assess the association between variables.
 
 #' @author Ramyar Molania
 
@@ -63,7 +63,8 @@ assessVariablesAssociation <- function(
         cont.cor.coef = c(0.9, 0.9),
         assess.se.obj = TRUE,
         remove.na = 'sample.annotation',
-        verbose = TRUE) {
+        verbose = TRUE
+        ){
     printColoredMessage(message = '------------The assessVariablesCorrelation function starts:',
                         color = 'white',
                         verbose = verbose)
