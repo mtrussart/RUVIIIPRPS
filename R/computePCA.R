@@ -36,6 +36,9 @@
 #' @param save.se.obj Logical. Indicates whether to save the SVD results in the metadata of the SummarizedExperiment object
 #' or to output the results as list. By default it is set to 'TRUE'.
 #' @param remove.na To remove NA or missing values from the assays or not. The options are 'assays' and 'none'.
+#' @param override.check Logical. When set to 'TRUE', the function verifies the current SummarizedExperiment object to
+#' determine if the PCA has already been computed for the current parameters. If it has, the metric will not be recalculated.
+#' The default is set to FALSE.
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
 #' @return A SummarizedExperiment object or a list that containing the singular value decomposition results and the
@@ -59,230 +62,226 @@ computePCA <- function(
         assess.se.obj = TRUE,
         remove.na = 'assays',
         save.se.obj = TRUE,
-        verbose = TRUE) {
+        override.check = FALSE,
+        verbose = TRUE
+        ){
     printColoredMessage(message = '------------The computePCA function starts:',
                         color = 'white',
                         verbose = verbose)
-    # check the inputs ####
-    if (is.null(assay.names)) {
-        stop('The "assay.names" cannot be empty.')
-    }
-    if (isTRUE(fast.pca) & is.null(nb.pcs)) {
-        stop('To perform fast PCA, the number of PCs (left singular vectors) must be specified.')
-    } else if (isTRUE(fast.pca) & nb.pcs == 0) {
-        stop('To perform fast PCA, the number of PCs (left singular vectors) must be specified.')
-    }
-    if (isTRUE(apply.log)){
-        if(pseudo.count < 0){
-            stop('The value of "pseudo.count" cannot be negative.')
+
+    # Check to override or not ####
+    if(isTRUE(override.check)){
+        if(isTRUE(fast.pca)){
+            method <- 'fast.svd'
+        } else method <- 'ordinary.svd'
+        override.check <- overrideCheck(
+            se.obj = se.obj,
+            slot = 'Metrics',
+            assay.names = assay.names,
+            assessment.type = 'global.level',
+            assessment = 'PCA',
+            method = method,
+            variable = 'general',
+            file.name = 'data',
+            verbose = verbose
+        )
+        if(is.logical(override.check)){
+            compute.metric <- FALSE
+        } else if (is.list(override.check)) {
+            compute.metric <- TRUE
+            assay.names <- override.check$selected.assays
         }
-        if (is.null(pseudo.count)){
-            stop('A value for the "pseudo.count" must be specified.')
+    } else if (isFALSE(override.check)) compute.metric <- TRUE
+
+    if(isTRUE(compute.metric)){
+        # Check the inputs ####
+        if (is.null(assay.names)) {
+            stop('The "assay.names" cannot be empty.')
         }
-    }
-    if(!remove.na %in% c('assays','none')){
-        stop('The "remove.na" must be on of the "assays" or "none"')
-    }
-    if (isTRUE(scale)) {
+        if (isTRUE(fast.pca) & is.null(nb.pcs)) {
+            stop('To perform fast PCA, the number of PCs (left singular vectors) must be specified.')
+        } else if (isTRUE(fast.pca) & nb.pcs == 0) {
+            stop('To perform fast PCA, the number of PCs (left singular vectors) must be specified.')
+        }
+        if (isTRUE(apply.log)){
+            if(pseudo.count < 0){
+                stop('The value of "pseudo.count" cannot be negative.')
+            }
+            if (is.null(pseudo.count)){
+                stop('A value for the "pseudo.count" must be specified.')
+            }
+        }
+        if(!remove.na %in% c('assays','none')){
+            stop('The "remove.na" must be on of the "assays" or "none"')
+        }
+        if (isTRUE(scale)) {
+            printColoredMessage(
+                message = 'Note: highly recommend not to scale the data before computing the PCA.',
+                color = 'red',
+                verbose = verbose)
+        }
+
+        # Check the assays ####
+        if (length(assay.names) == 1 && assay.names == 'all') {
+            assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
+        } else  assay.names <- factor(x = assay.names , levels = assay.names)
+        if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
+            stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
+        }
+        # Assess the SummarizedExperiment object ####
+        if (isTRUE(assess.se.obj)) {
+            se.obj <- checkSeObj(
+                se.obj = se.obj,
+                assay.names = assay.names,
+                variables = NULL,
+                remove.na = remove.na,
+                verbose = verbose)
+        }
+        # Data transformation ####
         printColoredMessage(
-            message = 'Note: highly recommend not to scale the data before computing the PCA.',
-            color = 'red',
+            message = '-- Data log transformation:',
+            color = 'magenta',
             verbose = verbose)
-    }
-
-    # assays ####
-    if (length(assay.names) == 1 && assay.names == 'all') {
-        assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
-    } else  assay.names <- factor(x = assay.names , levels = assay.names)
-    if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
-        stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
-    }
-
-    # assess the se.obj ####
-    if (assess.se.obj) {
-        se.obj <- checkSeObj(
+        all.assays <- applyLog(
             se.obj = se.obj,
             assay.names = assay.names,
-            variables = NULL,
-            remove.na = remove.na,
-            verbose = verbose)
-    }
-
-    # data transformation ####
-    printColoredMessage(
-        message = '-- Data log transformation:',
-        color = 'magenta',
-        verbose = verbose)
-    all.assays <- lapply(
-        levels(assay.names),
-        function(x) {
-            temp.data <- as.matrix(assay(x = se.obj, i = x))
-            if (isTRUE(apply.log) & !is.null(pseudo.count)) {
-                printColoredMessage(
-                    message = paste0('- Apply log2 + ', pseudo.count,  ' (pseudo.count) on the ' , x, ' data.'),
-                    color = 'blue',
-                    verbose = verbose)
-                temp.data <- log2(temp.data + pseudo.count)
-            } else if (isTRUE(apply.log) & is.null(pseudo.count)) {
-                printColoredMessage(
-                    message = paste0('- Apply log2 transformation on the ', x, ' data.'),
-                    color = 'blue',
-                    verbose = verbose)
-                temp.data <- temp.data
-            } else if (!apply.log){
-                printColoredMessage(
-                    message = paste0('- The ', x,' data will be used without log transformation.'),
-                    color = 'blue',
-                    verbose = verbose)
-                printColoredMessage(
-                    message = '- Please note, the assay should be in log scale before computing SVD.',
-                    color = 'red',
-                    verbose = verbose)
-                temp.data <- temp.data
-            }
-            return(temp.data)
-        })
-    names(all.assays) <- levels(assay.names)
-
-    # svd ####
-    printColoredMessage(
-        message = '-- Perform singular value decomposition (SVD):',
-        color = 'magenta',
-        verbose = verbose)
-    ## fast svd ####
-    if (isTRUE(fast.pca)) {
+            apply.log = apply.log,
+            pseudo.count = pseudo.count,
+            assessment = 'computing "PCA"',
+            verbose = verbose
+        )
+        # Compute SVD ####
         printColoredMessage(
-            message = paste0(
-                '- Perform "fast" singular value decomposition with scale = ',
-                scale, ' and center = ', center, '.'),
-            color = 'blue',
-            verbose = verbose)
-        printColoredMessage(
-        message = paste0(
-            '- Note: in the fast svd analysis, the percentage of variation of PCs will be ',
-            'computed proportional to the highest selected number of PCs (left singular vectors), not on all the PCs.'),
-            color = 'red',
-            verbose = verbose)
-        if (is.null(svd.bsparam))
-            svd.bsparam <- bsparam()
-        all.sv.decomposition <- lapply(
-            levels(assay.names),
-            function(x) {
-                printColoredMessage(
-                    message = paste0('- Perform fast SVD on the ', x , ' data.'),
-                    color = 'blue',
-                    verbose = verbose)
-                sv.dec <- BiocSingular::runSVD(
-                    x = t(all.assays[[x]]),
-                    k = nb.pcs,
-                    BSPARAM = svd.bsparam,
-                    center = center,
-                    scale = scale)
-                rownames(sv.dec$u) <- colnames(se.obj)
-                rownames(sv.dec$v) <- row.names(se.obj)
-                percentage <- sv.dec$d ^ 2 / sum(sv.dec$d ^ 2) * 100
-                percentage <- sapply(
-                    seq_along(percentage),
-                    function(i) round(percentage [i], 1))
-                return(list(svd = sv.dec, percentage.variation = percentage))
-            })
-        names(all.sv.decomposition) <- levels(assay.names)
-    } else {
-        ## ordinary svd ####
-        printColoredMessage(
-            message = paste0(
-                '- Perform "ordinary" singular value decomposition with scale = ',
-                scale, ' and center = ', center, '.'),
-            color = 'blue',
-            verbose = verbose)
-        all.sv.decomposition <- lapply(
-            levels(assay.names),
-            function(x) {
-                printColoredMessage(
-                    message = paste0('- Perform singular value decomposition on the ', x , ' data.'),
-                    color = 'blue',
-                    verbose = verbose)
-                sv.dec <- svd(scale(
+            message = '-- Perform singular value decomposition (SVD):',
+            color = 'magenta',
+            verbose = verbose
+        )
+        ## compute fast SVD ####
+        if (isTRUE(fast.pca)) {
+            printColoredMessage(
+                message = paste0(
+                    '- Perform "fast" singular value decomposition with scale = ',
+                    scale, ' and center = ', center, '.'),
+                color = 'orange',
+                verbose = verbose)
+            if (is.null(svd.bsparam))
+                svd.bsparam <- bsparam()
+            all.sv.decomposition <- lapply(
+                levels(assay.names),
+                function(x) {
+                    printColoredMessage(
+                        message = paste0('* perform fast SVD on the "', x , '" data.'),
+                        color = 'blue',
+                        verbose = verbose)
+                    sv.dec <- BiocSingular::runSVD(
+                        x = t(all.assays[[x]]),
+                        k = nb.pcs,
+                        BSPARAM = svd.bsparam,
+                        center = center,
+                        scale = scale)
+                    rownames(sv.dec$u) <- colnames(se.obj)
+                    rownames(sv.dec$v) <- row.names(se.obj)
+                    percentage <- sv.dec$d ^ 2 / sum(sv.dec$d ^ 2) * 100
+                    percentage <- sapply(
+                        seq_along(percentage),
+                        function(i) round(percentage [i], 1))
+                    return(list(svd = sv.dec, percentage.variation = percentage))
+                })
+            printColoredMessage(
+                message = paste0(
+                    '- Note: in the fast svd analysis, the percentage of variation of PCs will be ',
+                    'computed proportional to the highest selected number of PCs (left singular vectors), not on all the PCs.'),
+                color = 'red',
+                verbose = verbose)
+            names(all.sv.decomposition) <- levels(assay.names)
+        }
+        ## compute ordinary SVD ####
+        if (isFALSE(fast.pca)) {
+            printColoredMessage(
+                message = paste0(
+                    '- Perform "ordinary" singular value decomposition with scale = ',
+                    scale, ' and center = ', center, '.'),
+                color = 'orange',
+                verbose = verbose
+            )
+            all.sv.decomposition <- lapply(
+                levels(assay.names),
+                function(x) {
+                    printColoredMessage(
+                        message = paste0('* Perform singular value decomposition on the "', x , '" data.'),
+                        color = 'blue',
+                        verbose = verbose)
+                    sv.dec <- svd(scale(
                         x = t(all.assays[[x]]),
                         center = center,
-                        scale = scale
-                    ))
-                rownames(sv.dec$u) <- colnames(se.obj)
-                rownames(sv.dec$v) <- row.names(se.obj)
-                percentage <- sv.dec$d ^ 2 / sum(sv.dec$d ^ 2) * 100
-                percentage <- sapply(
-                    seq_along(percentage),
-                    function(i) round(percentage [i], 1))
-                return(list(svd = sv.dec, percentage.variation = percentage))
-            })
-        names(all.sv.decomposition) <- levels(assay.names)
-    }
-
-    # save the results ####
-    printColoredMessage(
-        message = '-- Save the SVD results:',
-        color = 'magenta',
-        verbose = verbose)
-    ## add the results to the SummarizedExperiment object ####
-    if (save.se.obj == TRUE) {
-        for (x in levels(assay.names)) {
-            ### check if metadata metric already exist ####
-            if (length(se.obj@metadata) == 0) {
-                se.obj@metadata[['metric']] <- list()
-            }
-            ## check if metadata metric already exist for this assay ####
-            if (!'metric' %in% names(se.obj@metadata)) {
-                se.obj@metadata[['metric']] <- list()
-            }
-            ## check if metadata metric already exist for this assay ####
-            if (!x %in% names(se.obj@metadata[['metric']])) {
-                se.obj@metadata[['metric']][[x]] <- list()
-            }
-            if (!'PCA' %in% names(se.obj@metadata[['metric']][[x]])) {
-                se.obj@metadata[['metric']][[x]][['PCA']] <- list()
-            }
-            if (fast.pca) {
-                if('fast.pca' %in%  names(se.obj@metadata[['metric']][[x]][['PCA']]) ){
-                    se.obj@metadata[['metric']][[x]][['PCA']][['fast.pca']] <- list()
-                }
-                if('pca.data' %in%  names(se.obj@metadata[['metric']][[x]][['PCA']][['fast.pca']]) ){
-                    se.obj@metadata[['metric']][[x]][['PCA']][['fast.pca']][['pca.data']] <- list()
-                }
-                se.obj@metadata[['metric']][[x]][['PCA']][['fast.pca']][['pca.data']] <- all.sv.decomposition[[x]]
-            } else {
-                if('pca' %in%  names(se.obj@metadata[['metric']][[x]][['PCA']]) ){
-                    se.obj@metadata[['metric']][[x]][['PCA']][['pca']] <- list()
-                }
-                if('pca.data' %in%  names(se.obj@metadata[['metric']][[x]][['PCA']][['pca']]) ){
-                    se.obj@metadata[['metric']][[x]][['PCA']][['pca']][['pca.data']] <- list()
-                }
-                se.obj@metadata[['metric']][[x]][['PCA']][['pca']][['pca.data']] <- all.sv.decomposition[[x]]
-            }
+                        scale = scale)
+                    )
+                    rownames(sv.dec$u) <- colnames(se.obj)
+                    rownames(sv.dec$v) <- row.names(se.obj)
+                    percentage <- sv.dec$d ^ 2 / sum(sv.dec$d ^ 2) * 100
+                    percentage <- sapply(
+                        seq_along(percentage),
+                        function(i) round(percentage [i], 1))
+                    return(list(svd = sv.dec, percentage.variation = percentage))
+                })
+            names(all.sv.decomposition) <- levels(assay.names)
         }
-        if(isTRUE(fast.pca)){
-            svd.tech <- 'fast.pca'
-        } else svd.tech <- 'pca'
-        printColoredMessage(
-            message = paste0('- The SVD results of individual assay (s) are saved to the',
-                             ' "se.obj@metadata$metric$AssayName$PCA$', svd.tech, '$pca.data" in the SummarizedExperiment object.'),
-            color = 'blue',
-            verbose = verbose)
 
+        # Save all the results ####
+        printColoredMessage(
+            message = '-- Save the SVD results:',
+            color = 'magenta',
+            verbose = verbose)
+        ## add the results to the SummarizedExperiment object ####
+        if (isTRUE(save.se.obj)) {
+            printColoredMessage(
+                message = '- Save all the SVD results to the "metadata" of the SummarizedExperiment object.',
+                color = 'blue',
+                verbose = verbose
+            )
+            if(isTRUE(fast.pca)){
+                method <- 'fast.svd'
+            } else method <- 'ordinary.svd'
+            se.obj <- addMetricToSeObj(
+                se.obj = se.obj,
+                slot = 'Metrics',
+                assay.names = assay.names,
+                assessment.type = 'global.level',
+                assessment = 'PCA',
+                method = method,
+                file.name = 'data',
+                variables = 'general',
+                results.data = all.sv.decomposition
+            )
+            printColoredMessage(
+                message = paste0('- The SVD results of individual assay (s) are saved to the',
+                                 ' "se.obj@metadata$metric$AssayName$global.level$PCA$', method, '$data" in the SummarizedExperiment object.'),
+                color = 'blue',
+                verbose = verbose)
+
+            printColoredMessage(message = '------------The computePCA function finished.',
+                                color = 'white',
+                                verbose = verbose)
+            return(se.obj)
+        }
+
+        if (isFALSE(save.se.obj)) {
+            ## return a list ####
+            printColoredMessage(
+                message = '- The SVD results of individual assays are outputed as a list.',
+                color = 'blue',
+                verbose = verbose
+            )
+            printColoredMessage(message = '------------The computePCA function finished.',
+                                color = 'white',
+                                verbose = verbose)
+            return(all.sv.decompositions = all.sv.decomposition)
+        }
+    } else {
         printColoredMessage(message = '------------The computePCA function finished.',
                             color = 'white',
                             verbose = verbose)
         return(se.obj)
-    }
 
-    if (isFALSE(save.se.obj)) {
-        ## return a list ####
-        printColoredMessage(
-            message = 'The SVD results of individual assays are outputed as a list.',
-            color = 'blue',
-            verbose = verbose)
-        printColoredMessage(message = '------------The computePCA function finished.',
-                            color = 'white',
-                            verbose = verbose)
-        return(all.sv.decompositions = all.sv.decomposition)
     }
 }
