@@ -19,7 +19,7 @@
 #' The default is set to 'CPM'.
 #' @param apply.log Logical. Indicates whether to apply a log-transformation to the data or not after the normalization
 #' is performed. The default is 'TRUE'.
-#' @param pseudo.count Numeric. A value as a pseudo count to be added to all measurements of the assay(s) after applying
+#' @param pseudo.count Numeric. A numeric value as a pseudo count to be added to all measurements of the assay(s) after applying
 #' the normalization to avoid -Inf for measurements that are equal to 0. The default is 1.
 #' @param remove.na Logical. Indicates whether to remove NA or missing values from the assay or not.
 #' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment class object.
@@ -47,7 +47,7 @@ applyOtherNormalizations <- function(
         assess.se.obj = TRUE,
         save.se.obj = TRUE,
         verbose = TRUE
-){
+        ){
     printColoredMessage(message = '------------The applyOtherNormalizations function starts:',
                         color = 'white',
                         verbose = verbose)
