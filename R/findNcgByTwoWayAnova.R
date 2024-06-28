@@ -146,6 +146,8 @@
 #' @param output.name Symbol. A representation for the output s name. If set to 'NULL', the function will choose a name
 #' automatically. In this case, the file name will be constructed as paste0(sum(ncg.selected),'|', paste0(bio.variables,
 #' collapse = '&'), '|', paste0(uv.variables, collapse = '&'),'|TWAnova:', ncg.selection.method, '|', assay.name).
+#' @param ncg.group Symbol. A symbol indicating the name of the group of NCG.
+#' @param  plot.output TTT
 #' @param save.imf Logical. Indicating whether to save the intermediate file in the SummarizedExperiment object or not.
 #' If set to 'TRUE', the function saves the results of the two-way ANOVA. Subsequently, if users wish to adjust parameters
 #' such as 'nb.ncg', 'ncg.selection.method', 'top.rank.bio.genes', and 'top.rank.uv.genes', the two-way ANOVA will not
@@ -199,6 +201,8 @@ findNcgByTwoWayAnova <- function(
         remove.na = 'none',
         save.se.obj = TRUE,
         output.name = NULL,
+        ncg.group = NULL,
+        plot.output = TRUE,
         save.imf = FALSE,
         imf.name = NULL,
         use.imf = FALSE,
@@ -894,7 +898,7 @@ findNcgByTwoWayAnova <- function(
             -pcs,
             names_to = 'Groups',
             values_to = 'ls')
-        pca.ncg <- ggplot(pca.ncg, aes(x = pcs, y = ls, group = Groups)) +
+        p.assess.ncg <- ggplot(pca.ncg, aes(x = pcs, y = ls, group = Groups)) +
             geom_line(aes(color = Groups), linewidth = 1) +
             geom_point(aes(color = Groups), size = 2) +
             xlab('PCs') +
@@ -913,11 +917,14 @@ findNcgByTwoWayAnova <- function(
                 legend.title = element_text(size = 14),
                 plot.title = element_text(size = 16)
             )
-        print(pca.ncg)
+        if(isTRUE(plot.output)) print(p.assess.ncg)
     }
 
     # Save results ####
     ### add results to the SummarizedExperiment object ####
+    if(is.null(ncg.group)){
+        ncg.group <- paste0('ncg|unsupervised')
+    }
     if(is.null(output.name)){
         output.name <- paste0(
             sum(ncg.selected),
@@ -942,14 +949,31 @@ findNcgByTwoWayAnova <- function(
         if(!'supervised' %in% names(se.obj@metadata[['NCG']])){
             se.obj@metadata[['NCG']][['supervised']] <- list()
         }
-        if(!output.name %in% names(se.obj@metadata[['NCG']][['supervised']])){
-            se.obj@metadata[['NCG']][['supervised']][[output.name]] <- list()
+        if(!ncg.group %in% names(se.obj@metadata[['NCG']][['supervised']])){
+            se.obj@metadata[['NCG']][['supervised']][[ncg.group]] <- list()
         }
-        se.obj@metadata[['NCG']][['supervised']][[output.name]] <- ncg.selected
+        if(!'ncg.set' %in% names(se.obj@metadata[['NCG']][['supervised']][[ncg.group]])){
+            se.obj@metadata[['NCG']][['supervised']][[ncg.group]][['ncg.set']] <- list()
+        }
+        if(!output.name %in% names(se.obj@metadata[['NCG']][['supervised']][[ncg.group]][['ncg.set']] )){
+            se.obj@metadata[['NCG']][['supervised']][[ncg.group]][['ncg.set']][[output.name]] <- list()
+        }
+        se.obj@metadata[['NCG']][['supervised']][[ncg.group]][['ncg.set']][[output.name]] <- ncg.selected
+
+        if(isTRUE(assess.ncg)){
+            if(!'assessment.plot' %in% names(se.obj@metadata[['NCG']][['supervised']][[ncg.group]])){
+                se.obj@metadata[['NCG']][['supervised']][[ncg.group]][['assessment.plot']] <- list()
+            }
+            if(!output.name %in% names(se.obj@metadata[['NCG']][['supervised']][[ncg.group]][['assessment.plot']] )){
+                se.obj@metadata[['NCG']][['supervised']][[ncg.group]][['assessment.plot']][[output.name]] <- list()
+            }
+            se.obj@metadata[['NCG']][['supervised']][[ncg.group]][['assessment.plot']][[output.name]] <- p.assess.ncg
+        }
         printColoredMessage(
             message = '- The NCGs are saved to metadata of the SummarizedExperiment object.',
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         printColoredMessage(
             message = '------------The findNcgByTwoWayAnova function finished.',
             color = 'white',
