@@ -1,10 +1,10 @@
-#' Assess the variation of biological and unwanted variables.
+#' Assess the variation in variables.
 
 #' @author Ramyar Molania
 
 #' @description
-#' This function applies a range of global and gene level metrics to assess the variation in biological and unwanted
-#' variables in the assay(s) of a SummarizedExperiment object. The result of individual metric will be plotted.
+#' This function applies a range of global and gene level metrics to assess the variation of specified
+#' variables in the assay(s) of a SummarizedExperiment object.
 
 #' @details
 #' Several assessment will be performed:
@@ -29,10 +29,8 @@
 #' @references
 #' Molania R., ..., Speed, T. P., A new normalization for Nanostring nCounter gene expression data, Nucleic Acids Research,
 #' 2019.
-#'
 #' Molania R., ..., Speed, T. P., Removing unwanted variation from large-scale RNA sequencing data with PRPS,
 #' Nature Biotechnology, 2023
-
 
 #' @param se.obj A SummarizedExperiment object.
 #' @param assay.names Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
@@ -40,7 +38,7 @@
 #' be selected.
 #' @param variables Symbols. Indicating the the column names containing variable(s) for assessing their variation within
 #' the SummarizedExperiment object. These variables may be either categorical or continuous.
-#' @param to.exclude Symbols. A symbol or vector of symbols indication which metrics to be excluded.
+#' @param plots.to.exclude Symbols. A symbol or vector of symbols indication which metrics to be excluded.
 #' The metrics can be obtained using the  'getAssessmentMetrics' function. The default is set to NULL. Refer
 #' to the details for more information.
 #' @param apply.log Logical. Indicates whether to apply a log-transformation to the data. By default
@@ -56,10 +54,16 @@
 #' is set to 'red'.
 #' @param rle.geom.hline.color Symbol. Indicates the color of the horizontal line in the RLE plots. The default is set
 #' to 'cyan'.
-#' @param rle.plot.ncol Numeric. Indicates the columns of the plot grid in the RLE plots. The default is set to 1.
-#' @param rle.plot.nrow Numeric. Indicates the rows of the plot grid in the RLE plots. The default is set to 3.
-#' @param rle.variables.colors List. Indicates selected colors for each variables for colored RLE plots. The default is
-#' set to 'NULL', then the function use the default colors.
+#' @param rle.plot.ncol Numeric. A numeric value indicating the columns of the plot grid in the RLE boxplots. The default is
+#' set to 1.
+#' @param rle.plot.nrow Numeric. A numeric value indicating the rows of the plot grid in the RLE boxplots. The default is set
+#' to 3.
+#' @param rle.var.plot.ncol Numeric. A numeric value indicating the columns of the plot grid in the scatter plots of the rle
+#' medians against variable. The default is set to 3.
+#' @param rle.var.plot.nrow Numeric. A numeric value indicating the rows of the plot grid in the scatter plots of the rle
+#' medians against variable. The default is set to 3.
+#' @param rle.colors List. A list of colors for the specified variables to color the RLE boxplots. If 'NULL', the default
+#' colors will be used.
 #' @param fast.pca Logical. Indicates whether to calculate a specific number of PCs instead of the full range to speed up
 #' the process. The default is set to 'TRUE'. Refer to the function 'computePCA' for more details.
 #' @param compute.nb.pcs Numeric. The number of first PCs to be calculated for the fast pca process. The default is set to 4.
@@ -72,43 +76,101 @@
 #' mean square otherwise. The default is 'FALSE'.
 #' @param svd.bsparam A BiocParallelParam object specifying how parallelization should be performed. The default is bsparam().
 #' We refer to the 'runSVD' function from the BiocSingular R package.
-#' @param pca.variables.colors List. Indicates selected colors for each variables for PCA plots. The default is
-#' set to 'NULL', then the function uses the default colors.
-#' @param sil.dist.measure Symbol. Indicates which ditsance measure to be used. The options are 'euclidean', 'maximum',
-#' 'manhattan', 'canberra', 'binary' or 'minkowski'. The default is set to 'euclidean'. Refer to the function 'dist' from
-#' the R package stats for more details.
-#' @param sli.nb.pcs Numeric. Indicates the number of PCs that should be used to compute the silhouette coefficients. The
-#' default is set to 3.
+#' @param pca.variables.colors List. A list of colors for the specified categorical variables to color PCA plots. If 'NULL',
+#' the default colors will be used.
+#' @param pca.plot.ncol Numeric. A numeric value indicating the columns of the plot grid in the scatter plots of the PCA
+#' . The default is set to 3.
+#' @param pca.plot.nrow Numeric. A numeric value indicating the rows of the plot grid in the scatter plots of the PCA
+#' . The default is set to 3.
+#' @param pca.stroke.size Numeric. A numeric value indicating the size of the stroke of the points in the scatter PCA plots.
+#' The default is set to 0.1.
+#' @param pca.stroke.color Symbol. A symbol specifying the color of the stroke of the points in the scatter PCA plots.
+#' The default is set to 'gray'.
+#' @param pca.points.alpha Numeric. A numeric value indicating the transparency of the points in the scatter PCA plots.
+#' The default is set to 0.5.
+#' @param pca.densities.alpha Numeric. A numeric value indicating the transparency of the densities in the scatter PCA plots.
+#' The default is set to 0.5.
+#' @param sil.dist.measure Symbol. A symbol indicating which ditsance measure to be applied on the PCs to calculate silhouette.
+#' The options are 'euclidean', maximum', manhattan', 'canberra', 'binary' or 'minkowski'. The default is set to 'euclidean'.
+#' Refer to the function 'computeSilhouette' for more details.
+#' @param sli.nb.pcs Numeric. A numeric value specifying the number of PCs to be used to compute the silhouette coefficients.
+#' The default is set to 3. Refer to the function 'computeSilhouette' for more details. This number cannot be larger than
+#' 'compute.nb.pcs'.
 #' @param ari.clustering.method Symbol. A symbol that indicates which clustering methods should be applied on the PCs to
-#' calculate the ARI. The options are 'mclust' or 'hclust' methods. The default is set to 'hclust'.
-#' @param ari.hclust.method Symbol. Indicate the agglomeration method to be used when the  'clustering.method' is 'hclust'
-#' method. The options are: 'ward.D', 'ward.D2', 'single', 'complete', 'average' (= UPGMA), 'mcquitty' (= WPGMA),
-#' 'median' (= WPGMC) or centroid' (= UPGMC). Refer to the 'hclust' function from the stats R package for more details.
-#' @param ari.hclust.dist.measure Symbol. Indicates the distance measure to be used in the 'dist' function. The options are
-#' 'euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'. Refer to the 'dist' function from the stats
-#' R package for more details.
-#' @param ari.nb.pcs Numeric. Indicates the number of PCs that should be used to compute the ARI. The default is set to 3.
-#' This number cannot be larger than 'compute.nb.pcs'.
-#' @param vca.nb.pcs Numeric. Indicates the number of PCs that should be used to compute the vector correlation analysis.
-#' The default is set to 3. This number cannot be larger than 'compute.nb.pcs'.
-#' @param lra.nb.pcs Numeric. Indicates the number of PCs that should be used to compute the linear regression analysis.
-#' The default is set to 3. This number cannot be larger than 'compute.nb.pcs'.
-#' @param corr.method Symbol. Indicates which correlation method should be used to compute association between gene-level
-#' expression and a continuous variable. The options are 'pearson', 'kendall', or "spearman". The default is set to 'spearman'.
-#' @param a Numeric. The significance level used for the confidence intervals in the correlation. The default is set to
-#' 0.05. Refer to the 'correls' function from the 'Rfast' R package for more details.
-#' @param rho Numeric. The value of the hypothesized correlation to be used in the hypothesis testing. The default is
-#' set to 0. Refer to the 'correls' function from the 'Rfast' R package for more details.
-#' @param anova.method Indicates which anova method should be used to compute association between gene-level expression
-#' and a categorical variable. The options are 'aov' and 'welch'. The default is set to 'aov'.
-#' @param deg.plot.ncol Indicates the columns of the plot grid in the p-value histograms plots. The default is set to 1.
-#' @param deg.plot.nrow Indicates the rows of the plot grid in the p-value histograms plots. The default is set to 3.
+#' calculate the ARI. The options are 'mclust' or 'hclust' methods. The default is set to 'hclust'. Refer to the 'computeARI'
+#' for more details.
+#' @param ari.hclust.method Symbol. A symbol specifying the agglomeration method to be used when the 'clustering.method'
+#' is set to 'hclust' method for computing ARI. The options are: 'ward.D', 'ward.D2', 'single', 'complete', 'average' (= UPGMA),
+#' 'mcquitty' (= WPGMA), median' (= WPGMC) or centroid' (= UPGMC). The default is set to 'complete'. Refer to the 'computeARI'
+#' for more details.
+#' @param ari.hclust.dist.measure Symbol. A symbol indicating the distance measure to be used in the 'dist' function when
+#' the 'clustering.method' is set to 'hclust' method for computing ARI. The options are 'euclidean', 'maximum', 'manhattan',
+#' 'canberra', 'binary' or 'minkowski'. The default is set to 'euclidean'. Refer to the 'computeARI' for more details.
+#' @param ari.nb.pcs Numeric. A numeric value indicating the number of PCs to be used to compute the ARI. The default is
+#' set to 3. This number cannot be larger than 'compute.nb.pcs'.
+#' @param vca.nb.pcs Numeric. A numeric value specifying the number of PCs that should be used to compute the vector correlation
+#' analysis. The default is set to 3. This number cannot be larger than 'compute.nb.pcs'.
+#' @param lra.nb.pcs Numeric.  A numeric value indicating the number of PCs that should be used to compute the linear
+#' regression analysis between the PCs and variables.The default is set to 3. This number cannot be larger than 'compute.nb.pcs'.
+#' @param corr.method Symbol. A symbol indicating which correlation method should be used to compute correlation between
+#' gene-level expression and a continuous variable. The options are 'pearson', 'kendall', or "spearman". The default is
+#' set to 'spearman'.
+#' @param a Numeric. A numeric value showing the significance level used for the confidence intervals in the gene level
+#' correlation analysis. The default is set to 0.05.
+#' @param rho Numeric. A numeric value showing the value of the hypothesized correlation to be used in the hypothesis
+#' testing. The default is set to 0.
+#' @param correlation.plot.ncol Numeric. A numeric value indicating the columns of the plot grid in the boxplots of the
+#' correlations. The default is set to 1.
+#' @param correlation.plot.nrow Numeric. A numeric value indicating the rows of the plot grid in the boxplots of the
+#' correlations. The default is set to 3.
+#' @param anova.method Symbol. A symbol indicating which anova method should be used to compute association between
+#' gene-level expression and a categorical variable. The options are 'aov' and 'welch'. The default is set to 'aov'.
+#' @param anova.plot.ncol Numeric. A numeric value indicating the columns of the plot grid in the boxplots of the
+#' ANOVA F-values. The default is set to 1.
+#' @param anova.plot.nrow Numeric. A numeric value indicating the rows of the plot grid in the boxplots of the
+#' ANOVA F-values. The default is set to 3.
+#' @param pcorr.method Symbol. A symbol indicating which correlation method should be used to compute gene-gene partial
+#' correlation. The options are 'pearson', 'kendall', or "spearman". The default is set to 'spearman'.
+#' @param pcorr.genes Vector. A vector comprising genes upon which the gene-gene correlation analysis will be performed.
+#'  The vector can be logical, numeric or gene names. The default is 'NULL'.
+#' @param pcorr.select.genes If 'TRUE', the function will compute correlation between individual genes and the specified
+#' variable for partail pair-wise correlation analysis, then select a subset of gene based the "corr.coff.cutoff" for
+#' down-stream analysis. The default is set to TRUE'
+#' @param pcorr.reference.data Symbol. A symbol specifying the name of the assay to be used to select genes using the correlation
+#' analysis. The default is NULL. This means all the specified assays will be used.
+#' @param pcorr.corr.cutoff Numeric. A numeric value to be used as a cutoff for selecting the genes. The default is set to
+#' 0.7.
+#' @param pcorr.filter.genes Logical. Indicates to filter gene-gene coreelation of the pair-wise partail correlations
+#' before generating the plots or not. The default is set to 'TRUE'.
+#' @param pcorr.corr.dif.cutoff Numeric. A numeric value to be used as a cutoff for filtering genes. The default is set to
+#' 0.3 .
+#' @param pcorr.plot.ncol Numeric. Indicates number of columns in the plot grid. When the number of selected assay is more than
+#' 1, the function puts all the RLE boxplots in one grid.
+#' @param pcorr.plot.nrow Numeric. Indicates number of rows in the plot grid. When the number of selected assay is more than
+#' 3, the function puts all the RLE boxplots in one grid.
+#' @param deg.plot.ncol Numeric. A numeric value indicating the columns of the plot grid in the p-value histograms plots.
+#' The default is set to 1.
+#' @param deg.plot.nrow Numeric. A numeric value indicating the rows of the plot grid in the p-value histograms plots.
+#' The default is set to 3.
+#' @param gene.set.score.reference.data Symbol. A symbol specifying either the column name in the SummarizedExperiment object containing
+#' the scores of a gene set enrichment analysis or the name of the assay to be used as reference.
+#' @param gene.set.score.regress.out.variables Symbol. A symbol or a vector of symbols indicating the name(s) of the
+#' columns in the SummmairzedExperiment object to regress out from the data before calculating the score of a gene set.
+#' The default is set to NULL.
+#' @param gene.set.score.list List. A list gene set for each continuous variables to calculate the gene set enrichment
+#' analysis.
+#' @param gene.set.score.normalization Symbol. A symbol indicating normalization methods to be applied before computing
+#' gene set scoring. The default is set to 'NULL'.
+#' @param  gene.set.score.assessment TTT
+#' @param  gene.set.score.variables.to.assess TTT
 #' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment class object.
 #' @param remove.na Symbol. To remove NA or missing values from the assays or not. The options are 'assays' and 'none'.
 #' The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
 #' the checkSeObj function for more details.
-#' @param output.file.name Path and name of the output file to save the assessments plots in a pdf format.
-#' @param verbose Logical. If TRUE, displaying process messages is enabled.
+#' @param override.check Logical. When set to 'TRUE', the function verifies the current SummarizedExperiment object to
+#' determine if a certain metric has already been computed for the current parameters. If it has, the metric will not be
+#' recalculated again. The default is set to 'FALSE'.
+#' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
 #' @return A SummarizedExperiment object containing all the assessments plots and metrics. If specified it will generate
 #' a pdf containing the assessments plots and metrics used for the assessment.
@@ -125,17 +187,19 @@ assessVariation <- function(
         se.obj,
         assay.names = 'all',
         variables,
-        to.exclude = NULL,
+        plots.to.exclude = NULL,
         apply.log = TRUE,
         pseudo.count = 1,
-        general.points.size = 1,
+        general.points.size = 1.5,
         rle.iqr.width = 2,
         rle.median.points.size = 1,
         rle.median.points.color = 'red',
         rle.geom.hline.color = "cyan",
-        rle.plot.ncol = 1,
+        rle.plot.ncol = 2,
         rle.plot.nrow = 3,
-        rle.variables.colors = NULL,
+        rle.var.plot.ncol = 3,
+        rle.var.plot.nrow = 2,
+        rle.colors = NULL,
         fast.pca = TRUE,
         compute.nb.pcs = 5,
         nb.pcs.toplot.pca = 3,
@@ -143,6 +207,12 @@ assessVariation <- function(
         scale = FALSE,
         svd.bsparam = bsparam(),
         pca.variables.colors = NULL,
+        pca.plot.nrow = 2,
+        pca.plot.ncol = 3,
+        pca.stroke.size = 0.05,
+        pca.stroke.color = 'grey',
+        pca.points.alpha = 0.5,
+        pca.densities.alpha = 0.5,
         sil.dist.measure = 'euclidian',
         sli.nb.pcs = 3,
         ari.clustering.method = "hclust",
@@ -154,12 +224,31 @@ assessVariation <- function(
         corr.method = 'spearman',
         a = 0.05,
         rho = 0,
+        correlation.plot.ncol = 1,
+        correlation.plot.nrow = 3,
         anova.method = 'aov',
+        anova.plot.ncol = 1,
+        anova.plot.nrow = 3,
+        pcorr.method = 'spearman',
+        pcorr.genes = NULL,
+        pcorr.select.genes = FALSE,
+        pcorr.reference.data = NULL,
+        pcorr.corr.cutoff = .8,
+        pcorr.filter.genes = TRUE,
+        pcorr.corr.dif.cutoff = .1,
+        pcorr.plot.ncol = 2,
+        pcorr.plot.nrow = 2,
         deg.plot.ncol = 1,
-        deg.plot.nrow = 3,
+        deg.plot.nrow = 1,
+        gene.set.score.reference.data = NULL,
+        gene.set.score.regress.out.variables = NULL,
+        gene.set.score.list,
+        gene.set.score.normalization = NULL,
+        gene.set.score.assessment = FALSE,
+        gene.set.score.variables.to.assess = NULL,
         assess.se.obj = TRUE,
         remove.na = 'none',
-        output.file.name = NULL,
+        override.check = FALSE,
         verbose = TRUE
         ){
     printColoredMessage(message = '------------The assessVariation function starts:',
@@ -180,7 +269,7 @@ assessVariation <- function(
     if(is.null(variables)){
         stop('The "variables" cannot be empty or NULL.')
     }
-    if(is.logical(to.exclude)){
+    if(is.logical(plots.to.exclude)){
         stop('The "to.exclude" must be a vector or NULL.')
     }
     if (isFALSE(is.logical(apply.log))) {
@@ -222,16 +311,13 @@ assessVariation <- function(
     } else if (fast.pca & compute.nb.pcs == 0) {
         stop('To perform fast PCA, the number of PCs (compute.nb.pcs) must specified.')
     }
-    if (isTRUE(is.logical(output.file.name))) {
-        stop('The "output.file.name" must be a character name or "NULL".')
-    }
     if (fast.pca & is.null(compute.nb.pcs)) {
         stop('To perform fast PCA, the number of PCs (compute.nb.pcs) must specified.')
     } else if (fast.pca & compute.nb.pcs == 0) {
         stop('To perform fast PCA, the number of PCs (compute.nb.pcs) must specified.')
     }
 
-    # Assays ####
+    # Check the assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else assay.names <- factor(x = assay.names, levels = assay.names)
@@ -248,34 +334,34 @@ assessVariation <- function(
             remove.na = remove.na,
             verbose = verbose)
     }
-    # All possible metrics for each variable #####
+    # Get all possible metrics for each variable #####
     printColoredMessage(
-        message = 'Find all possible assessment metrics:',
+        message = '-- Get all possible assessment metrics and plot:',
         color = 'magenta',
         verbose = verbose)
     se.obj <- getAssessmentMetrics(
         se.obj = se.obj,
         variables = variables,
         plot.output = FALSE,
-        save.se.obj = TRUE)
-    # Metrics and plots to generate #####
+        save.se.obj = TRUE
+        )
+    ## Metrics and plots to generate #####
     metrics.table <- se.obj@metadata$AssessmentMetrics$metrics.table
-    if(!is.null(to.exclude)){
-        metrics.table <- metrics.table[!metrics.table$Code %in% to.exclude, ]
+    if(!is.null(plots.to.exclude)){
+        printColoredMessage(
+            message = paste0('- Exclude all the specified codes'),
+            color = 'blue',
+            verbose = verbose)
+        metrics.table <- metrics.table[!metrics.table$Code %in% plots.to.exclude, ]
     }
-    if(!is.null(to.exclude)){
-        plots.table <- metrics.table[!metrics.table$Code %in% to.exclude, ]
-    } else plots.table <- metrics.table
-
+    n.plots <- length(unique(paste0(metrics.table$Metrics, metrics.table$PlotTypes)))
     printColoredMessage(
-        message = paste0(
-            nrow(se.obj@metadata$AssessmentMetrics$metrics.table),
-            ' assessment plots will be generated.'),
+        message = paste0('- In total, ',n.plots, ' assessment plots will be generated.'),
         color = 'blue',
         verbose = verbose)
 
-    ## RLE #####
-    ### compute rle #####
+    # RLE #####
+    ## compute rle #####
     if('RLE' %in% metrics.table$Metrics){
         if('rlePlot' %in% metrics.table$PlotTypes ){
             rle.outputs.to.return <- 'all'
@@ -289,11 +375,13 @@ assessVariation <- function(
             assess.se.obj = FALSE,
             remove.na = 'none',
             save.se.obj = TRUE,
-            verbose = verbose)
+            override.check = override.check,
+            verbose = verbose
+            )
     }
 
-    ### plot general rle #####
-    if('rlePlot' %in% plots.table$PlotTypes){
+    ## plot general rle #####
+    if('rlePlot' %in% metrics.table$PlotTypes){
         se.obj <- plotRLE(
             se.obj = se.obj,
             assay.names = assay.names,
@@ -308,19 +396,20 @@ assessVariation <- function(
             plot.nrow = rle.plot.nrow,
             plot.output = FALSE,
             save.se.obj = TRUE,
-            verbose = verbose)
+            verbose = verbose
+            )
     }
 
-    ### plot colored rle #####
-    if('coloredRLEplot' %in% plots.table$PlotTypes){
-        coloredRLEplot.vars <- plots.table$PlotTypes == 'coloredRLEplot'
+    ## plot colored rle #####
+    if('coloredRLEplot' %in% metrics.table$PlotTypes){
+        coloredRLEplot.vars <- metrics.table$PlotTypes == 'coloredRLEplot'
         coloredRLEplot.vars <- metrics.table$Variables[coloredRLEplot.vars]
         for(i in coloredRLEplot.vars){
             se.obj <- plotRLE(
                 se.obj = se.obj,
                 assay.names = assay.names,
                 variable = i,
-                variable.colors = rle.variables.colors,
+                variable.colors = rle.colors,
                 ylim.rle.plot = NULL,
                 iqr.width = rle.iqr.width,
                 median.points.size = rle.median.points.size,
@@ -330,13 +419,14 @@ assessVariation <- function(
                 plot.nrow = rle.plot.nrow,
                 plot.output = FALSE,
                 save.se.obj = TRUE,
-                verbose = verbose)
+                verbose = verbose
+                )
         }
     }
-    ### plot rle medians with variable #####
-    if('rleMedians' %in% plots.table$Factors){
-        rleMedplot.vars <- plots.table$Factors == 'rleMedians'
-        rleMedplot.vars <- plots.table$Variables[rleMedplot.vars]
+    ## plot rle medians with variable #####
+    if('rleMedians' %in% metrics.table$Factors){
+        rleMedplot.vars <- metrics.table$Factors == 'rleMedians'
+        rleMedplot.vars <- metrics.table$Variables[rleMedplot.vars]
         for(i in rleMedplot.vars){
             se.obj <- plotRleVariable(
                 se.obj = se.obj,
@@ -346,38 +436,39 @@ assessVariation <- function(
                 ylim.rle.med.plot = NULL,
                 ylim.rle.iqr.plot = NULL,
                 points.size = general.points.size,
-                plot.ncol = 3,
-                plot.nrow = 3,
+                plot.ncol = rle.var.plot.ncol,
+                plot.nrow = rle.var.plot.nrow,
                 plot.output = FALSE,
                 save.se.obj = TRUE,
-                verbose = verbose)
+                verbose = verbose
+                )
         }
     }
-    ### plot rle iqr with variable #####
-    if('rleIqr' %in% plots.table$Factors){
-        rleIqrplot.vars <- plots.table$Factors == 'rleIqr'
-        rleIqrplot.vars <- plots.table$Variables[rleIqrplot.vars]
+
+    ## plot rle iqr with variable #####
+    if('rleIqr' %in% metrics.table$Factors){
+        rleIqrplot.vars <- metrics.table$Factors == 'rleIqr'
+        rleIqrplot.vars <- metrics.table$Variables[rleIqrplot.vars]
         for(i in rleIqrplot.vars){
             se.obj <- plotRleVariable(
                 se.obj = se.obj,
                 assay.names = assay.names,
                 variable = i,
-                rle.data.type = 'rle.iqr',
+                rle.data.type = 'rle.iqrs',
                 ylim.rle.med.plot = NULL,
                 ylim.rle.iqr.plot = NULL,
                 points.size = general.points.size,
-                plot.ncol = 3,
-                plot.nrow = 3,
+                plot.ncol = rle.var.plot.ncol,
+                plot.nrow = rle.var.plot.nrow,
                 plot.output = FALSE,
                 save.se.obj = TRUE,
                 verbose = verbose)
         }
     }
-
-    ## PCA ####
-    ### compute pca ####
-    if('PCA' %in% metrics.table$Metrics){
-        se.obj <- computePCA(
+    # PCA ####
+    ## compute pca ####
+    if(sum(c('PCA', 'LRA', 'VCA', 'ARI', 'Silhouette')  %in% metrics.table$Metrics) > 0 ) {
+        se.obj <- RUVIIIPRPS::computePCA(
             se.obj = se.obj,
             assay.names = assay.names,
             fast.pca = fast.pca,
@@ -390,13 +481,13 @@ assessVariation <- function(
             assess.se.obj = FALSE,
             remove.na = 'none',
             save.se.obj = TRUE,
+            override.check = override.check,
             verbose = verbose)
     }
-
-    ### scatter plot pca ####
-    if('PCA' %in% plots.table$Metrics & 'scatterPlot' %in% plots.table$PlotTypes){
-        pca.scatter.vars <- plots.table$Metrics == 'PCA' & plots.table$PlotTypes == 'scatterPlot'
-        pca.scatter.vars <- plots.table$Variables[pca.scatter.vars]
+    ## scatter plot pca ####
+    if('PCA' %in% metrics.table$Metrics & 'scatterPlot' %in% metrics.table$PlotTypes){
+        pca.scatter.vars <- metrics.table$Metrics == 'PCA' & metrics.table$PlotTypes == 'scatterPlot'
+        pca.scatter.vars <- metrics.table$Variables[pca.scatter.vars]
         for(i in pca.scatter.vars){
             se.obj <- RUVIIIPRPS::plotPCA(
                 se.obj = se.obj,
@@ -407,22 +498,21 @@ assessVariation <- function(
                 plot.type = "scatter",
                 variable.colors = pca.variables.colors,
                 points.size = general.points.size,
-                stroke.color = "gray30",
-                stroke.size = 0.2,
-                points.alpha = 0.5,
-                densities.alpha = 0.5,
-                plot.ncol = c(3,1),
-                plot.nrow = c(3,2),
+                stroke.color = pca.stroke.color,
+                stroke.size = pca.stroke.size,
+                points.alpha = pca.points.alpha,
+                densities.alpha = pca.densities.alpha,
+                plot.ncol = pca.plot.nrow,
+                plot.nrow = pca.plot.nrow,
                 plot.output = FALSE,
                 save.se.obj = TRUE,
                 verbose = TRUE)
         }
     }
-
-    ### boxplot pca ####
-    if('PCA' %in% plots.table$Metrics & 'boxPlot' %in% plots.table$PlotTypes){
-        pca.boxplot.vars <- plots.table$Metrics == 'PCA' & metrics.table$PlotTypes == 'boxPlot'
-        pca.boxplot.vars <- plots.table$Variables[pca.boxplot.vars]
+    ## boxplot pca ####
+    if('PCA' %in% metrics.table$Metrics & 'boxPlot' %in% metrics.table$PlotTypes){
+        pca.boxplot.vars <- metrics.table$Metrics == 'PCA' & metrics.table$PlotTypes == 'boxPlot'
+        pca.boxplot.vars <- metrics.table$Variables[pca.boxplot.vars]
         for(i in pca.boxplot.vars){
             se.obj <- RUVIIIPRPS::plotPCA(
                 se.obj = se.obj,
@@ -433,20 +523,19 @@ assessVariation <- function(
                 plot.type = "boxplot",
                 variable.colors = pca.variables.colors,
                 points.size = general.points.size,
-                stroke.color = "gray30",
-                stroke.size = 0.2,
-                points.alpha = 0.5,
-                densities.alpha = 0.5,
-                plot.ncol = c(3,1),
-                plot.nrow = c(3,2),
-                plot.output = F,
+                stroke.color = pca.stroke.color,
+                stroke.size = pca.stroke.size,
+                points.alpha = pca.points.alpha,
+                densities.alpha = pca.densities.alpha,
+                plot.ncol = pca.plot.nrow,
+                plot.nrow = pca.plot.nrow,
+                plot.output = FALSE,
                 save.se.obj = TRUE,
                 verbose = TRUE)
         }
     }
-
-    ## Vector correlation ####
-    ### compute vector correlation ####
+    # Vector correlation ####
+    ## compute vector correlation ####
     if('VCA' %in% metrics.table$Metrics){
         pc.vec.corr.vars <- metrics.table$Metrics == 'VCA'
         pc.vec.corr.vars <- metrics.table$Variables[pc.vec.corr.vars]
@@ -461,11 +550,10 @@ assessVariation <- function(
                 verbose = verbose)
         }
     }
-
-    ### plot vector correlation ####
-    if('VCA' %in% plots.table$Metrics){
-        index <- plots.table$Metrics == 'VCA'
-        pc.vec.corr.vars <- plots.table$Variables[index]
+    ## plot vector correlation ####
+    if('VCA' %in% metrics.table$Metrics){
+        index <- metrics.table$Metrics == 'VCA'
+        pc.vec.corr.vars <- metrics.table$Variables[index]
         for(i in pc.vec.corr.vars){
             se.obj <- plotPCVariableCorrelation(
                 se.obj = se.obj,
@@ -478,9 +566,8 @@ assessVariation <- function(
                 verbose = verbose)
         }
     }
-
-    ## Linear regression ####
-    ### compute linear regression ####
+    # Linear regression ####
+    ## compute linear regression ####
     if('LRA' %in% metrics.table$Metrics){
         pc.reg.vars <- metrics.table$Metrics == 'LRA'
         pc.reg.vars <- metrics.table$Variables[pc.reg.vars]
@@ -495,11 +582,10 @@ assessVariation <- function(
                 verbose = verbose)
         }
     }
-
-    ### plot linear regression ####
-    if('LRA' %in% plots.table$Metrics){
-        pc.reg.vars <- plots.table$Metrics == 'LRA'
-        pc.reg.vars <- plots.table$Variables[pc.reg.vars]
+    ## plot linear regression ####
+    if('LRA' %in% metrics.table$Metrics){
+        pc.reg.vars <- metrics.table$Metrics == 'LRA'
+        pc.reg.vars <- metrics.table$Variables[pc.reg.vars]
         for(i in pc.reg.vars){
             se.obj <- plotPCVariableRegression(
                 se.obj = se.obj,
@@ -513,8 +599,8 @@ assessVariation <- function(
         }
     }
 
-    ## Silhouette coefficient ####
-    ### compute silhouette coefficients ####
+    # Silhouette coefficient ####
+    ## compute silhouette coefficients ####
     if('Silhouette' %in% metrics.table$Metrics){
         index.single <- metrics.table$Metrics == 'Silhouette' &
             metrics.table$PlotTypes == 'barPlot'
@@ -536,42 +622,41 @@ assessVariation <- function(
                 verbose = verbose)
         }
     }
-
-    ### barplot silhouette coefficients  ####
-    if('Silhouette' %in% plots.table$Metrics & 'barPlot' %in% plots.table$PlotTypes){
-        index <- plots.table$Metrics == 'Silhouette' & plots.table$PlotTypes == 'barPlot'
-        sil.single.vars <- plots.table$Variables[index]
+    ## barplot silhouette coefficients  ####
+    if('Silhouette' %in% metrics.table$Metrics & 'barPlot' %in% metrics.table$PlotTypes){
+        index <- metrics.table$Metrics == 'Silhouette' & metrics.table$PlotTypes == 'barPlot'
+        sil.single.vars <- metrics.table$Variables[index]
         for(i in sil.single.vars){
             se.obj <- plotSilhouette(
                 se.obj = se.obj,
                 assay.names = assay.names,
                 variables = i,
                 plot.type = 'single.plot',
-                silhouette.method = 'sil.euclidian',
-                plot.output = F,
+                silhouette.method = paste0('sil.', sil.dist.measure),
+                plot.output = FALSE,
                 save.se.obj = TRUE,
                 verbose = verbose)
         }
     }
-    ### combined plot silhouette coefficients  ####
-    if('Silhouette' %in% plots.table$Metrics & 'combinedPlot' %in% plots.table$PlotTypes){
-        index <- plots.table$Metrics == 'Silhouette' & plots.table$PlotTypes == 'combinedPlot'
-        sil.combined.vars <- plots.table$Variables[index]
+    ## combined plot silhouette coefficients  ####
+    if('Silhouette' %in% metrics.table$Metrics & 'combinedPlot' %in% metrics.table$PlotTypes){
+        index <- metrics.table$Metrics == 'Silhouette' & metrics.table$PlotTypes == 'combinedPlot'
+        sil.combined.vars <- metrics.table$Variables[index]
         for(i in sil.combined.vars){
             se.obj <- plotSilhouette(
                 se.obj = se.obj,
                 assay.names = assay.names,
                 variables = strsplit(x = i, split = '&')[[1]],
                 plot.type = 'combined.plot',
-                silhouette.method = 'sil.euclidian',
+                silhouette.method = paste0('sil.', sil.dist.measure),
                 plot.output = FALSE,
                 save.se.obj = TRUE,
                 verbose = verbose)
         }
     }
 
-    ## ARI ####
-    ### compute adjusted rand index ####
+    # ARI ####
+    ## compute adjusted rand index ####
     if('ARI' %in% metrics.table$Metrics){
         index.single <- metrics.table$Metrics == 'ARI' &
             metrics.table$PlotTypes == 'barPlot'
@@ -595,45 +680,49 @@ assessVariation <- function(
                 verbose = verbose)
         }
     }
-
-    ### barplot adjusted rand index  ####
-    if('ARI' %in% plots.table$Metrics & 'barPlot' %in% plots.table$PlotTypes){
-        index <- plots.table$Metrics == 'ARI' & plots.table$PlotTypes == 'barPlot'
-        ari.single.vars <- plots.table$Variables[index]
+    ## barplot adjusted rand index  ####
+    if('ARI' %in% metrics.table$Metrics & 'barPlot' %in% metrics.table$PlotTypes){
+        index <- metrics.table$Metrics == 'ARI' & metrics.table$PlotTypes == 'barPlot'
+        ari.single.vars <- metrics.table$Variables[index]
+        if(ari.clustering.method == 'mclust'){
+            ari.method <- 'mclust'
+        } else ari.method <- paste0('hclust.', ari.hclust.method, '.', ari.hclust.dist.measure)
         for(i in ari.single.vars){
             se.obj <- plotARI(
                 se.obj = se.obj,
                 assay.names = assay.names,
                 variables = i,
                 plot.type = 'single.plot',
-                ari.method = 'hclust.complete.euclidian',
+                ari.method = ari.method,
                 plot.output = FALSE,
                 save.se.obj = TRUE,
                 verbose = verbose)
         }
     }
-    ### combined adjusted rand index  ####
-    if('ARI' %in% plots.table$Metrics & 'combinedPlot' %in% plots.table$PlotTypes){
-        index <- plots.table$Metrics == 'ARI' & plots.table$PlotTypes == 'combinedPlot'
-        ari.combined.vars <- plots.table$Variables[index]
+    ## combined adjusted rand index  ####
+    if('ARI' %in% metrics.table$Metrics & 'combinedPlot' %in% metrics.table$PlotTypes){
+        index <- metrics.table$Metrics == 'ARI' & metrics.table$PlotTypes == 'combinedPlot'
+        ari.combined.vars <- metrics.table$Variables[index]
+        if(ari.clustering.method == 'mclust'){
+            ari.method <- 'mclust'
+        } else ari.method <- paste0('hclust.', ari.hclust.method, '.', ari.hclust.dist.measure)
         for(i in ari.combined.vars){
             se.obj <- plotARI(
                 se.obj = se.obj,
                 assay.names = assay.names,
                 variables = strsplit(x = i, split = '&')[[1]],
                 plot.type = 'combined.plot',
-                ari.method = 'hclust.complete.euclidian',
+                ari.method = ari.method,
                 plot.output = FALSE,
                 save.se.obj = TRUE,
                 verbose = verbose)
         }
     }
-
-    ## Gene variable correlation ####
-    ### compute gene variable correlations ####
+    # Gene variable correlation ####
+    ## compute gene variable correlations ####
     if('Correlation' %in% metrics.table$Metrics){
         index <- metrics.table$Metrics == 'Correlation'
-        gene.var.corr.vars <- metrics.table$Variables[index]
+        gene.var.corr.vars <- unique(metrics.table$Variables[index])
         for(i in gene.var.corr.vars){
             se.obj <- computeGenesVariableCorrelation(
                 se.obj = se.obj,
@@ -648,33 +737,34 @@ assessVariation <- function(
                 pseudo.count = pseudo.count,
                 apply.round = TRUE,
                 assess.se.obj = FALSE,
+                override.check = override.check,
                 remove.na = 'none',
                 save.se.obj = TRUE)
         }
     }
-    ### plot gene variable correlations ####
-    if('Correlation' %in% plots.table$Metrics){
-        index <- plots.table$Metrics == 'Correlation'
-        gene.var.corr.vars <- plots.table$Variables[index]
+    ## plot gene variable correlations ####
+    if('Correlation' %in% metrics.table$Metrics){
+        index <- metrics.table$Metrics == 'Correlation'
+        gene.var.corr.vars <- unique(metrics.table$Variables[index])
         for(i in gene.var.corr.vars){
             se.obj <- plotGenesVariableCorrelation(
                 se.obj = se.obj,
                 assay.names = assay.names,
                 variable = i,
                 correlation.method = corr.method,
+                plot.ncol = correlation.plot.ncol,
+                plot.nrow = correlation.plot.nrow,
                 plot.output = FALSE,
                 save.se.obj = TRUE,
                 verbose = verbose)
             }
     }
 
-    ## Gene variable anova ####
-    ### compute gene variable anova ####
+    # Gene variable anova ####
+    ## compute gene variable anova ####
     if('ANOVA' %in% metrics.table$Metrics){
         index <- metrics.table$Metrics == 'ANOVA'
-        gene.var.anova.vars <- metrics.table$Variables[index]
-        gene.var.anova.fvalue.scores <- list()
-        gene.var.anova.pvalue.scores <- list()
+        gene.var.anova.vars <- unique(metrics.table$Variables[index])
         for(i in gene.var.anova.vars){
             se.obj <- computeGenesVariableAnova(
                 se.obj = se.obj,
@@ -688,32 +778,33 @@ assessVariation <- function(
                 apply.round = TRUE,
                 assess.se.obj = FALSE,
                 remove.na = 'none',
+                override.check = override.check,
                 save.se.obj = TRUE)
         }
     }
-
-    ### plot gene variable anova ####
+    ## plot gene variable anova ####
     if('ANOVA' %in% metrics.table$Metrics){
         index <- metrics.table$Metrics == 'ANOVA'
-        gene.var.corr.vars <- metrics.table$Variables[index]
+        gene.var.corr.vars <- unique(metrics.table$Variables[index])
         for(i in gene.var.corr.vars){
             se.obj <- plotGenesVariableAnova(
                 se.obj = se.obj,
                 assay.names = assay.names,
                 variable = i,
                 anova.method = anova.method,
+                plot.ncol = anova.plot.ncol,
+                plot.nrow = anova.plot.nrow,
                 plot.output = FALSE,
                 save.se.obj = TRUE,
                 verbose = TRUE)
         }
     }
-    ## DGE ####
-    ### compute dge ####
+
+    # DGE ####
+    ## compute dge ####
     if('DGE' %in% metrics.table$Metrics){
         index <- metrics.table$Metrics == 'DGE'
-        dge.vars <- metrics.table$Variables[index]
-        dge.scores <- list()
-        dge.uniform.scores <- list()
+        dge.vars <- unique(metrics.table$Variables[index])
         for(i in dge.vars){
             se.obj <- computeDGE(
                 se.obj = se.obj,
@@ -724,14 +815,15 @@ assessVariation <- function(
                 assess.se.obj = FALSE,
                 remove.na = 'none',
                 save.se.obj = TRUE,
-                verbose = verbose)
+                override.check = override.check,
+                verbose = verbose
+                )
         }
     }
-
-    ### plot p-value hist ####
-    if('DGE' %in% plots.table$Metrics){
-        index <- plots.table$Metrics == 'DGE'
-        dge.vars <- plots.table$Variables[index]
+    ## plot p-value hist ####
+    if('DGE' %in% metrics.table$Metrics){
+        index <- metrics.table$Metrics == 'DGE'
+        dge.vars <- unique(metrics.table$Variables[index])
         for(i in dge.vars){
             se.obj <- plotDGE(
                 se.obj = se.obj,
@@ -741,132 +833,117 @@ assessVariation <- function(
                 plot.nrow = deg.plot.nrow,
                 plot.output = FALSE,
                 save.se.obj = TRUE,
-                verbose = verbose)
+                verbose = verbose
+                )
         }
     }
-    # Plot all the metrics ####
-    mytheme <- gridExtra::ttheme_default(
-        core = list(fg_params = list(cex = 1)),
-        colhead = list(fg_params = list(cex = 1)),
-        rowhead = list(fg_params = list(cex = 1)))
 
-    categorical.vars <- continuous.vars <- NULL
-    if (!is.null(variables)) {
-        vars.class <- sapply(
-            variables,
-            function(x) class(colData(se.obj)[[x]]))
-        categorical.vars <- names(vars.class[vars.class %in% c('character', 'factor')])
-        continuous.vars <- names(vars.class[vars.class %in% c('numeric', 'integer')])
+    # Partial correlation ####
+    ## compute partial correlation ####
+    if('PartialCorrelation' %in% metrics.table$Metrics){
+        index <- metrics.table$Metrics == 'PartialCorrelation'
+        pcorr.vars <- unique(metrics.table$Variables[index])
+        for(i in pcorr.vars){
+            se.obj <- computeGenesPartialCorrelation(
+                se.obj = se.obj,
+                assay.names = assay.names,
+                variable = i,
+                method = pcorr.method,
+                genes = pcorr.genes[[i]],
+                select.genes = pcorr.select.genes,
+                reference.data = pcorr.reference.data,
+                corr.coff.cutoff = pcorr.corr.cutoff,
+                apply.log = apply.log,
+                pseudo.count = pseudo.count,
+                apply.round = TRUE,
+                assess.se.obj = FALSE,
+                remove.na = 'none',
+                save.se.obj = TRUE,
+                override.check = override.check,
+                verbose = verbose
+            )
+        }
     }
-    if(is.null(output.file.name)){
-        output.file.name <- 'RUVIIIPRPS_VariationAssessment'
+    ## plot partial correlation ####
+    if('PartialCorrelation' %in% metrics.table$Metrics){
+        index <- metrics.table$Metrics == 'PartialCorrelation'
+        pcorr.vars <- unique(metrics.table$Variables[index])
+        for(i in pcorr.vars){
+            index <- metrics.table$Metrics == 'PartialCorrelation' & metrics.table$Variables == i
+            plot.types <- metrics.table$PlotTypes[index]
+                for(j in plot.types){
+                    if(j == 'scatterPlot'){
+                        plot.type = 'scatter.plot'
+                    } else if(j == 'barPlot'){
+                        plot.type = 'barplot'
+                    } else if (j == 'histogram') plot.type = 'histogram'
+                    se.obj <- plotGenesPartialCorrelation(
+                        se.obj = se.obj,
+                        assay.names = assay.names,
+                        variable = i,
+                        method = pcorr.method,
+                        plot.type = plot.type,
+                        filter.genes = pcorr.filter.genes,
+                        corr.dif.cutoff = pcorr.corr.dif.cutoff,
+                        plot.ncol = pcorr.plot.ncol,
+                        plot.nrow = pcorr.plot.nrow,
+                        plot.output = FALSE,
+                        save.se.obj = TRUE,
+                        verbose = verbose)
+                }
+            }
     }
-    pdf(paste0(output.file.name, '.pdf'), width = 18, height = 10)
-    plot.new()
-    text(.5, .5, "Assess variation and normalization perfroance", font = 2, cex = 1.5)
-    grid.table(metrics.table, theme = mytheme)
+    # Gene set scoring ####
+    ## compute gene set scoring ####
+    if('GeneSetScore' %in% metrics.table$Metrics){
+        index <- metrics.table$Metrics == 'GeneSetScore'
+        gene.set.vars <- unique(metrics.table$Variables[index])
+        gene.set.vars <- gene.set.vars[gene.set.vars %in% names(gene.set.score.list)]
+        if(length(gene.set.vars) > 0){
+            for(i in gene.set.vars){
+                se.obj <- computeGeneSetScore(
+                    se.obj = se.obj,
+                    assay.names = assay.names,
+                    upset.genes = gene.set.score.list[[i]]$upset.genes,
+                    downset.genes = gene.set.score.list[[i]]$downset.genes,
+                    apply.log = apply.log,
+                    pseudo.count = pseudo.count,
+                    normalization = gene.set.score.normalization,
+                    regress.out.variables = gene.set.score.regress.out.variables,
+                    assess.score = gene.set.score.assessment ,
+                    variables.to.assess = gene.set.score.variables.to.assess,
+                    corr.method = 'spearman',
+                    gene.set.name = i,
+                    plot.output = FALSE,
+                    assess.se.obj = FALSE,
+                    save.se.obj = TRUE,
+                    verbose = verbose
+                )
+            }
+        }
+    }
 
-    if('General' %in% plots.table$Variables  & 'rlePlot' %in% plots.table$PlotTypes){
-        print(se.obj@metadata$plot$RLE$uncolored.rle.plot)
-    }
-    for(i in continuous.vars){
-        plot.new()
-        text(.5, .5, paste0("Assess variation \n in the variable: \n ", i ), font = 2, cex = 1.5)
-        metrics.table.var <- plots.table[plots.table$Variables == i, ]
-        for(j in 1:nrow(metrics.table.var)){
-            if(metrics.table.var$Factors[j] == 'rleMedians'){
-                if(length(assay.names) > 1){
-                    print(se.obj@metadata$plot$RLE$rle.var.plot[[i]]$rle.med.var.plot)
-                } else print(se.obj@metadata$metric[[assay.names]]$RLE$rle.plot$rle.var.plot[[j]]$rle.med.var.plot)
-            }
-            if(metrics.table.var$Factors[j] == 'rleIqr'){
-                if(length(assay.names) > 1){
-                    print(se.obj@metadata$plot$RLE$rle.var.plot[[i]]$rle.iqr.var.plot)
-                } else print(se.obj@metadata$metric[[assay.names]]$RLE$rle.plot$rle.var.plot[[j]]$rle.iqr.var.plot)
-            }
-            if(metrics.table.var$Factors[j] == 'pcs' & metrics.table.var$Metrics[j] == 'PCA'){
-                if(length(assay.names) > 1){
-                    print(se.obj@metadata$plot$PCA$fast.pca[[i]]$pca.var.scat.plot)
-                } else print(se.obj@metadata$metric[[assay.names]]$PCA$fast.pca$pca.plot[[j]]$pca.var.scat.plot)
-            }
-            if(metrics.table.var$Factors[j] == 'pcs' & metrics.table.var$Metrics[j] == 'LRA'){
-                if(length(assay.names) > 1){
-                    print(se.obj@metadata$plot$LRA[[i]])
-                } else print(se.obj@metadata$metric[[assay.names]]$LRA[[j]]$lra.plot)
-            }
-            if(metrics.table.var$Factors[j] == 'geneCorr'){
-                if(length(assay.names) > 1){
-                    print(se.obj@metadata$plot$Correlation$spearman[[i]])
-                } else print(se.obj@metadata$metric[[assay.names]]$Correlation$spearman[[j]]$cor.coef.plot)
-            }
+    ## plot partial correlation ####
+    if('GeneSetScore' %in% metrics.table$Metrics){
+        index <- metrics.table$Metrics == 'GeneSetScore'
+        gene.set.vars <- unique(metrics.table$Variables[index])
+        gene.set.vars <- gene.set.vars[gene.set.vars %in% names(gene.set.score.list)]
+        for(i in gene.set.vars){
+            se.obj <- plotGeneSetScore(
+                se.obj = se.obj,
+                assay.names = assay.names,
+                reference.score = gene.set.score.reference.data,
+                gene.set.name = i,
+                plot.output = FALSE,
+                assess.se.obj = FALSE,
+                save.se.obj = TRUE,
+                verbose = verbose
+                )
         }
     }
-    for(i in categorical.vars){
-        plot.new()
-        text(.5, .5, paste0("Assess variation \n in the variable: \n ", i ), font = 2, cex = 1.5)
-        metrics.table.var <- plots.table[metrics.table$Variables == i, ]
-        if('coloredRLEplot' %in% metrics.table.var$PlotTypes){
-            if(length(assay.names) > 1){
-                print(se.obj@metadata$plot$RLE$colored.rle.plot[[i]])
-            } else print(se.obj@metadata$metric[[assay.names]]$RLE$rle.plot$colored.rle.plot[[i]])
-
-        }
-        if('rleMedians' %in% metrics.table.var$Factors){
-            if(length(assay.names) > 1){
-                print(se.obj@metadata$plot$RLE$rle.var.plot[[i]]$rle.med.var.plot)
-            } else print(se.obj@metadata$metric[[assay.names]]$RLE$rle.plot$rle.var.plot[[i]]$rle.med.var.plot)
-
-        }
-        if('rleIqr' %in% metrics.table.var$Factors){
-            if(length(assay.names) > 1){
-                print(se.obj@metadata$plot$RLE$rle.var.plot[[i]]$rle.iqr.var.plot)
-            } else print(se.obj@metadata$metric[[assay.names]]$RLE$rle.plot$rle.var.plot[[i]]$rle.iqr.var.plot)
-        }
-        if('pcsboxPlot' %in% paste0(metrics.table.var$Factors, metrics.table.var$PlotTypes) ){
-            if(length(assay.names) > 1){
-                print(se.obj@metadata$plot$PCA$fast.pca[[i]]$pca.box.plot)
-            } else print(se.obj@metadata$metric[[assay.names]]$PCA$fast.pca$pca.plot[[i]]$pca.box.plot)
-        }
-        if('pcsscatterPlot' %in% paste0(metrics.table.var$Factors, metrics.table.var$PlotTypes)){
-            if(length(assay.names) > 1){
-                print(se.obj@metadata$plot$PCA$fast.pca[[i]]$pca.scat.plot)
-            } else print(se.obj@metadata$metric[[assay.names]]$PCA$fast.pca$pca.plot[[i]]$pca.scat.plot)
-        }
-        if( 'VCA' %in% metrics.table.var$Metrics ){
-            if(length(assay.names) > 1){
-                print(se.obj@metadata$plot$VCA[[i]])
-            } else print(se.obj@metadata$metric[[assay.names]]$VCA[[i]]$vect.corr.plot)
-        }
-        if('ARI' %in% metrics.table.var$Metrics ){
-            if(length(assay.names) > 1){
-                print(se.obj@metadata$plot$ARI$hclust.complete.euclidian$ari.single.plot[[i]])
-            } else print(se.obj@metadata$metric[[assay.names]]$ARI$hclust.complete.euclidian[[i]]$ari.single.plot)
-        }
-        if('silhouetteCoeff' %in% metrics.table.var$Factors ){
-            if(length(assay.names) > 1){
-                print(se.obj@metadata$plot$Silhouette$sil.euclidian[[i]])
-            } else print(se.obj@metadata$metric[[assay.names]]$Silhouette$sil.euclidian[[i]]$sil.coef.single.plot)
-        }
-        if('geneAnova' %in% metrics.table.var$Factors ){
-            if(length(assay.names) > 1){
-                print(se.obj@metadata$plot$ANOVA$aov[[i]])
-            } else print(se.obj@metadata$metric[[assay.names]]$ANOVA$aov[[i]]$F.values.plot)
-        }
-        if('pvalue' %in% metrics.table.var$Factors ){
-            if(length(assay.names) > 1){
-                print(se.obj@metadata$plot$DEG[[i]])
-            } else print(se.obj@metadata$metric[[assay.names]]$DGE[[i]]$p.values.plot)
-        }
-    }
-    dev.off()
     printColoredMessage(message = '------------The assessVariation function finished.',
                         color = 'white',
                         verbose = verbose)
     return(se.obj)
 }
-
-
-
-
-
 
