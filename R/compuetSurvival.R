@@ -1,4 +1,4 @@
-#' Generates Kaplan-Meier survival plots.
+#' Compute variable and gene-level Kaplan-Meier survival.
 
 #' @author Ramyar Molania
 
@@ -8,10 +8,10 @@
 
 #' @param se.obj A SummarizedExperiment object.
 #' @param assay.names Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
-#' SummarizedExperiment object to calculate RLE data, medians and interquartile ranges. The default is set to "all, which
-#' indicates all the assays of the SummarizedExperiment object will be selected.
-#' @param genes Symbol. A symbol or a vector of symbols for the selection of genes for gene level survival analysis. The
-#' default is set to 'all'.
+#' SummarizedExperiment object to compute the survival. The default is set to "all, which indicates all the assays of the
+#' SummarizedExperiment object will be selected.
+#' @param genes Symbol. A symbol or a vector of gene names/ids for the selection of genes for gene-level survival analysis.
+#' The default is set to 'all'.
 #' @param variable Symbol. A symbol that indicates the column name of the SummarizedExperiment object that contains
 #' a categorical variable e.g. tumour subtypes, ... for variable-level survival analysis. The default is set to 'NULL'.
 #' @param survival.time Symbol.A symbol that indicates the column name of the SummarizedExperiment object that contains
@@ -108,18 +108,6 @@ computeSurvival <- function(
     selected.colores <-  c(
         c("#E7B800", "#2E9FDF", 'red4'),
         RColorBrewer::brewer.pal(8, "Dark2")[-5],
-        RColorBrewer::brewer.pal(10, "Paired"),
-        RColorBrewer::brewer.pal(12, "Set3"),
-        RColorBrewer::brewer.pal(9, "Blues")[c(8, 3, 7, 4, 6, 9, 5)],
-        RColorBrewer::brewer.pal(9, "Oranges")[c(8, 3, 7, 4, 6, 9, 5)],
-        RColorBrewer::brewer.pal(9, "Greens")[c(8, 3, 7, 4, 6, 9, 5)],
-        RColorBrewer::brewer.pal(9, "Purples")[c(8, 3, 7, 4, 6, 9, 5)],
-        RColorBrewer::brewer.pal(9, "Reds")[c(8, 3, 7, 4, 6, 9, 5)],
-        RColorBrewer::brewer.pal(9, "Greys")[c(8, 3, 7, 4, 6, 9, 5)],
-        RColorBrewer::brewer.pal(9, "BuGn")[c(8, 3, 7, 4, 6, 9, 5)],
-        RColorBrewer::brewer.pal(9, "PuRd")[c(8, 3, 7, 4, 6, 9, 5)],
-        RColorBrewer::brewer.pal(9, "BuPu")[c(8, 3, 7, 4, 6, 9, 5)],
-        RColorBrewer::brewer.pal(9, "YlGn")[c(8, 3, 7, 4, 6, 9, 5)],
         RColorBrewer::brewer.pal(10, "Paired"))
 
     # Gene level survival analysis ####
@@ -138,24 +126,24 @@ computeSurvival <- function(
         all.genes.grouping <- lapply(
             levels(assay.names),
             function(i){
+                expr.data <- assay(x = se.obj, i = i)
                 all.genes.grouping <- lapply(
                     genes,
                     function(x){
                         # Group gene expression
                         quantiles <- stats::quantile(
-                            x = assay(x = se.obj, i = i)[x , ],
+                            x = expr.data[x , ],
                             probs = seq(0, 1, c(1/expr.stratify)))
                         expr.lables <- round(x = seq(0, 1, c(1/expr.stratify)) , digits = 2)
                         expr.lables <- sapply(
                             1:c(length(expr.lables)-1),
                             function(x) paste(expr.lables[x], expr.lables[x+1], sep = ':'))
-                        genes.group <- NULL
                         genes.group <- as.numeric(
                             cut(x = assay(x = se.obj, i = i)[x , ],
                                 breaks = quantiles,
                                 include.lowest = TRUE))
-                        temp.data$gene <- paste0('group', expr.lables[genes.group])
-                        return(temp.data)
+                        survival.data$gene <- paste0('group', expr.lables[genes.group])
+                        return(survival.data)
                     })
                 names(all.genes.grouping) <- genes
                 all.genes.grouping
@@ -167,10 +155,11 @@ computeSurvival <- function(
             all.genes.p.values <- lapply(
                 levels(assay.names),
                 function(i){
+                    survival.data <- all.genes.grouping[[i]]
                     all.genes.p.values <- lapply(
                         genes,
                         function(x){
-                            diff.surv <- survival::survdiff(formula = survival::Surv(time , status) ~ gene, data = all.genes.grouping[[i]][[x]])
+                            diff.surv <- survival::survdiff(formula = survival::Surv(time , status) ~ gene, data = survival.data[[x]])
                             diff.surv$pvalue
                         })
                     names(all.genes.p.values) <- genes
@@ -185,10 +174,11 @@ computeSurvival <- function(
             all.genes.survial.plots <- lapply(
                 levels(assay.names),
                 function(i){
+                    survival.data <- all.genes.grouping[[i]]
                     all.genes.survial.plots <- lapply(
                         genes,
                         function(x){
-                            fit.surv <- survival::survfit(formula = survival::Surv(time , status) ~ gene, data = all.genes.grouping[[i]][[x]])
+                            fit.surv <- survival::survfit(formula = survival::Surv(time , status) ~ gene, data = survival.data[[x]])
                             p <- ggsurvplot(fit.surv,
                                             pval = TRUE,
                                             conf.int = FALSE,
@@ -197,7 +187,8 @@ computeSurvival <- function(
                                             linetype = 1,
                                             legend = "bottom",
                                             title = x,
-                                            palette = selected.colores[seq(length(unique(genes.group)))])
+                                            palette = selected.colores[seq(length(unique(survival.data[[x]][['gene']])))]
+                                            )
                             p
 
                         })
@@ -264,60 +255,63 @@ computeSurvival <- function(
             color = 'blue',
             verbose = verbose)
         ### for all assays
-        for (x in levels(assay.names)) {
-            ## check if metadata metric already exist
-            if (length(se.obj@metadata) == 0) {
-                se.obj@metadata[['metric']] <- list()
+        if(!is.null(genes)){
+            if(isTRUE(return.p.values)){
+                se.obj <- addMetricToSeObj(
+                    se.obj = se.obj,
+                    slot = 'Metrics',
+                    assay.names = assay.names,
+                    assessment.type = 'gene.level',
+                    assessment = 'Survival',
+                    method = 'Kaplan.Meier',
+                    file.name = 'data',
+                    variables = 'p.values',
+                    results.data = all.genes.p.values
+                )
             }
-            ## check if metadata metric already exist
-            if (!'metric' %in% names(se.obj@metadata)) {
-                se.obj@metadata[['metric']] <- list()
+           if(isTRUE(return.survival.plots)){
+                se.obj <- addMetricToSeObj(
+                    se.obj = se.obj,
+                    slot = 'Metrics',
+                    assay.names = assay.names,
+                    assessment.type = 'gene.level',
+                    assessment = 'Survival',
+                    method = 'Kaplan.Meier',
+                    file.name = 'data',
+                    variables = 'plots',
+                    results.data = all.genes.p.values
+                )
             }
-            ## check if metadata metric already exist for this assay
-            if (!x %in% names(se.obj@metadata[['metric']])) {
-                se.obj@metadata[['metric']][[x]] <- list()
+
+        }
+        if(!is.null(variable)){
+            if(isTRUE(return.p.values)){
+                se.obj <- addMetricToSeObj(
+                    se.obj = se.obj,
+                    slot = 'Metrics',
+                    assay.names = assay.names,
+                    assessment.type = 'gene.level',
+                    assessment = 'Survival',
+                    method = 'Kaplan.Meier',
+                    file.name = 'data',
+                    variables = 'p.values',
+                    results.data = all.genes.p.values
+                )
             }
-            ## check if metadata metric already exist for this assay and this metric
-            if (!'Survival' %in% names(se.obj@metadata[['metric']][[x]])) {
-                se.obj@metadata[['metric']][[x]][['Survival']] <- list()
+            if(isTRUE(return.survival.plots)){
+                se.obj <- addMetricToSeObj(
+                    se.obj = se.obj,
+                    slot = 'Metrics',
+                    assay.names = assay.names,
+                    assessment.type = 'gene.level',
+                    assessment = 'Survival',
+                    method = 'Kaplan.Meier',
+                    file.name = 'data',
+                    variables = 'plots',
+                    results.data = all.genes.p.values
+                )
             }
-            if(!is.null(genes)){
-                ## check if metadata metric already exist for this assay and this metric
-                if (!'gene.level' %in% names(se.obj@metadata[['metric']][[x]][['Survival']])) {
-                    se.obj@metadata[['metric']][[x]][['Survival']][['gene.level']] <- list()
-                }
-                if(isTRUE(return.p.values)){
-                    ## check if metadata metric already exist for this assay and this metric
-                    if (!'p.values' %in% names(se.obj@metadata[['metric']][[x]][['Survival']][['gene.level']])) {
-                        se.obj@metadata[['metric']][[x]][['Survival']][['gene.level']][['p.values']] <- list()
-                    }
-                    se.obj@metadata[['metric']][[x]][['Survival']][['gene.level']][['p.values']] <- all.genes.p.values[[x]]
-                }
-                if(isTRUE(return.survival.plots)){
-                    ## check if metadata metric already exist for this assay and this metric
-                    if (!'plots' %in% names(se.obj@metadata[['metric']][[x]][['Survival']][['gene.level']])) {
-                        se.obj@metadata[['metric']][[x]][['Survival']][['gene.level']][['plots']] <- all.genes.survial.plots[[x]]
-                    }
-                }
-            }
-            if(!is.null(variable)){
-                if (!'variable.level' %in% names(se.obj@metadata[['metric']][[x]][['Survival']])) {
-                    se.obj@metadata[['metric']][[x]][['Survival']][['variable.level']] <- list()
-                }
-                if(isTRUE(return.p.values)){
-                    if (!'p.values' %in% names(se.obj@metadata[['metric']][[x]][['Survival']][['variable.level']])) {
-                        se.obj@metadata[['metric']][[x]][['Survival']][['variable.level']][['p.values']] <- list()
-                    }
-                    se.obj@metadata[['metric']][[x]][['Survival']][['variable.level']][['p.values']] <- surv.pvalue.variable
-                }
-                if(isTRUE(return.survival.plots)){
-                    ## check if metadata metric already exist for this assay and this metric
-                    if (!'plots' %in% names(se.obj@metadata[['metric']][[x]][['Survival']][['variable.level']])) {
-                        se.obj@metadata[['metric']][[x]][['Survival']][['variable.level']][['plots']] <- list
-                    }
-                    se.obj@metadata[['metric']][[x]][['Survival']][['variable.level']][['plots']] <- surv.plot.variable
-                }
-            }
+
         }
         printColoredMessage(
             message = paste0('The RLE data of individual assay is saved to the metadata@metric in SummarizedExperiment object.'),
