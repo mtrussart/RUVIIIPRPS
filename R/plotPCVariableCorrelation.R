@@ -15,22 +15,24 @@
 #' @param assay.names Symbol. A symbol or vector of symbols for the selection of the name(s) of the assay(s) in the
 #' SummarizedExperiment object to generate a vector correlation. The default is "all, which indicates all
 #' the assays of the SummarizedExperiment object will be selected.
-#' @param variable Symbol. Indicates a name of the column in the sample annotation of the SummarizedExperiment object.
-#' The variable must be a categorical variable.
+#' @param variable Symbol. A symbol that indicates the name of the column in the sample annotation of the SummarizedExperiment
+#' object. The variable must be a categorical variable.
 #' @param fast.pca Logical. Indicates whether to use the fast PCA or PCA results computed by the computePCA function. The
 #' default is 'TRUE'.
-#' @param nb.pcs Numeric. The number of first PCs to use to plot the vector correlation. The default is 10.
-#' @param plot.output Logical. If TRUE, the individual vector correlation plot(s) will be printed while functions is running.
+#' @param nb.pcs Numeric. A numeric value indicating the number of first PCs to use to plot the vector correlation. The
+#' default is set to 10.
+#' @param plot.output Logical. If 'TRUE', the vector correlation line-dot plot of individual assay(s) will be printed
+#' while the function is running.
 #' @param save.se.obj Logical. Indicates whether to save the vector correlation plots to the meta data of the
 #' SummarizedExperiment object or to output the result as list. By default it is set to TRUE.
-#' @param verbose Logical. If TRUE, displaying process messages is enabled.
+#' @param verbose Logical. If 'TRUE', displaying process messages is enabled.
 
 #' @return A SummarizedExperiment object or a list that contains all the vector correlation plots for the individual
 #' assay(s).
 
+#' @importFrom grDevices colorRampPalette
 #' @importFrom tidyr pivot_longer
 #' @importFrom dplyr mutate
-#' @importFrom grDevices colorRampPalette
 #' @import ggplot2
 #' @export
 
@@ -42,12 +44,13 @@ plotPCVariableCorrelation <- function(
         nb.pcs = 10,
         plot.output = TRUE,
         save.se.obj = TRUE,
-        verbose = TRUE) {
+        verbose = TRUE
+        ){
     printColoredMessage(message = '------------The plotPCVariableCorrelation function starts:',
                         color = 'white',
                         verbose = verbose)
 
-    # check the inputs ####
+    # Check the inputs ####
     if (is.null(assay.names)) {
         stop('The "assay.names" cannot be empty.')
     } else if (is.list(assay.names)){
@@ -69,8 +72,7 @@ plotPCVariableCorrelation <- function(
         ', then "computePCA"-->"computePCVariableCorrelation"-->"plotPCVariableCorrelation".'))
     }
 
-    # assays ####
-    # assays ####
+    # Check the assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else  assay.names <- factor(x = assay.names , levels = assay.names)
@@ -78,62 +80,45 @@ plotPCVariableCorrelation <- function(
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
-    # select colors ####
+    # Select colors ####
     if(length(levels(assay.names)) < 9 ){
         data.sets.colors <- RColorBrewer::brewer.pal(8, 'Dark2')[1:length(levels(assay.names))]
         names(data.sets.colors) <- levels(assay.names)
-    } else{
+    } else {
         colfunc <- grDevices::colorRampPalette( RColorBrewer::brewer.pal(8, 'Dark2'))
         data.sets.colors <- colfunc(n = length(levels(assay.names)))
         names(data.sets.colors) <- levels(assay.names)
     }
 
-    # check metric exist ####
-    m.out <- lapply(
-        levels(assay.names),
-        function(x) {
-            if (!x %in% names(se.obj@metadata[['metric']]))
-                stop(paste0('Any metrics has not been computed yet on the  ', x, ' data.'))
-        })
-
-    # obtain vector correlations ####
+    # Obtain vector correlations ####
     printColoredMessage(
         message = '-- Obtain the computed vector correlations for each assay(s) from the SummarizedExperiment object:',
         color = 'magenta',
         verbose = verbose
     )
-    all.pcs.vect.corr <- lapply(
-        levels(assay.names),
-        function(x) {
-            if (!'VCA' %in% names(se.obj@metadata[['metric']][[x]]) ) {
-                stop(paste0('Any vector correlation is found for the ', x, ' data. Please run the "computePCVariableCorrelation" function first.'))
-            }
-            if (!variable %in% names(se.obj@metadata[['metric']][[x]][['VCA']]) ) {
-                stop(paste0('The vector correlation is not found for the ', variable, ' variable and the ', x, ' data.'))
-            }
-            if (!'vec.cor' %in% names(se.obj@metadata[['metric']][[x]][['VCA']][[variable]]) ) {
-                stop(paste0('The vector correlation is not found for the ', variable, ' variable and the ', x, ' data.'))
-            }
-            printColoredMessage(
-                message = paste0('- Obtain the vector correlations for the "', x , '" data.'),
-                color = 'blue',
-                verbose = verbose
-            )
-            vectos.corrs <- se.obj@metadata[['metric']][[x]][['VCA']][[variable]][['vec.cor']]
-            if(length(vectos.corrs) < nb.pcs){
-                stop(paste0('The number of vector correlations of the assay ',
-                            x, ' for the ', variable, ' variable are less than', nb.pcs, '.',
-                            'Re-run the "PCVariableCorrelation" function with nb.pcs = ', nb.pcs, '.'))
-            }
-            vectos.corrs[1:nb.pcs]
-        })
-    names(all.pcs.vect.corr) <- levels(assay.names)
+    if(isTRUE(fast.pca)){
+        method = 'fast.svd'
+    } else method = 'svd'
+    all.pcs.vect.corr <- getMetricFromSeObj(
+        se.obj = se.obj,
+        assay.names = assay.names,
+        slot = 'Metrics',
+        assessment.type = 'global.level',
+        assessment = 'VCA',
+        method = method,
+        variables = variable,
+        file.name = 'vector.correlations',
+        sub.file.name = NULL,
+        required.function = 'computePCVariableCorrelation',
+        message.to.print = 'vector correlation'
+        )
 
-    # individual plots ####
+    # Gene individual line-dot plots ####
     printColoredMessage(
         message = paste0('-- Generate the vector correlations vs. PCs line-dot plot for each assay(s):'),
         color = 'magenta',
-        verbose = verbose)
+        verbose = verbose
+        )
     all.vect.corr.plots <- lapply(
         levels(assay.names),
         function(x){
@@ -146,7 +131,7 @@ plotPCVariableCorrelation <- function(
                 pcs = seq_len(nb.pcs)
                 )
             vect.corr.plot <- ggplot(data.to.plot, aes(x = pcs, y = vec.corr, group = 1)) +
-                geom_line(color = 'gray80', size = 1) +
+                geom_line(color = 'gray80', linewidth = 1) +
                 geom_point(color = 'gray40', size = 3) +
                 xlab('Cumulative PCs') +
                 ylab('Vector correlations') +
@@ -166,7 +151,7 @@ plotPCVariableCorrelation <- function(
         })
     names(all.vect.corr.plots) <- levels(assay.names)
 
-    # overall plot ####
+    # Generate overall plot ####
     if(length(assay.names) > 1){
         printColoredMessage(
             message = paste0('-- Put all the vector correlation line-dot plots togather:'),
@@ -200,6 +185,21 @@ plotPCVariableCorrelation <- function(
                 axis.text.y = element_text(size = 12),
                 legend.text = element_text(size = 12),
                 legend.title = element_text(size = 14))
+        overall.vect.corr.plot <- annotate_figure(
+            p = overall.vect.corr.plot,
+            top = text_grob(
+                label = "Vector correlation analsis",
+                color = "orange",
+                face = "bold",
+                size = 18),
+            bottom = text_grob(
+                label = paste0(
+                    'Analysis: ', 'vector correlation analysis between the first ', nb.pcs, ' PCs and the ', variable, ' variable.'),
+                color = "black",
+                hjust = 1,
+                x = 1,
+                size = 10)
+            )
         printColoredMessage(
             message = '- The individual assay vector correlation line-dots plot are combined into one.',
             color = 'blue',
@@ -207,7 +207,7 @@ plotPCVariableCorrelation <- function(
         if(isTRUE(plot.output)) suppressMessages(print(overall.vect.corr.plot))
     }
 
-    # save the plots ####
+    # Save the plots ####
     printColoredMessage(
         message = '-- Save all the vector correlation line-dots plots:',
         color = 'magenta',
@@ -216,39 +216,41 @@ plotPCVariableCorrelation <- function(
         ## add results to the SummarizedExperiment object ####
         printColoredMessage(
             message = '- Save all the vector correlation line-dots plot(s) to the "metadata" of the SummarizedExperiment object.',
-            color = 'blue',
-            verbose = verbose)
-        ## add vector correlation plots of individual assays ####
-        ### check the metadata of the SummarizedExperiment object ####
-        ### for each assays ####
-        for (x in levels(assay.names)) {
-            ## check if metadata metric already exist for this assay and this metric and the variable
-            if (!'vect.corr.plot' %in% names(se.obj@metadata[['metric']][[x]][['VCA']][[variable]])) {
-                se.obj@metadata[['metric']][[x]][['VCA']][[variable]][['vect.corr.plot']] <- list()
-            }
-            ## check if metadata metric already exist for this assay, this metric and this variable
-            se.obj@metadata[['metric']][[x]][['VCA']][[variable]][['vect.corr.plot']] <- all.vect.corr.plots[[x]]
-        }
+            color = 'orange',
+            verbose = verbose
+            )
+        se.obj <- addMetricToSeObj(
+            se.obj = se.obj,
+            slot = 'Metrics',
+            assay.names = assay.names,
+            assessment.type = 'global.level',
+            assessment = 'VCA',
+            method = method,
+            variables = variable,
+            file.name = 'plot',
+            results.data = all.vect.corr.plots
+            )
+
         printColoredMessage(
-            message = paste0('- The vector correlation line-dot plot for the individal assay(s) is saved to the ',
+            message = paste0('* The vector correlation line-dot plot for the individal assay(s) is saved to the ',
                              ' "se.obj@metadata$metric$AssayName$VCA$VariableName$vect.corr.plot" in the SummarizedExperiment object.'),
             color = 'blue',
             verbose = verbose)
 
         ## add overall vector correlation plot of all assays ####
         if(length(assay.names) > 1){
-            if (!'plot' %in%  names(se.obj@metadata)) {
-                se.obj@metadata[['plot']] <- list()
-            }
-            if (!'VCA' %in%  names(se.obj@metadata[['plot']])) {
-                se.obj@metadata[['plot']][['VCA']] <- list()
-            }
-            if (!variable %in%  names(se.obj@metadata[['plot']][['VCA']])) {
-                se.obj@metadata[['plot']][['VCA']][[variable]] <- list()
-            }
-            se.obj@metadata[['plot']][['VCA']][[variable]] <- overall.vect.corr.plot
+            se.obj <- addOverallPlotToSeObj(
+                se.obj = se.obj,
+                slot = 'Plots',
+                assessment.type = 'global.level',
+                assessment = 'VCA',
+                method = method,
+                variables = variable,
+                file.name = 'line.dotplot',
+                plot.data = overall.vect.corr.plot
+                )
             printColoredMessage(
-                message = paste0('- The combined vector correlation line-dots plots of all the assays are saved to the',
+                message = paste0('* The combined vector correlation line-dots plots of all the assays are saved to the',
                                  ' "se.obj@metadata$plot$VCA$VaribleName" in the SummarizedExperiment object.'),
                 color = 'blue',
                 verbose = verbose
