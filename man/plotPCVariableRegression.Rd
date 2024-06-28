@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotPCVariableRegression.R
 \name{plotPCVariableRegression}
 \alias{plotPCVariableRegression}
-\title{plot the regression analysis.}
+\title{Generate line-dot plot of the PC variable regression analysis.}
 \usage{
 plotPCVariableRegression(
   se.obj,
@@ -18,16 +18,18 @@ plotPCVariableRegression(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Optional string or list of strings for the selection of the name(s)
-of the assay(s) of the SummarizedExperiment class object to compute the correlation. By default}
+\item{assay.names}{Symbol. A symbol or vector of symbols for the selection of the name(s) of the assay(s) in the
+SummarizedExperiment object to generate a vector correlation. The default is "all, which indicates all
+the assays of the SummarizedExperiment object will be selected.}
 
-\item{variable}{String of the label of a categorical variable such as
-sample types or batches from colData(se.obj).}
+\item{variable}{Symbol. A symbol indicating the name of the column in the sample annotation of the SummarizedExperiment object.
+The variable must be a continuous variable such as library size, tumor purity, ... .}
 
 \item{fast.pca}{Logical. Indicates whether to use the PCA calculated using a specific number of PCs instead of the
 full range to speed up the process, by default is set to 'TRUE'.}
 
-\item{nb.pcs}{Numeric. The number of few first cumulative PCs, by default is set to 10.}
+\item{nb.pcs}{Numeric. A numeric value specifying the number of first PCs to be used to plot the r squared.
+The default is set to 10.}
 
 \item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
 object 'se.obj' or to output the result. By default it is set to TRUE.}
@@ -37,8 +39,8 @@ object 'se.obj' or to output the result. By default it is set to TRUE.}
 \item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
 }
 \value{
-A SummarizedExperiment object containing the computed correlation for
-the continuous variable and if requested the associated plot.
+A SummarizedExperiment object containing the line-dot plots for the continuous variable and if requested
+the associated plot.
 }
 \description{
 This function generate a dot-line plot between the first cumulative PCs and the regression R squared obtained

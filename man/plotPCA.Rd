@@ -13,12 +13,13 @@ plotPCA(
   plot.type = "scatter",
   variable.colors = NULL,
   points.size = 1,
-  stroke.color = "gray30",
-  stroke.size = 0.2,
+  stroke.color = "gray",
+  stroke.size = 0.1,
   points.alpha = 0.5,
   densities.alpha = 0.5,
-  plot.ncol = c(3, 3),
-  plot.nrow = c(3, 3),
+  legend.position = "bottom",
+  plot.ncol = 3,
+  plot.nrow = 3,
   plot.output = TRUE,
   save.se.obj = TRUE,
   verbose = TRUE
@@ -40,31 +41,42 @@ the variable.}
 \item{fast.pca}{Logical. Indicates whether to use the computed fast PC ro not. The default is 'TRUE'. We refe to the
 computePCA function for more details.}
 
-\item{nb.pcs}{Numeric. The number of first PCs to be used for plotting. The default is set to 3.It's important to note
+\item{nb.pcs}{Numeric. A numeric value indicating the number of first PCs to be used for plotting. The default is set to 3.It's important to note
 that the variation of PCs for a portion of all selected PCs will be based solely on those selected PCs.}
 
-\item{plot.type}{Symbol. Indicates which plot type should be used. Options are: 'scatter' and 'boxplot'. The default is
-set to 'scatter'. Please note, the 'plot.type' cannot be set to 'scatter' of a categorical variable is provided.}
+\item{plot.type}{Symbol. A symbol specifying which plot type should be generated. Options are: 'scatter' and 'boxplot'.
+The default is set to 'scatter'. Please note, the 'plot.type' cannot be set to 'scatter' of a categorical variable is
+provided.}
 
-\item{variable.colors}{Symbol.}
+\item{variable.colors}{Symbol. A vector of color names in scatter plots of PCs when a categorical variable is specified.
+If is 'NULL', the function will use the default colors.}
 
-\item{points.size}{Numeric. Indicates the size of points in the scatter PCA plots.}
+\item{points.size}{Numeric. A numeric value specifying the size of points in the scatter PCA plots. The default is set
+to 1.}
 
-\item{stroke.color}{Symbol. Indicates the color of the stroke of the points in the scatter PCA plots.}
+\item{stroke.color}{Symbol. A symbol specifying the color of the stroke of the points in the scatter PCA plots. The
+default is set to 'gray'.}
 
-\item{stroke.size}{Numeric. Indicates the size of the stroke of the points in the scatter PCA plots.}
+\item{stroke.size}{Numeric. A numeric value indicating the size of the stroke of the points in the scatter PCA plots.
+The default is set to 0.1.}
 
-\item{points.alpha}{Numeric. Indicates the transparency of the points in the scatter PCA plots.}
+\item{points.alpha}{Numeric. A numeric value indicating the transparency of the points in the scatter PCA plots. The
+default is set to 0.5.}
 
-\item{densities.alpha}{Numeric. Indicates the transparency of the densities in the scatter PCA plots.}
+\item{densities.alpha}{Numeric.  A numeric value indicating the transparency of the densities in the scatter PCA plots.
+The default is set to 0.5.}
 
-\item{plot.ncol}{Numeric. Indicates number of columns in the plot grid. When the number of selected assay is more than
-1, the function puts all the PCA plots in one grid.}
+\item{legend.position}{Symbol. A symbol indicating the location of the plot legend.  This setting will apply when a categorical
+variable is provided and the 'plot.type' is set to 'scatter'. Options are: 'top', 'right', 'bottom' and 'left'. The default
+is set to "bottom".}
 
-\item{plot.nrow}{Numeric. Indicates number of rows in the plot grid. When the number of selected assay is more than
+\item{plot.ncol}{Numeric. A numeric value indicating the number of columns in the plot grid. When the number of selected
+assay is more than 1, the function puts all the PCA plots in one grid.}
+
+\item{plot.nrow}{Numeric. A numeric value indicating number of rows in the plot grid. When the number of selected assay is more than
 3, the function puts all the PCA plots in one grid.}
 
-\item{plot.output}{Logical. If TRUE, the individual PCA plot(s) will be printed while functions is running.}
+\item{plot.output}{Logical. If 'TRUE', the individual PCA plot(s) will be printed while functions is running.}
 
 \item{save.se.obj}{Logical. Indicates whether to save the plots in the metadata of the SummarizedExperiment object
 or to output the results as list. By default it is set to 'TRUE'.}

@@ -9,6 +9,8 @@ plotGenesVariableCorrelation(
   assay.names = "all",
   variable,
   correlation.method = "spearman",
+  plot.ncol = 4,
+  plot.nrow = 1,
   plot.output = TRUE,
   save.se.obj = TRUE,
   verbose = TRUE
@@ -27,12 +29,16 @@ that contains a continuous variable such as library size, tumor purity, ... .}
 \item{correlation.method}{Symbol. Indicates which computed correlation coefficient should be used for plotting. The
 default is 'gene.spearman.corr'. We refer to the 'computeGenesVariableCorrelation' function for more details.}
 
+\item{plot.ncol}{Numeric. A numeric value indicates columns of rows in the plot grid. The default is set to 4.}
+
+\item{plot.nrow}{Numeric. A numeric value indicates rows of rows in the plot grid. The default is set to 1.}
+
 \item{plot.output}{Logical. Indicates whether to plot the ARI, by default it is set to FALSE.}
 
 \item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
 object 'se.obj' or to output the result. By default it is set to TRUE.}
 
-\item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
+\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
 \value{
 A SummarizedExperiment object or a list that containing the boxplots of the Spearman or Pearson correlations

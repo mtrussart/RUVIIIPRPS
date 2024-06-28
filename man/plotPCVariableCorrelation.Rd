@@ -22,20 +22,22 @@ plotPCVariableCorrelation(
 SummarizedExperiment object to generate a vector correlation. The default is "all, which indicates all
 the assays of the SummarizedExperiment object will be selected.}
 
-\item{variable}{Symbol. Indicates a name of the column in the sample annotation of the SummarizedExperiment object.
-The variable must be a categorical variable.}
+\item{variable}{Symbol. A symbol that indicates the name of the column in the sample annotation of the SummarizedExperiment
+object. The variable must be a categorical variable.}
 
 \item{fast.pca}{Logical. Indicates whether to use the fast PCA or PCA results computed by the computePCA function. The
 default is 'TRUE'.}
 
-\item{nb.pcs}{Numeric. The number of first PCs to use to plot the vector correlation. The default is 10.}
+\item{nb.pcs}{Numeric. A numeric value indicating the number of first PCs to use to plot the vector correlation. The
+default is set to 10.}
 
-\item{plot.output}{Logical. If TRUE, the individual vector correlation plot(s) will be printed while functions is running.}
+\item{plot.output}{Logical. If 'TRUE', the vector correlation line-dot plot of individual assay(s) will be printed
+while the function is running.}
 
 \item{save.se.obj}{Logical. Indicates whether to save the vector correlation plots to the meta data of the
 SummarizedExperiment object or to output the result as list. By default it is set to TRUE.}
 
-\item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
+\item{verbose}{Logical. If 'TRUE', displaying process messages is enabled.}
 }
 \value{
 A SummarizedExperiment object or a list that contains all the vector correlation plots for the individual

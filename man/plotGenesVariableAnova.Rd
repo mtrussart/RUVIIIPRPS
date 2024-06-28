@@ -9,6 +9,8 @@ plotGenesVariableAnova(
   assay.names = "all",
   variable,
   anova.method = "aov",
+  plot.ncol = 4,
+  plot.nrow = 1,
   plot.output = TRUE,
   save.se.obj = TRUE,
   verbose = TRUE
@@ -25,6 +27,10 @@ variable such as sample types or batches.}
 
 \item{anova.method}{Logical. Indicates whether to use the PCA calculated using a specific number of PCs instead of the
 full range to speed up the process, by default is set to 'TRUE'.}
+
+\item{plot.ncol}{Numeric. A numeric value indicates columns of rows in the plot grid. The default is set to 4.}
+
+\item{plot.nrow}{Numeric. A numeric value indicates rows of rows in the plot grid. The default is set to 1.}
 
 \item{plot.output}{Logical. Indicates whether to plot the ARI, by default it is set to FALSE.}
 

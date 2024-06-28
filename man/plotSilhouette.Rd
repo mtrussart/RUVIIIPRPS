@@ -25,7 +25,7 @@ the assays of the SummarizedExperiment object will be selected.}
 \item{variables}{Symbol. Indicates one or two column names in the SummarizedExperiment object that contains categorical
 variables such as sample subtypes or batches.}
 
-\item{silhouette.method}{Symbol. Indicates what computed ARI methods should be used for plotting. The "ari.method" must be
+\item{silhouette.method}{Symbol. A symbol Indicates what computed ARI methods should be used for plotting. The "ari.method" must be
 specified based on the "computeARI" function. The default is "hclust.complete.euclidian", which is the default of the
 the "computeARI" function. We refer to the "computeARI" function for more detail}
 

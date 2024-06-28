@@ -38,6 +38,8 @@ findNcgAcrossSamples(
   remove.na = "none",
   save.se.obj = TRUE,
   output.name = NULL,
+  ncg.group = NULL,
+  plot.output = TRUE,
   save.imf = FALSE,
   imf.name = NULL,
   use.imf = FALSE,
@@ -158,6 +160,10 @@ object or to output the result. The default is 'TRUE'.}
 
 \item{output.name}{Symbol. A representation for the output's name. If set to 'NULL', the function will choose a name
 automatically.}
+
+\item{ncg.group}{Symbol. A symbol indicating the name of the group of NCG.}
+
+\item{plot.output}{TTT}
 
 \item{save.imf}{Logical. Indicates whether to save the intermediate file or not. If 'TRUE', the function save the results
 of the statistical analyses in the metadata of the SummarizedExperiment object. Then, if users want to change the parameters

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotDGE.R
 \name{plotDGE}
 \alias{plotDGE}
-\title{Plot p-values histograms of DEG analysis.}
+\title{Plot p-values histograms of DGE analysis.}
 \usage{
 plotDGE(
   se.obj,
@@ -25,9 +25,11 @@ SummarizedExperiment object will be selected.}
 \item{variable}{Symbol. Specifies the column name in the SummarizedExperiment object containing a categorical variable
 , such as sample types or batches}
 
-\item{plot.ncol}{Numeric. Indicates number of columns in the plot grid.}
+\item{plot.ncol}{Numeric. A numeric value indicating the number of columns in the plot grid. This setting applies when
+more than one data is provided. The default is set to 1.}
 
-\item{plot.nrow}{Numeric. Indicates number of rows in the plot grid.}
+\item{plot.nrow}{Numeric. A numeric value indicating the number of rows in the plot grid. This setting applies when
+more than one data is provided. The default is set to 1.}
 
 \item{plot.output}{Logical. Indicates whether to plot the p-values histograms when the functions is running, by default
 it is set to 'FALSE'.}
@@ -41,12 +43,12 @@ object 'se.obj' or to output the result. By default it is set to TRUE.}
 A SummarizedExperiment object or a list that containing the computed ARI on the categorical variable.
 }
 \description{
-This function plots the p-values histograms of the DEG analysis.
+This function plots the p-values histograms of the DGE analysis.
 }
 \details{
 DE analyses is performed using the Wilcoxon signed-rank test with log-transformed data e.g. raw counts, normalized data, ....
 To evaluate the effects of the different sources of unwanted variation on the data, DE analyses is performed across
-batches. In the absence of any batch effects, the histogram of the resulting unadjusted P values should be uniformly
+batches. In the absence of any batch effects, the histogram of the resulting un-adjusted P values should be uniformly
 distributed
 }
 \author{
