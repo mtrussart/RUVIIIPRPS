@@ -1,9 +1,12 @@
-#' RUVIII with technical replicates or PRPS normalization.
+#' Assess the W matrix of RUV-III
 
 #' @author Ramyar Molania
 
 #' @description
-#' This functions assesses the correlation between the W of RUV-III normalized data with known variables.
+#' This functions assesses the correlation between the W of RUV-III normalized data with known variables. Tt calculates
+#' the association of the columns of the W matrix with both specified biological and unwanted variables. The correlation
+#' values obtained for the biological variables will be subtracted from 1. Finally, the average of all these correlations
+#' is computed to determine the final correlation values. A higher correlation indicates better performance.
 
 #' @param se.obj A summarized experiment object.
 #' @param variables Symbol. A symbol or symbols representing the label of variable(s), such as cancer subtypes, tumour
@@ -21,10 +24,10 @@
 #' @param save.se.obj Logical. Indicates whether to plot the output or not. The default is set to 'TRUE'.
 #' @param verbose Logical. Indicates whether to plot the output or not. The default is set to 'TRUE'.
 
+#' @importFrom dplyr bind_rows summarise mutate group_by
 #' @importFrom fastDummies dummy_cols
 #' @importFrom gtools mixedorder
 #' @importFrom tidyr pivot_longer
-#' @importFrom dplyr bind_rows summarise mutate group_by
 #' @export
 
 assessW <- function(
@@ -59,13 +62,13 @@ assessW <- function(
             message = '-- Compare different W values',
             color = 'magenta',
             verbose = verbose)
-        data.names <- gsub('\\.', '_', names(se.obj@metadata$RUVIII))
+        data.names <- gsub('\\.', '_', names(se.obj@metadata$RUVIII$W))
         data.names <- mixedorder(data.names)
         all.w <- lapply(
-            names(se.obj@metadata$RUVIII)[data.names],
-            function(x) se.obj@metadata$RUVIII[[x]]$W
+            data.names,
+            function(x) se.obj@metadata$RUVIII[['W']][[x]]
         )
-        names(all.w) <- names(se.obj@metadata$RUVIII)[data.names]
+        names(all.w) <- gsub('\\.', '_', names(se.obj@metadata$RUVIII$W))
 
         ## variables class
         all.vars <- c(bio.variables, uv.variables)
@@ -123,7 +126,7 @@ assessW <- function(
             group_by(data, groups) %>%
             summarise(corr = mean(corr)) %>%
             summarise(assess = corr[groups == 'wanted']/2 + corr[groups == 'unwanted']/2) %>%
-            mutate(data = factor(data, levels = names(se.obj@metadata$RUVIII)[data.names]))
+            mutate(data = factor(data, levels = gsub('\\.', '_', names(se.obj@metadata$RUVIII$W))))
         p.w <- ggplot(all, aes(x = data, y = assess)) +
             geom_bar(stat = 'identity', fill = 'grey') +
             xlab('W') +
@@ -145,13 +148,13 @@ assessW <- function(
             message = '-- Assess different W values',
             color = 'magenta',
             verbose = verbose)
-        data.names <- gsub('\\.', '_', names(se.obj@metadata$RUVIII))
+        data.names <- gsub('\\.', '_', names(se.obj@metadata$RUVIII$W))
         data.names <- mixedorder(data.names)
         all.w <- lapply(
-            names(se.obj@metadata$RUVIII)[data.names],
-            function(x) se.obj@metadata$RUVIII[[x]]$W
+            data.names,
+            function(x) se.obj@metadata$RUVIII[['W']][[x]]
         )
-        names(all.w) <- names(se.obj@metadata$RUVIII)[data.names]
+        names(all.w) <- gsub('\\.', '_', names(se.obj@metadata$RUVIII$W))
 
         ## variables class
         class.all.vars <- sapply(
@@ -201,7 +204,7 @@ assessW <- function(
             round(digits = 3) %>%
             mutate(variable = row.names(.)) %>%
             pivot_longer(cols = -variable, values_to = 'corr', names_to = 'data') %>%
-            mutate(data = factor(data, levels = names(se.obj@metadata$RUVIII)[data.names])) %>%
+            mutate(data = factor(data, levels = gsub('\\.', '_', names(se.obj@metadata$RUVIII$W)) )) %>%
             data.frame(.)
         p.w <- ggplot(all.corrs, aes(x = data, y = corr, group = variable)) +
             geom_line(aes(color = variable), size = 1) +
