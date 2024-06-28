@@ -685,11 +685,7 @@ prepareSeObj <- function(
                             color = 'white',
                             verbose = verbose)
 
-    } else if (class(data)[1] == 'SummarizedExperiment' |
-               class(data)[1] == 'RangedSummarizedExperiment'){
-        printColoredMessage(message = '------------The createSeObj function starts:',
-                            color = 'white',
-                            verbose = verbose)
+    } else if (class(data)[1] == 'SummarizedExperiment' | class(data)[1] == 'RangedSummarizedExperiment'){
         se.obj <- data
         sample.annotation <- SummarizedExperiment::colData(x = se.obj)
         if(ncol(sample.annotation) == 0){
@@ -830,7 +826,7 @@ prepareSeObj <- function(
             if(verbose) print(summary(library.size/10^6), color = 'blue')
             if('library.size' %in% colnames(SummarizedExperiment::colData(se.obj))){
                 stop('There is "library.size" column name in the SummarizedExperiment object.')
-            } else se.obj[['library.size']] <- library.size
+            } else se.obj[['library.size']] <- log2(library.size)
 
         }
         # add gene details ####
@@ -1017,7 +1013,10 @@ prepareSeObj <- function(
                     im.str.gene.sig <- hk_immunStroma$hgnc_symbol[im.str.gene.sig]
                 } else if(gene.group == 'ensembl_gene_id')
                     im.str.gene.sig <- hk_immunStroma$ensembl_gene_id[im.str.gene.sig]
-                tumour.purity <- singscore::rankGenes(assay(x = se.obj, i = assay.name.to.estimate.purity))
+                tumour.purity <- singscore::rankGenes(
+                    assay(x = se.obj,
+                          i = assay.name.to.estimate.purity)
+                     )
                 tumour.purity <- singscore::simpleScore(
                     rankData = tumour.purity,
                     upSet = im.str.gene.sig)
@@ -1051,8 +1050,8 @@ prepareSeObj <- function(
                     rankData = tumour.purity,
                     upSet = im.str.gene.sig)
                 tumour.purity.singscore <- tumour.purity$TotalScore
-                sample.annotation[['tumour.purity.estimate']] <- tumour.purity.estimate
-                sample.annotation[['tumour.purity.singscore']] <- 1 - tumour.purity.singscore
+                se.obj[['tumour.purity.estimate']] <- tumour.purity.estimate
+                se.obj[['tumour.purity.singscore']] <- 1 - tumour.purity.singscore
             }
         }
         # outputs ####
