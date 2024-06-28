@@ -68,8 +68,9 @@
 #' or to output the result as list. The default by is set to 'TRUE'.
 #' @param plot.prps.map Logical. Indicates whether to generate the PRPS map plot for individual sources of unwanted variation.
 #' The default is 'TRUE'.
-#' @param prps.name Symbol. A symbol to specify the name of all PRPS sets that will be created for all specified source(s)
+#' @param output.name Symbol. A symbol to specify the name of all PRPS sets that will be created for all specified source(s)
 #' of unwanted variation. The default is set to 'NULL'. The, the function creates a name based on paste0('prps_', uv.variable).
+#' @param prps.group TTTT
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
 #' @return A SummarizedExperiment object that contains all the PRPS data and PPRS map plot in the metadata or a list
@@ -103,7 +104,8 @@ createPrPsForCategoricalUV <- function(
         cont.cor.coef = c(0.95, 0.95),
         plot.prps.map = TRUE,
         save.se.obj = TRUE,
-        prps.name = NULL,
+        output.name = NULL,
+        prps.group = NULL,
         verbose = TRUE) {
     printColoredMessage(message = '------------The prpsForCategoricalUV function starts:',
                         color = 'white',
@@ -447,13 +449,10 @@ createPrPsForCategoricalUV <- function(
             theme_bw() +
             theme(
                 axis.line = element_line(colour = 'black', size = .85),
-                axis.title.x = element_text(size = 18),
-                axis.title.y = element_text(size = 18),
-                axis.text.x = element_text(
-                    size = 10,
-                    angle = 45,
-                    hjust = 1),
-                axis.text.y = element_text(size = 10),
+                axis.title.x = element_text(size = 16),
+                axis.title.y = element_text(size = 16),
+                axis.text.x = element_text(size = 12, angle = 35, hjust = 1),
+                axis.text.y = element_text(size = 12),
                 legend.position = 'none')
         if(isTRUE(verbose)) print(prps.map.plot)
     }
@@ -461,7 +460,7 @@ createPrPsForCategoricalUV <- function(
     # Save the results ####
     ## select output name ####
     if(!is.null(other.uv.variables)) {
-        out.put.name <- paste0(
+        output.name <- paste0(
             main.uv.variable,
             '|',
             paste0(bio.variables, collapse = '&'),
@@ -470,42 +469,49 @@ createPrPsForCategoricalUV <- function(
             '|',
             assay.name)
     } else{
-        out.put.name <- paste0(
+        output.name <- paste0(
             main.uv.variable,
             '|',
             paste0(bio.variables, collapse = '&'),
             '|',
             assay.name)
     }
-    if(is.null(prps.name)){
-        prps.name <- paste0('prps_', main.uv.variable)
+    if (is.null(prps.group)) {
+        prps.group <- paste0('prps|supervised|', main.uv.variable)
     }
     ## save the output in the SummarizedExperiment object ####
     if (isTRUE(save.se.obj)) {
-        ## check if PRPS already exists in the metadata
+        ## check
         if (!'PRPS' %in% names(se.obj@metadata)) {
             se.obj@metadata[['PRPS']] <- list()
         }
-        ## check if supervised already exists in the PRPS slot
+        ## check
         if (!'supervised' %in% names(se.obj@metadata[['PRPS']])) {
             se.obj@metadata[['PRPS']][['supervised']] <- list()
         }
-        ## check if prps.name already exists in the PRPS$supervised slot
-        if (!prps.name %in% names(se.obj@metadata[['PRPS']][['supervised']])) {
-            se.obj@metadata[['PRPS']][['supervised']][[prps.name]] <- list()
+        ## check
+        if (!prps.group %in% names(se.obj@metadata[['PRPS']][['supervised']])) {
+            se.obj@metadata[['PRPS']][['supervised']][[prps.group]] <- list()
         }
-        ## check if prps.name already exists in the PRPS$supervised slot
-        if (!'prps.data' %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.name]])) {
-            se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.data']] <- list()
+        ## check
+        if (!'prps.data' %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.group]])) {
+            se.obj@metadata[['PRPS']][['supervised']][[prps.group]][['prps.data']] <- list()
         }
-        se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.data']][[out.put.name]] <- prps.sets
+        ## check
+        if (!output.name %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.group]][['prps.data']])) {
+            se.obj@metadata[['PRPS']][['supervised']][[prps.group]][['prps.data']][[output.name]] <- list()
+        }
+        se.obj@metadata[['PRPS']][['supervised']][[prps.group]][['prps.data']][[output.name]]  <- prps.sets
 
         ## plot
         if(isTRUE(plot.prps.map)){
-            if (!'prps.map.plot' %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.name]])) {
-                se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.map.plot']] <- list()
+            if (!'prps.map.plot' %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.group]])) {
+                se.obj@metadata[['PRPS']][['supervised']][[prps.group]][['prps.map.plot']] <- list()
             }
-            se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.map.plot']][[out.put.name]] <- prps.map.plot
+            if (!output.name %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.group]][['prps.map.plot']])) {
+                se.obj@metadata[['PRPS']][['supervised']][[prps.group]][['prps.map.plot']][[output.name]] <- list()
+            }
+            se.obj@metadata[['PRPS']][['supervised']][[prps.group]][['prps.map.plot']][[output.name]] <- prps.map.plot
         }
         printColoredMessage(
             message = 'The PRPS data and PRPS map plot are saved to th metdata in the s',
