@@ -73,8 +73,9 @@
 #' or to output the result as list. The default by is set to 'TRUE'.
 #' @param plot.prps.map Logical. Indicates whether to generate the PRPS map plot for individual sources of unwanted variation.
 #' The default is 'TRUE'.
-#' @param prps.name Symbol. A symbol to specify the name of all PRPS sets that will be created for all specified source(s)
+#' @param output.name Symbol. A symbol to specify the name of all PRPS sets that will be created for all specified source(s)
 #' of unwanted variation. The default is set to 'NULL'. The, the function creates a name based on paste0('prps_', uv.variable).
+#' @param prps.group TTTT
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
 #' @return SummarizedExperiment A SummarizedExperiment object containing the PRPS data or just PRPS data.
@@ -105,7 +106,8 @@ createPrPsForContinuousUV <- function(
         remove.na = 'both',
         save.se.obj = TRUE,
         plot.prps.map = TRUE,
-        prps.name = NULL,
+        output.name = NULL,
+        prps.group = NULL,
         verbose = TRUE
         ){
     printColoredMessage(message = '------------The prpsForContinuousUV function starts.',
@@ -413,43 +415,41 @@ createPrPsForContinuousUV <- function(
                 rbind(., prps.sets.plot) %>%
                 mutate(groups = factor(groups, levels= c(main.uv.variable, unique(prps.sets.plot$groups)))) %>%
                 mutate(new.g = ifelse(groups == main.uv.variable, 'UV', 'PRPS sets')) %>%
-                mutate(new.g = factor(new.g, levels = c('UV', 'PRPS sets'))) %>%
-                ggplot(aes(x = bio.variable, y = uv.var, color = groups)) +
+                mutate(new.g = factor(new.g, levels = c('UV', 'PRPS sets')))
+            prps.map.plot <- ggplot(data = prps.map.plot, aes(x = uv.var , y = bio.variable , color = groups)) +
                 geom_boxplot() +
                 geom_point() +
                 scale_color_manual(values = c('darkgreen', 'tomato', 'navy')) +
-                facet_grid(.~new.g, scales = 'free_x', space = 'free') +
+                facet_grid(new.g~., scales = 'free', space = 'free') +
                 scale_x_discrete(expand = c(0, 0.5)) +
-                ylab(main.uv.variable) +
-                xlab('Homogeneous groups') +
-                ylim(c(
+                xlab(main.uv.variable) +
+                ylab('Homogeneous groups') +
+                xlim(c(
                     min(se.obj[[main.uv.variable]]),
                     max(se.obj[[main.uv.variable]])
                 )) +
                 geom_hline(yintercept = c(
                     min(se.obj[[main.uv.variable]]),
                     max(se.obj[[main.uv.variable]])), color = 'gray70') +
+                theme_bw() +
                 theme(
                     legend.key = element_blank(),
                     axis.line = element_line(colour = 'black', linewidth = 1),
                     axis.title.x = element_text(size = 16),
                     axis.title.y = element_text(size = 16),
-                    axis.text.y = element_text(size = 14),
-                    axis.text.x = element_text(
-                        size = 5,
-                        angle = 25,
-                        vjust = 1,
-                        hjust = 1),
+                    axis.text.y = element_text(size = 12),
+                    axis.text.x = element_text(size = 12, angle = 35, vjust = 1, hjust = 1),
                     legend.text = element_text(size = 14),
                     legend.title = element_text(size = 18),
-                    strip.text.x = element_text(size = 15))
+                    strip.text.y = element_text(size = 15)
+                    )
             if(isTRUE(plot.prps.map)) print(prps.map.plot)
         }
     }
     # Saving the output ####
     ## select output name ####
     if(!is.null(other.uv.variables)) {
-        out.put.name <- paste0(
+        output.name <- paste0(
             main.uv.variable,
             '|',
             paste0(bio.variables, collapse = '&'),
@@ -458,43 +458,50 @@ createPrPsForContinuousUV <- function(
             '|',
             assay.name)
     } else if (is.null(other.uv.variables)) {
-        out.put.name <- paste0(
+        output.name <- paste0(
             main.uv.variable,
             '|',
             paste0(bio.variables, collapse = '&'),
             '|',
             assay.name)
     }
-    ## select prps.name ####
-    if(is.null(prps.name)){
-        prps.name <- paste0('prps_', main.uv.variable)
+    ## select prps group name ####
+    if (is.null(prps.group)) {
+        prps.group <- paste0('prps|supervised|', main.uv.variable)
     }
     if (isTRUE(save.se.obj)) {
         ## check if PRPS exists
         if (!'PRPS' %in% names(se.obj@metadata)) {
             se.obj@metadata[['PRPS']] <- list()
         }
-        ## check if supervised exists
+        ## check
         if (!'supervised' %in% names(se.obj@metadata[['PRPS']])) {
             se.obj@metadata[['PRPS']][['supervised']] <- list()
         }
-        ## check if prps.name exists
-        if (!prps.name %in% names(se.obj@metadata[['PRPS']][['supervised']])) {
-            se.obj@metadata[['PRPS']][['supervised']][[prps.name]] <- list()
+        ## check
+        if (!prps.group %in% names(se.obj@metadata[['PRPS']][['supervised']])) {
+            se.obj@metadata[['PRPS']][['supervised']][[prps.group]] <- list()
         }
-        ## check if prps.data exists
-        if (!'prps.data' %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.name]])) {
-            se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.data']] <- list()
+        ## check
+        if (!'prps.data' %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.group]])) {
+            se.obj@metadata[['PRPS']][['supervised']][[prps.group]][['prps.data']] <- list()
         }
-        se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.data']][[out.put.name]] <- prps.sets
+        ## check
+        if (!output.name %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.group]][['prps.data']])) {
+            se.obj@metadata[['PRPS']][['supervised']][[prps.group]][['prps.data']][[output.name]] <- list()
+        }
+        se.obj@metadata[['PRPS']][['supervised']][[prps.group]][['prps.data']][[output.name]] <- prps.sets
 
         ## plot
         if(isTRUE(plot.prps.map)){
-            ## check if prps.map.plot exists
-            if (!'prps.map.plot' %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.name]])) {
-                se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.map.plot']] <- list()
+            ## check
+            if (!'prps.map.plot' %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.group]])) {
+                se.obj@metadata[['PRPS']][['supervised']][[prps.group]][['prps.map.plot']] <- list()
             }
-            se.obj@metadata[['PRPS']][['supervised']][[prps.name]][['prps.map.plot']][[out.put.name]] <- prps.map.plot
+            if (!output.name %in% names(se.obj@metadata[['PRPS']][['supervised']][[prps.group]][['prps.map.plot']])) {
+                se.obj@metadata[['PRPS']][['supervised']][[prps.group]][['prps.map.plot']][[output.name]] <- list()
+            }
+            se.obj@metadata[['PRPS']][['supervised']][[prps.group]][['prps.map.plot']][[output.name]] <- prps.map.plot
         }
         printColoredMessage(
             message = paste0('The PRPS data and PRPS map plots are saved to the metadata of the SummarizedExperiment object.'),

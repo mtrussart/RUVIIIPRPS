@@ -74,8 +74,9 @@
 #' or to output the result as list. The default by is set to 'TRUE'.
 #' @param plot.output Logical. Indicates whether to generate the PRPS map plot for individual sources of unwanted variation.
 #' The default is 'TRUE'.
-#' @param prps.name Symbol. A symbol to specify the name of all PRPS sets that will be created for all specified source(s)
+#' @param output.name Symbol. A symbol to specify the name of all PRPS sets that will be created for all specified source(s)
 #' of unwanted variation. The default is set to 'NULL'. The, the function creates a name based on paste0('prps_', uv.variable).
+#' @param  prps.group TTT
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
 #' @return A SummarizedExperiment object that contains all the PRPS data and PPRS map plot in the metadata or a list
@@ -107,9 +108,10 @@ createPrPsSupervised <- function(
         remove.na = 'both',
         save.se.obj = TRUE,
         plot.output = TRUE,
-        prps.name = NULL,
+        output.name = NULL,
+        prps.group = NULL,
         verbose = TRUE
-) {
+        ){
     printColoredMessage(message = '------------The createPrPsSupervised function starts:',
                         color = 'white',
                         verbose = verbose)
@@ -150,7 +152,8 @@ createPrPsSupervised <- function(
                         assess.se.obj = FALSE,
                         save.se.obj = save.se.obj,
                         remove.na = remove.na,
-                        prps.name = prps.name,
+                        output.name = output.name,
+                        prps.group = prps.group,
                         verbose = verbose
                     )
                 })
@@ -180,7 +183,8 @@ createPrPsSupervised <- function(
                     assess.se.obj = FALSE,
                     save.se.obj = save.se.obj,
                     remove.na = remove.na,
-                    prps.name = prps.name,
+                    output.name = output.name,
+                    prps.group = prps.group,
                     verbose = verbose
                 )
             }
@@ -215,7 +219,8 @@ createPrPsSupervised <- function(
                         save.se.obj = save.se.obj,
                         pseudo.count = pseudo.count,
                         remove.na = remove.na,
-                        prps.name = prps.name,
+                        output.name = output.name,
+                        prps.group = prps.group,
                         verbose = verbose
                     )
                 })
@@ -244,7 +249,8 @@ createPrPsSupervised <- function(
                     save.se.obj = save.se.obj,
                     pseudo.count = pseudo.count,
                     remove.na = remove.na,
-                    prps.name = prps.name,
+                    output.name = output.name,
+                    prps.group = prps.group,
                     verbose = verbose
                 )
             }
