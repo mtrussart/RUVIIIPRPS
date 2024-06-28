@@ -14,10 +14,12 @@
 #' that contains a continuous variable such as library size, tumor purity, ... .
 #' @param correlation.method Symbol. Indicates which computed correlation coefficient should be used for plotting. The
 #' default is 'gene.spearman.corr'. We refer to the 'computeGenesVariableCorrelation' function for more details.
+#' @param plot.ncol Numeric. A numeric value indicates columns of rows in the plot grid. The default is set to 4.
+#' @param plot.nrow Numeric. A numeric value indicates rows of rows in the plot grid. The default is set to 1.
 #' @param plot.output Logical. Indicates whether to plot the ARI, by default it is set to FALSE.
 #' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
 #' object 'se.obj' or to output the result. By default it is set to TRUE.
-#' @param verbose Logical. If TRUE, displaying process messages is enabled.
+#' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
 #' @return A SummarizedExperiment object or a list that containing the boxplots of the Spearman or Pearson correlations
 #' coefficients for individual assays.
@@ -33,6 +35,8 @@ plotGenesVariableCorrelation <- function(
         assay.names = 'all',
         variable,
         correlation.method = 'spearman',
+        plot.ncol = 4,
+        plot.nrow = 1,
         plot.output = TRUE,
         save.se.obj = TRUE,
         verbose = TRUE
@@ -41,7 +45,7 @@ plotGenesVariableCorrelation <- function(
                         color = 'white',
                         verbose = verbose)
 
-    # check the inputs ####
+    # Check the inputs ####
     if (is.null(assay.names)) {
         stop('Please provide at least an assay name.')
     } else if (is.null(variable)) {
@@ -56,7 +60,7 @@ plotGenesVariableCorrelation <- function(
         ))
     }
 
-    # assays ####
+    # Check the assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else  assay.names <- factor(x = assay.names , levels = assay.names)
@@ -64,40 +68,28 @@ plotGenesVariableCorrelation <- function(
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
-    # check metric ####
-    m.out <- lapply(
-        levels(assay.names),
-        function(x) {
-            if (!x %in% names(se.obj@metadata[['metric']]))
-                stop(paste0('Any correlation analysis has not been computed yet on the  ', x, ' assay'))
-        })
-    # obtain correlations coefficients ####
+    # Obtain correlations coefficients ####
     printColoredMessage(
         message = paste0('-- Obtain the computed correlation coefficient between genes and the "', variable, '" variable',
                          ' from the SummarizedExperiment object:'),
         color = 'magenta',
         verbose = verbose)
-    all.corr.coeff <- lapply(
-        levels(assay.names),
-        function(x) {
-            printColoredMessage(
-                message = paste0('- Obtain computed correlation coefficients for the "', x, '" data.'),
-                color = 'blue',
-                verbose = verbose
-            )
-            if (!'Correlation' %in% names(se.obj@metadata[['metric']][[x]])) {
-                stop(paste0('Any correlation analysis has not been computed yet on the  ', x, ' assay'))
-            }
-            if (!correlation.method %in% names(se.obj@metadata[['metric']][[x]][['Correlation']])) {
-                stop(paste0('The ', correlation.method , ' has not been computed yet for the ', x, ' assay.'))
-            }
-            if (!variable %in% names(se.obj@metadata[['metric']][[x]][['Correlation']][[correlation.method]])) {
-                stop(paste0('The ', correlation.method , ' has not been computed yet for the ', variable, ' variable and the ', x, ' assay.'))
-            }
-            corr.coeff <- se.obj@metadata[['metric']][[x]][['Correlation']][[correlation.method]][[variable]]$cor.coef[,2]
-        })
-    names(all.corr.coeff) <- levels(assay.names)
 
+    all.corr.coeff.pvalues <- getMetricFromSeObj(
+        se.obj = se.obj,
+        slot = 'Metrics',
+        assay.names = assay.names,
+        assessment = 'Correlation',
+        assessment.type = 'gene.level',
+        method = correlation.method,
+        variables = variable,
+        file.name = 'correlations.pvalues',
+        sub.file.name = NULL,
+        required.function = 'computeGenesVariableCorrelation',
+        message.to.print = 'correlations and pvalues'
+        )
+
+    # Generate boxplots of the correlation coefficients ####
     printColoredMessage(
         message = '-- Generate boxplots of the correlation coefficients:',
         color = 'magenta',
@@ -111,7 +103,7 @@ plotGenesVariableCorrelation <- function(
                 color = 'blue',
                 verbose = verbose
             )
-            corr.coeff <- all.corr.coeff[[x]]
+            corr.coeff <- all.corr.coeff.pvalues[[x]][,'correlation']
             p.corr.coeff <- ggplot() +
                 geom_boxplot(aes(y = corr.coeff, x = 1), outlier.color = 'gray') +
                 ylab('Spearman correlation coefficient') +
@@ -121,9 +113,9 @@ plotGenesVariableCorrelation <- function(
                 theme(
                     panel.background = element_blank(),
                     axis.line = element_line(colour = 'black', linewidth = 1),
-                    axis.title.x = element_text(size = 18),
-                    axis.title.y = element_text(size = 18),
-                    plot.title = element_text(size = 15),
+                    plot.title = element_text(size = 16),
+                    axis.title.x = element_text(size = 14),
+                    axis.title.y = element_text(size = 14),
                     axis.ticks.x = element_blank(),
                     axis.text.x = element_text(size = 0),
                     axis.text.y = element_text(size = 12))
@@ -132,7 +124,7 @@ plotGenesVariableCorrelation <- function(
         })
     names(all.corr.coeff.plots) <- levels(assay.names)
 
-    # overall plot ####
+    ## put all boxplots  together ####
     everything <- datasets <- corr.coff <- NULL
     if(length(assay.names) > 1){
         printColoredMessage(
@@ -140,7 +132,8 @@ plotGenesVariableCorrelation <- function(
             color = 'magenta',
             verbose = verbose
         )
-        all.corr.coeff <- as.data.frame(all.corr.coeff) %>%
+        all.corr.coeff <- sapply(levels(assay.names), function(x) all.corr.coeff.pvalues[[x]][,2]) %>%
+            data.frame(.) %>%
             tidyr::pivot_longer(
                 dplyr::everything(),
                 names_to = 'datasets',
@@ -159,11 +152,26 @@ plotGenesVariableCorrelation <- function(
             theme(
                 panel.background = element_blank(),
                 axis.line = element_line(colour = 'black', linewidth = 1),
+                plot.title = element_text(size = 16),
                 axis.title.x = element_text(size = 14),
                 axis.title.y = element_text(size = 14),
-                plot.title = element_text(size = 15),
                 axis.text.x = element_text(size = 12, angle = 25, hjust = 1),
                 axis.text.y = element_text(size = 12))
+        overall.corr.coeff.plot <- annotate_figure(
+            p = overall.corr.coeff.plot,
+            top = text_grob(
+                label = "Correlation analysis",
+                color = "orange",
+                face = "bold",
+                size = 18),
+            bottom = text_grob(
+                label = paste0(
+                    'Analysis: ', 'Correlation analysis between individaul gen expression an the  ', variable, ' variable.'),
+                color = "black",
+                hjust = 1,
+                x = 1,
+                size = 10)
+        )
         printColoredMessage(
             message = '- The boxplots of correlation coefficients of each assays are combined into one plot.',
             color = 'blue',
@@ -171,44 +179,174 @@ plotGenesVariableCorrelation <- function(
             )
         if(isTRUE(plot.output)) suppressMessages(print(overall.corr.coeff.plot))
     }
-    # save the results ####
+
+    # Generate p-value histograms of the correlation coefficients ####
+    printColoredMessage(
+        message = '-- Generate p-value histograms of the correlations:',
+        color = 'magenta',
+        verbose = verbose
+    )
+    ## specified ylim ####
+    breaks <- seq(from = 0, to = 1, by = .1)
+    ylim.pvalue <- sapply(
+        assay.names,
+        function(x) {
+            binned <- cut(
+                x = all.corr.coeff.pvalues[[x]][, 1],
+                breaks = breaks,
+                include.lowest = TRUE)
+            frequency <- table(binned)[1]
+        })
+    ylim.pvalue <- ceiling(x = max(ylim.pvalue))
+    ## generate histograms ####
+    all.pvalue.hist.plots <- lapply(
+        levels(assay.names),
+        function(x){
+            printColoredMessage(
+                message = paste0('- Generate p-value histograms for the "', x, '" data.'),
+                color = 'blue',
+                verbose = verbose
+            )
+            pvalues <- all.corr.coeff.pvalues[[x]]
+            p.pvalues <- ggplot(pvalues, aes(x = pvalues[,1])) +
+                geom_histogram(binwidth = 0.1) +
+                ggtitle(variable) +
+                xlab('p-values') +
+                ylab(expression('Frequency'~10^3)) +
+                scale_y_continuous(labels = function(x) format(x /1000, scientific = F), limits = c(0, ylim.pvalue)) +
+                theme(
+                    panel.background = element_blank(),
+                    axis.line = element_line(colour = 'black', linewidth = 1),
+                    plot.title = element_text(size = 15),
+                    axis.title.x = element_text(size = 10),
+                    axis.title.y = element_text(size = 10),
+                    axis.text.x = element_text(size = 8),
+                    axis.text.y = element_text(size = 8))
+            if(isTRUE(plot.output) & length(assay.names) == 1) print(p.pvalues)
+            return(p.pvalues)
+        })
+    names(all.pvalue.hist.plots) <- levels(assay.names)
+
+    ## put all histograms together ####
+    everything <- datasets <- corr.coff <- NULL
+    if(length(assay.names) > 1){
+        printColoredMessage(
+            message = '-- Put all the p-values histograms of the correlations together.',
+            color = 'magenta',
+            verbose = verbose
+        )
+        overall.pvalue.hist.plot <- ggarrange(
+            plotlist = all.pvalue.hist.plots,
+            ncol = plot.ncol,
+            nrow = plot.nrow)
+        if(class(overall.pvalue.hist.plot)[[1]] == 'list'){
+            plot.list <- lapply(
+                seq(length(overall.pvalue.hist.plot)),
+                function(x){
+                    annotate_figure(
+                        p = overall.pvalue.hist.plot[[x]],
+                        top = text_grob(
+                            label = "Correlation analysis",
+                            color = "orange",
+                            face = "bold",
+                            size = 18),
+                        bottom = text_grob(
+                            label = paste0(
+                                'Analysis: ', 'Correlation analysis between individaul gen expression an the  ', variable, ' variable.'),
+                            color = "black",
+                            hjust = 1,
+                            x = 1,
+                            size = 10))
+                })
+            overall.pvalue.hist.plot <- ggarrange(
+                plotlist = plot.list,
+                ncol = 1,
+                nrow = 1)
+        } else {
+            overall.pvalue.hist.plot <- annotate_figure(
+                p = overall.pvalue.hist.plot,
+                top = text_grob(
+                    label = "Correlation analysis",
+                    color = "orange",
+                    face = "bold",
+                    size = 18),
+                bottom = text_grob(
+                    label = paste0(
+                        'Analysis: ', 'Correlation analysis between individaul gen expression an the  ', variable, ' variable.'),
+                    color = "black",
+                    hjust = 1,
+                    x = 1,
+                    size = 10))
+        }
+        printColoredMessage(
+            message = '- The p-values histograms of each assays are combined into one plot.',
+            color = 'blue',
+            verbose = verbose
+        )
+        if(isTRUE(plot.output)) suppressMessages(print(overall.pvalue.hist.plot))
+    }
+
+    # Save the results ####
     printColoredMessage(
         message = '-- Save the all the boxplots of the correlation coefficients:',
         color = 'magenta',
         verbose = verbose)
     ## add results to the SummarizedExperiment object ####
     if (isTRUE(save.se.obj)) {
+        ### save plot per assay ####
         printColoredMessage(
-            message = '- Save all the boxplots of the correlation coefficients of each assay(s) in the "metadata" in the SummarizedExperiment object.',
+            message = '- Save all the boxplots of the correlation coefficients and p-values histograms of each assay(s) in the "metadata" in the SummarizedExperiment object.',
             color = 'blue',
             verbose = verbose)
-        for (x in levels(assay.names)) {
-            ## check if metadata metric already exist for this assay, this metric and this variable
-            if(!'cor.coef.plot' %in% se.obj@metadata[['metric']][[x]][['Correlation']][[correlation.method]][[variable]])
-                se.obj@metadata[['metric']][[x]][['Correlation']][[correlation.method]][[variable]][['cor.coef.plot']] <- list()
-            se.obj@metadata[['metric']][[x]][['Correlation']][[correlation.method]][[variable]][['cor.coef.plot']] <- all.corr.coeff.plots[[x]]
-        }
+        se.obj <- addMetricToSeObj(
+            se.obj = se.obj,
+            slot = 'Metrics',
+            assay.names = assay.names,
+            assessment.type = 'gene.level',
+            assessment = 'Correlation',
+            method = correlation.method,
+            variables = variable,
+            file.name = 'cor.coef.boxplot',
+            results.data = all.corr.coeff.plots
+            )
+        se.obj <- addMetricToSeObj(
+            se.obj = se.obj,
+            slot = 'Metrics',
+            assay.names = assay.names,
+            assessment.type = 'gene.level',
+            assessment = 'Correlation',
+            method = correlation.method,
+            variables = variable,
+            file.name = 'cor.pvalues.histogram',
+            results.data = all.pvalue.hist.plots
+        )
         printColoredMessage(
-            message = paste0('- The boxplot of the correlation coefficients for the indiviaul assay(s) is  saved to',
+            message = paste0('- The boxplot of the correlation coefficients and p-values histograms for the indiviaul assay(s) is  saved to',
                              '  "se.obj@metadata$metric$AssayName$Correlation$', correlation.method, ' in the SummarizedExperiment object.'),
             color = 'blue',
             verbose = verbose)
 
+        ## save combined plots ####
         if (length(assay.names) > 1) {
-            if (!'plot' %in%  names(se.obj@metadata)) {
-                se.obj@metadata[['plot']] <- list()
-            }
-            if (!'Correlation' %in%  names(se.obj@metadata[['plot']])) {
-                se.obj@metadata[['plot']][['Correlation']] <- list()
-            }
-            if (!correlation.method %in%  names(se.obj@metadata[['plot']][['Correlation']])) {
-                se.obj@metadata[['plot']][['Correlation']][[correlation.method]] <- list()
-            }
-            if (!variable %in%  names(se.obj@metadata[['plot']][['Correlation']][[correlation.method]])) {
-                se.obj@metadata[['plot']][['Correlation']][[correlation.method]][[variable]] <- list()
-            }
-            se.obj@metadata[['plot']][['Correlation']][[correlation.method]][[variable]] <- overall.corr.coeff.plot
-
+            se.obj <- addOverallPlotToSeObj(
+                se.obj = se.obj,
+                slot = 'Plots',
+                assessment.type = 'gene.level',
+                assessment = 'Correlation',
+                method = correlation.method,
+                variables = variable,
+                file.name = 'cor.coef.boxplot',
+                plot.data = overall.corr.coeff.plot
+                )
+            se.obj <- addOverallPlotToSeObj(
+                se.obj = se.obj,
+                slot = 'Plots',
+                assessment.type = 'gene.level',
+                assessment = 'Correlation',
+                method = correlation.method,
+                variables = variable,
+                file.name = 'cor.pvalues.histogram',
+                plot.data = overall.pvalue.hist.plot)
             printColoredMessage(
                 message = paste0('- The combined boxplots of the correlation coefficients of all the  indiviaul assay(s) is saved to',
                                  '  "se.obj@metadata$plot$Correlation$', correlation.method, ' in the SummarizedExperiment object.'),
@@ -221,10 +359,11 @@ plotGenesVariableCorrelation <- function(
                             verbose = verbose)
         return(se.obj = se.obj)
 
-    } else if (save.se.obj == FALSE) {
-        # return only the correlation result ####
+    }
+    ## out put the results as list ####
+    if (isFALSE(save.se.obj)) {
         printColoredMessage(
-            message = 'All the plots are saved as a list.',
+            message = '- All the plots are saved as a list.',
             color = 'blue',
             verbose = verbose)
         printColoredMessage(message = '------------The genesVariableCorrelation function finished.',
@@ -239,5 +378,4 @@ plotGenesVariableCorrelation <- function(
                 ))
         }
     }
-
 }
