@@ -2,7 +2,7 @@
 % Please edit documentation in R/assessW.R
 \name{assessW}
 \alias{assessW}
-\title{RUVIII with technical replicates or PRPS normalization.}
+\title{Assess the W matrix of RUV-III}
 \usage{
 assessW(
   se.obj,
@@ -40,7 +40,10 @@ variation and lack correlation with biological variables. See the function's det
 \item{verbose}{Logical. Indicates whether to plot the output or not. The default is set to 'TRUE'.}
 }
 \description{
-This functions assesses the correlation between the W of RUV-III normalized data with known variables.
+This functions assesses the correlation between the W of RUV-III normalized data with known variables. Tt calculates
+the association of the columns of the W matrix with both specified biological and unwanted variables. The correlation
+values obtained for the biological variables will be subtracted from 1. Finally, the average of all these correlations
+is computed to determine the final correlation values. A higher correlation indicates better performance.
 }
 \author{
 Ramyar Molania

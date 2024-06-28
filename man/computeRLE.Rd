@@ -46,9 +46,9 @@ the checkSeObj function for more details.}
 \item{save.se.obj}{Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object or
 to output the result as list. By default it is set to TRUE.}
 
-\item{override.check}{Logical. Determines whether to verify the computed RLE data for the specified assay(s) or not.
-If set to 'TRUE', the function will verify the SummarizedExperiment object; if the computed RLE data is already present,
-it will not recompute them. The default value is 'FALSE'.}
+\item{override.check}{Logical. When set to 'TRUE', the function verifies the current SummarizedExperiment object to
+determine if the RLE has already been computed for the current parameters. If it has, the metric will not be recalculated.
+The default is set to FALSE.}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }

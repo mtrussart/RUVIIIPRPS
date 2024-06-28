@@ -13,6 +13,7 @@ computeDGE(
   assess.se.obj = TRUE,
   remove.na = "none",
   save.se.obj = TRUE,
+  override.check = FALSE,
   verbose = TRUE
 )
 }
@@ -24,7 +25,7 @@ SummarizedExperiment object to compute the differential gene expression analysis
 SummarizedExperiment object will be selected.}
 
 \item{variable}{Symbol. A symbol that indicates a column name of the SummarizedExperiment object that contains a
-categorical variable such as batches. If the variable has more than two levels, the function perform DEG between all
+categorical variable such as batches. If the variable has more than two levels, the function perform DGE between all
 possible pariwise groups.}
 
 \item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data before compuritn DGE. The
@@ -40,8 +41,12 @@ default is 1.}
 is selected, the samples that contains NA or missing values for each 'variables' will be excluded. By default, it is
 set to 'both'.}
 
-\item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
+\item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment
 object 'se.obj' or to output the result. By default it is set to TRUE.}
+
+\item{override.check}{Logical. When set to 'TRUE', the function verifies the current SummarizedExperiment object to
+determine if the DGE has already been computed for the current parameters. If it has, the metric will not be recalculated.
+The default is set to FALSE.}
 
 \item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
 }

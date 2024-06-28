@@ -36,7 +36,7 @@ The default is set to 'CPM'.
 \item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data or not after the normalization
 is performed. The default is 'TRUE'.}
 
-\item{pseudo.count}{Numeric. A value as a pseudo count to be added to all measurements of the assay(s) after applying
+\item{pseudo.count}{Numeric. A numeric value as a pseudo count to be added to all measurements of the assay(s) after applying
 the normalization to avoid -Inf for measurements that are equal to 0. The default is 1.}
 
 \item{remove.na}{Logical. Indicates whether to remove NA or missing values from the assay or not.}

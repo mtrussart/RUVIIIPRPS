@@ -2,7 +2,7 @@
 % Please edit documentation in R/compuetSurvival.R
 \name{computeSurvival}
 \alias{computeSurvival}
-\title{Generates Kaplan-Meier survival plots.}
+\title{Compute variable and gene-level Kaplan-Meier survival.}
 \usage{
 computeSurvival(
   se.obj,
@@ -25,11 +25,11 @@ computeSurvival(
 \item{se.obj}{A SummarizedExperiment object.}
 
 \item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
-SummarizedExperiment object to calculate RLE data, medians and interquartile ranges. The default is set to "all, which
-indicates all the assays of the SummarizedExperiment object will be selected.}
+SummarizedExperiment object to compute the survival. The default is set to "all, which indicates all the assays of the
+SummarizedExperiment object will be selected.}
 
-\item{genes}{Symbol. A symbol or a vector of symbols for the selection of genes for gene level survival analysis. The
-default is set to 'all'.}
+\item{genes}{Symbol. A symbol or a vector of gene names/ids for the selection of genes for gene-level survival analysis.
+The default is set to 'all'.}
 
 \item{variable}{Symbol. A symbol that indicates the column name of the SummarizedExperiment object that contains
 a categorical variable e.g. tumour subtypes, ... for variable-level survival analysis. The default is set to 'NULL'.}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/computeGenesVariableCorrelation.R
 \name{computeGenesVariableCorrelation}
 \alias{computeGenesVariableCorrelation}
-\title{compute the correlation between individual gene expression and a continuous variable.}
+\title{Compute the correlation between individual gene expression and a continuous variable.}
 \usage{
 computeGenesVariableCorrelation(
   se.obj,
@@ -19,6 +19,7 @@ computeGenesVariableCorrelation(
   assess.se.obj = TRUE,
   remove.na = "both",
   save.se.obj = TRUE,
+  override.check = FALSE,
   verbose = TRUE
 )
 }
@@ -29,8 +30,8 @@ computeGenesVariableCorrelation(
 SummarizedExperiment object to compute the correlation. By default all the assays of the SummarizedExperiment class
 object will be selected.}
 
-\item{variable}{Symbol. Indicates a column name of the SummarizedExperiment object that contains a continuous variable
-such as library size, tumor purity, ....}
+\item{variable}{Symbol. A symbol indicating a column name of the SummarizedExperiment object that contains a continuous
+variable such as library size, tumor purity, ....}
 
 \item{method}{Symbol. Indicates which correlation methods should be used. The options are 'pearson', 'kendall', or
 "spearman". The default is set to 'spearman'.}
@@ -44,8 +45,8 @@ set to 0. We refer to the correls function from the Rfast package for more detai
 \item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data before computing the correlation.
 By default the log transformation will be selected.}
 
-\item{pseudo.count}{Numeric. A value as a pseudo count to be added to all measurements before log transformation,
-by default it is set to 1.}
+\item{pseudo.count}{Numeric. A numeric value as a pseudo count to be added to all measurements before log transformation.
+The default it is set to 1.}
 
 \item{plot.top.genes}{Logical. Indicates whether to plot the gene expression of the number of genes from the high or
 low correlation, by default it is set to FALSE.}
@@ -63,17 +64,18 @@ checkSeObj function for more details. The default is TRUE.}
 \item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the current SummarizedExperiment
 object or to output the result. By default it is set to TRUE.}
 
-\item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
+\item{override.check}{Logical. When set to 'TRUE', the function verifies the current SummarizedExperiment object to
+determine if the correlation has already been computed for the current parameters. If it has, the metric will not be recalculated.
+The default is set to FALSE.}
+
+\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
 \value{
-A SummarizedExperiment object or a list that contains the  correlation coefficients on the continuous variable.
+A SummarizedExperiment object or a list that contains the correlation coefficients on the continuous variable.
 }
 \description{
 This function computes Spearman or Pearson correlations between individual gene-level expression of each assay and
 a continuous variable in SummarizedExperiment object.
-}
-\details{
-Additional details...
 }
 \references{
 Molania R., ..., Speed, T. P., Removing unwanted variation from large-scale RNA sequencing data with PRPS,

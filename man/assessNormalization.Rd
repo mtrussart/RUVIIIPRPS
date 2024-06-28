@@ -9,21 +9,23 @@ assessNormalization(
   assay.names = "all",
   bio.variables,
   uv.variables,
-  metrics.to.exclude = NULL,
   assessments.to.exclude = NULL,
   fast.pca = TRUE,
   sil.dist.measure = "euclidian",
   ari.clustering.method = "hclust",
   ari.hclust.method = "complete",
   ari.hclust.dist.measure = "euclidian",
-  fstat.cutoff = 1,
-  corr.coef.cutoff = 0.2,
   corr.method = "spearman",
+  corr.cutoff = 0.2,
   anova.method = "aov",
-  output.file = NULL,
+  fvalue.cutoff = 1,
+  pcorr.method = "spearman",
+  pcorr.cutoff = 0.3,
+  bio.weight = 0.6,
+  uv.weight = 0.4,
   plot.output = TRUE,
-  output.name = NULL,
   save.se.obj = TRUE,
+  output.name = NULL,
   verbose = TRUE
 )
 }
@@ -34,60 +36,69 @@ assessNormalization(
 SummarizedExperiment object. The default is set to 'all', so all the assays in the SummarizedExperiment object will
 be selected.}
 
-\item{bio.variables}{Symbols. Indicating the column names that contain known biological variable(s) in the
-SummarizedExperiment object. These biological variables can be categorical or continuous.}
+\item{bio.variables}{Symbols. A symbol or a vector of symbols indicating the column names that contain known biological
+variable(s) in the SummarizedExperiment object. These biological variables can be both categorical and continuous.}
 
-\item{uv.variables}{Symbols. Indicating the column names that contain unwanted variable(s) in the SummarizedExperiment
-object. These unwanted variables can be categorical or continuous.}
+\item{uv.variables}{Symbols. A symbol or a vector of symbols indicating the column names that contain unwanted variable(s)
+in the SummarizedExperiment object. These unwanted variables can be both categorical and continuous.}
 
-\item{metrics.to.exclude}{Symbols. A symbol or vector of symbols indication which metrics to be excluded.
-The metrics can be obtained using the  'getAssessmentMetrics' function. The default is set to NULL. Refer
-to the details for more information.}
+\item{assessments.to.exclude}{Symbol. A symbol or vector of symbols (Code) specifying which assessment metrics to exclude.
+These metrics can be acquired using the 'getAssessmentMetrics' function. Default is set to 'NULL'.}
 
-\item{assessments.to.exclude}{Symbols. A symbol or vector of symbols indicating which assessment metrics to exclude.
-These metrics can be acquired using the 'getAssessmentMetrics' function. Default is set to NULL. See the details for
-further information.}
+\item{fast.pca}{Logical. Indicates whether to obtain computed fast PCA or not. The default is set to 'TRUE'.}
 
-\item{fast.pca}{Logical. Indicates whether to calculate a specific number of PCs instead of the full range
-to speed up the process, by default is set to 'TRUE'.}
+\item{sil.dist.measure}{Symbol. A symbol indicating which distant measurement has been used to compute silhouette analysis
+should be obtained. The options are: 'euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'.
+The default is set to 'euclidean'.}
 
-\item{sil.dist.measure}{A character string indicating which method
-is to be used for the differential analysis: 'euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'.
-By default 'euclidean' will be selected.}
+\item{ari.clustering.method}{Symbol. A symbol indicating which clustering method has been used to compute ARI should
+be used. The options are 'mclust' or 'hclust' methods. The default is set to 'hclust'.}
 
-\item{ari.clustering.method}{Symbol. Indicates which clustering methods should be applied on the PCs calculate the ARI.
-The function provides the 'mclust' or 'hclust' methods. The default is 'hclust'.}
+\item{ari.hclust.method}{Symbol. A symbol indicating which hclust method has been used to compute ARI. The options are
+'ward.D', ward.D2', 'single', 'complete', 'average' (= UPGMA), 'mcquitty' (= WPGMA), 'median' (= WPGMC) or centroid'
+(= UPGMC). The default is set to 'complete'.}
 
-\item{ari.hclust.method}{Symbol. Indicate the agglomeration method to be used for the 'hclust' method. This should be
-one of 'ward.D', 'ward.D2', 'single', 'complete', 'average' (= UPGMA), 'mcquitty' (= WPGMA), 'median' (= WPGMC) or
-'centroid' (= UPGMC). See the hclust function for more details.}
+\item{ari.hclust.dist.measure}{Symbol. A symbol indicating which distant measurement has been used to compute 'hclsut'
+for the ARI analysis. The options are euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'. The
+default is set to 'euclidean'.}
 
-\item{ari.hclust.dist.measure}{Symbol. Indicates the distance measure to be used in the dist function. This must be
-one of euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'. See the dist function for more details.}
+\item{corr.method}{Symbol. A symbol indicates which correlation methods has been used to compute genes-variable correlation.
+Options are 'spearman' or 'pearson'. The default is 'spearman'.}
 
-\item{fstat.cutoff}{Numeric. Specifies the threshold for selecting genes that have a F-statistics lower than this value
-with categorical variables. The default value is 1.}
+\item{corr.cutoff}{Numeric. A numeric values that specifies the threshold for selecting genes that have an absolute
+correlation coefficient lower than this value with continuous variables. The default is set to 0.2.}
 
-\item{corr.coef.cutoff}{Numeric. Specifies the threshold for selecting genes that have an absolute correlation coefficient
-lower than this value with continuous variables. The default value is 0.2.}
+\item{anova.method}{Symbol. A symbol indicating which ANOVA method has been used for compute genes-variable ANOVA. Options
+are 'aov' or 'weltch'. The default is set to 'aov'.}
 
-\item{corr.method}{Symbol. Indicates which correlation methods should be used. Options are The default is 'spearman'.}
+\item{fvalue.cutoff}{Numeric. Specifies the threshold for selecting genes that have a F-statistics lower than this value
+with categorical variables. The default value is set to 1.}
 
-\item{anova.method}{Symbol. Indicates which ANOVA methods should be used. Options are ... . The default is 'aov'.}
+\item{pcorr.method}{A symbol indicating which correlation method has been used for compute genes-gene ordinary and
+partial correlations. Options are 'spearman' or 'pearson'. The default is set to 'spearman'.}
 
-\item{output.file}{Path and name of the output file to save the assessments plots in a pdf format.}
+\item{pcorr.cutoff}{Numeric. A threshold value used to select gene-gene correlations where the difference between
+ordinary and partial correlations is less than this value.}
 
-\item{plot.output}{BB}
+\item{bio.weight}{Numeric. A numeric value to weight the final biological preservation scores. The default is set 0.6.
+Refer to the detail for more information.}
 
-\item{output.name}{TTTT}
+\item{uv.weight}{Numeric. A numeric value to weight the final removal of unwanted variation scores. The default is set 0.4.
+Refer to the detail for more information.}
 
-\item{save.se.obj}{TTTT}
+\item{plot.output}{Logical. If 'TRUE', the final assessment plot will printed.}
 
-\item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
+\item{save.se.obj}{Logical. Indicates whether to save all the results to the SummarizedExperiment. The default is set
+to 'TRUE'.}
+
+\item{output.name}{Symbol. A symbol indicating the file name for the results in the SummarizedExperiment. If 'NULL',
+the function will create "paste0('RUVprps_assessNormalization', length(assays(se.obj)), '_assays.')" as a file name.}
+
+\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
 \value{
-A SummarizedExperiment object containing all the assessments plots and metrics. If specified it will generate
-a pdf containing the assessments plots and metrics used for the assessment.
+A SummarizedExperiment object containing all the assessments matrix, plot and table or a list that contains all
+the results.
 }
 \description{
 This function summarizes a range of global and gene level metrics obtained using the 'assessVariation' function for

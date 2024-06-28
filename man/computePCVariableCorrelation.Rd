@@ -21,16 +21,17 @@ computePCVariableCorrelation(
 SummarizedExperiment object to calculate the vector correlation. The default is "all, which indicates all the assays
 of the SummarizedExperiment object will be selected.}
 
-\item{variable}{Symbol. Indicates a name of the column in the sample annotation of the SummarizedExperiment object.
-The variable must be a categorical variable.}
+\item{variable}{Symbol. A symbol indicating the name of the column in the sample annotation of the SummarizedExperiment
+object. The variable must be a categorical variable.}
 
 \item{fast.pca}{Logical. Indicates whether to use the fast PCA or PCA results computed by the computePCA function. The
 default is 'TRUE'.}
 
-\item{nb.pcs}{Numeric. The number of the first PCs to be used to calculate the vector correlation. The default is 10.
+\item{nb.pcs}{Numeric. A numeric value indicating the number of the first PCs to be used to calculate the vector correlation.
+The default is 10.
 This number cannot be bigger that number of PCs calculated by the 'computePCA' function.}
 
-\item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment
+\item{save.se.obj}{Logical. Indicates whether to save the results in the metadata of the SummarizedExperiment
 object  or to output the result as list. By default it is set to TRUE.}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}

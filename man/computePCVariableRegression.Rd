@@ -21,15 +21,16 @@ computePCVariableRegression(
 SummarizedExperiment object to calculate regression analysis. The default is "all, which indicates all
 the assays of the SummarizedExperiment object will be selected.}
 
-\item{variable}{Symbol. Indicates a name of the column in the sample annotation of the SummarizedExperiment object.
-The variable must be a continuous variable.}
+\item{variable}{Symbol. A symbol indicating the name of the column in the sample annotation of the SummarizedExperiment object.
+The variable must be a continuous variable such as library size, tumor purity, ... .}
 
 \item{fast.pca}{Logical. Indicates whether to use the computed fast PCA or PCA results computed by the computePCA function. The
 default is 'TRUE'.}
 
-\item{nb.pcs}{Numeric. The number of first PCs to use to plot the vector correlation. The default is 10.}
+\item{nb.pcs}{Numeric. A numeric value specifying the number of first PCs to be used to compute the vector correlation.
+The default is set to 10.}
 
-\item{save.se.obj}{Logical. Indicates whether to save the vector correlation plots to the meta data of the
+\item{save.se.obj}{Logical. Indicates whether to save the vector correlation plots to the 'metadata' of the
 SummarizedExperiment object or to output the result as list. By default it is set to TRUE.}
 
 \item{verbose}{Logical. If TRUE, displaying process messages is enabled.}

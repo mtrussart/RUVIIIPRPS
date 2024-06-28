@@ -17,47 +17,53 @@ computeGenesVariableAnova(
   assess.se.obj = TRUE,
   remove.na = "both",
   save.se.obj = TRUE,
+  override.check = FALSE,
   verbose = TRUE
 )
 }
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Optional string or list of strings for the selection of the name(s)
-of the assay(s) of the SummarizedExperiment class object to compute the ANOVA. By default}
+\item{assay.names}{Symbol. A symbol or vector of symbols for the selection of the name(s) of the assay(s) of the
+SummarizedExperiment object to compute the correlation. By default all the assays of the SummarizedExperiment class
+object will be selected.}
 
-\item{variable}{String of the label of a categorical variable such as
-sample types or batches from colData(se.obj).}
+\item{variable}{Symbol. A symbol indicating a column name of the SummarizedExperiment object that contains a
+categorical variable such as experimental batches, ... .}
 
-\item{method}{A character string indicating which method
-is to be used for the differential analysis: "aov" or "welch". By default "aov" will
-be selected.}
+\item{method}{Symbol. A symbol indicating which method is to be used for the ANOVA analysis. The options are "aov" and
+"welch". The default is set to "aov".}
 
-\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data. By default
-the log transformation will be selected.}
+\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data before applying ANOVA. The default
+is set to 'TRUE'.}
 
-\item{pseudo.count}{Numeric. A value as a pseudo count to be added to all measurements before log transformation,
-by default it is set to 1.}
+\item{pseudo.count}{Numeric. A numeric value as a pseudo count to be added to all measurements before applying log transformation.
+The default is set to 1.}
 
-\item{plot.top.genes}{Logical. Indicates whether to plot the gene expression of the number of genes
-from the top listing of anova by default it is set to FALSE.}
+\item{plot.top.genes}{Logical. Indicates whether to plot the gene expression of "nb.top.genes" number genes with highest
+and lowest F-statistics across the specified variable. The default is set to 'FALSE'.}
 
-\item{nb.top.genes}{Defines the number of genes from the top or bottom listing of anova to plot,
-by default is set to 3.}
+\item{nb.top.genes}{Numeric. A numeric value Defining the number of genes from the top or bottom listing of ANOVA
+F-statistics to plot. The default is set to 3.}
 
-\item{apply.round}{Logical. Indicates whether to round the ARI results, by default it is set to TRUE.}
+\item{apply.round}{Logical. Indicates whether to round the values of F-statistics. The default is set to 'TRUE'.}
 
-\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment class object.}
+\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment class object. The default is set to
+'TRUE'.}
 
-\item{remove.na}{TO BE DEFINED.}
+\item{remove.na}{Symbol. A symbol that specifies whether to eliminate missing values from either 'assays', 'sample.annotation',}
 
-\item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment object
-'se.obj' or to output the result. By default it is set to TRUE.}
+\item{save.se.obj}{Logical. Indicates whether to save the results, ANOVA F-statistics and p-values, in the metadata
+of the SummarizedExperiment object or to output the result as a list or vector. The default is set to 'TRUE'.}
 
-\item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
+\item{override.check}{Logical. When set to 'TRUE', the function verifies the current SummarizedExperiment object to
+determine if the ANOVA has already been computed for the current parameters. If it has, the metric will not be recalculated.
+The default is set to FALSE.}
+
+\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
 \value{
-SummarizedExperiment A SummarizedExperiment object containing the log2 F-statistics of ANOVA on the continuous
+A SummarizedExperiment object containing the log2 F-statistics of ANOVA on the continuous
 variable and if requested the associated boxplot.
 }
 \description{

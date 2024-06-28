@@ -2,23 +2,25 @@
 % Please edit documentation in R/assessVariation.R
 \name{assessVariation}
 \alias{assessVariation}
-\title{Assess the variation of biological and unwanted variables.}
+\title{Assess the variation in variables.}
 \usage{
 assessVariation(
   se.obj,
   assay.names = "all",
   variables,
-  to.exclude = NULL,
+  plots.to.exclude = NULL,
   apply.log = TRUE,
   pseudo.count = 1,
-  general.points.size = 1,
+  general.points.size = 1.5,
   rle.iqr.width = 2,
   rle.median.points.size = 1,
   rle.median.points.color = "red",
   rle.geom.hline.color = "cyan",
-  rle.plot.ncol = 1,
+  rle.plot.ncol = 2,
   rle.plot.nrow = 3,
-  rle.variables.colors = NULL,
+  rle.var.plot.ncol = 3,
+  rle.var.plot.nrow = 2,
+  rle.colors = NULL,
   fast.pca = TRUE,
   compute.nb.pcs = 5,
   nb.pcs.toplot.pca = 3,
@@ -26,6 +28,12 @@ assessVariation(
   scale = FALSE,
   svd.bsparam = bsparam(),
   pca.variables.colors = NULL,
+  pca.plot.nrow = 2,
+  pca.plot.ncol = 3,
+  pca.stroke.size = 0.05,
+  pca.stroke.color = "grey",
+  pca.points.alpha = 0.5,
+  pca.densities.alpha = 0.5,
   sil.dist.measure = "euclidian",
   sli.nb.pcs = 3,
   ari.clustering.method = "hclust",
@@ -37,12 +45,31 @@ assessVariation(
   corr.method = "spearman",
   a = 0.05,
   rho = 0,
+  correlation.plot.ncol = 1,
+  correlation.plot.nrow = 3,
   anova.method = "aov",
+  anova.plot.ncol = 1,
+  anova.plot.nrow = 3,
+  pcorr.method = "spearman",
+  pcorr.genes = NULL,
+  pcorr.select.genes = FALSE,
+  pcorr.reference.data = NULL,
+  pcorr.corr.cutoff = 0.8,
+  pcorr.filter.genes = TRUE,
+  pcorr.corr.dif.cutoff = 0.1,
+  pcorr.plot.ncol = 2,
+  pcorr.plot.nrow = 2,
   deg.plot.ncol = 1,
-  deg.plot.nrow = 3,
+  deg.plot.nrow = 1,
+  gene.set.score.reference.data = NULL,
+  gene.set.score.regress.out.variables = NULL,
+  gene.set.score.list,
+  gene.set.score.normalization = NULL,
+  gene.set.score.assessment = FALSE,
+  gene.set.score.variables.to.assess = NULL,
   assess.se.obj = TRUE,
   remove.na = "none",
-  output.file.name = NULL,
+  override.check = FALSE,
   verbose = TRUE
 )
 }
@@ -56,7 +83,7 @@ be selected.}
 \item{variables}{Symbols. Indicating the the column names containing variable(s) for assessing their variation within
 the SummarizedExperiment object. These variables may be either categorical or continuous.}
 
-\item{to.exclude}{Symbols. A symbol or vector of symbols indication which metrics to be excluded.
+\item{plots.to.exclude}{Symbols. A symbol or vector of symbols indication which metrics to be excluded.
 The metrics can be obtained using the  'getAssessmentMetrics' function. The default is set to NULL. Refer
 to the details for more information.}
 
@@ -80,12 +107,20 @@ is set to 'red'.}
 \item{rle.geom.hline.color}{Symbol. Indicates the color of the horizontal line in the RLE plots. The default is set
 to 'cyan'.}
 
-\item{rle.plot.ncol}{Numeric. Indicates the columns of the plot grid in the RLE plots. The default is set to 1.}
+\item{rle.plot.ncol}{Numeric. A numeric value indicating the columns of the plot grid in the RLE boxplots. The default is
+set to 1.}
 
-\item{rle.plot.nrow}{Numeric. Indicates the rows of the plot grid in the RLE plots. The default is set to 3.}
+\item{rle.plot.nrow}{Numeric. A numeric value indicating the rows of the plot grid in the RLE boxplots. The default is set
+to 3.}
 
-\item{rle.variables.colors}{List. Indicates selected colors for each variables for colored RLE plots. The default is
-set to 'NULL', then the function use the default colors.}
+\item{rle.var.plot.ncol}{Numeric. A numeric value indicating the columns of the plot grid in the scatter plots of the rle
+medians against variable. The default is set to 3.}
+
+\item{rle.var.plot.nrow}{Numeric. A numeric value indicating the rows of the plot grid in the scatter plots of the rle
+medians against variable. The default is set to 3.}
+
+\item{rle.colors}{List. A list of colors for the specified variables to color the RLE boxplots. If 'NULL', the default
+colors will be used.}
 
 \item{fast.pca}{Logical. Indicates whether to calculate a specific number of PCs instead of the full range to speed up
 the process. The default is set to 'TRUE'. Refer to the function 'computePCA' for more details.}
@@ -105,51 +140,132 @@ mean square otherwise. The default is 'FALSE'.}
 \item{svd.bsparam}{A BiocParallelParam object specifying how parallelization should be performed. The default is bsparam().
 We refer to the 'runSVD' function from the BiocSingular R package.}
 
-\item{pca.variables.colors}{List. Indicates selected colors for each variables for PCA plots. The default is
-set to 'NULL', then the function uses the default colors.}
+\item{pca.variables.colors}{List. A list of colors for the specified categorical variables to color PCA plots. If 'NULL',
+the default colors will be used.}
 
-\item{sil.dist.measure}{Symbol. Indicates which ditsance measure to be used. The options are 'euclidean', 'maximum',
-'manhattan', 'canberra', 'binary' or 'minkowski'. The default is set to 'euclidean'. Refer to the function 'dist' from
-the R package stats for more details.}
+\item{pca.plot.nrow}{Numeric. A numeric value indicating the rows of the plot grid in the scatter plots of the PCA
+. The default is set to 3.}
 
-\item{sli.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the silhouette coefficients. The
-default is set to 3.}
+\item{pca.plot.ncol}{Numeric. A numeric value indicating the columns of the plot grid in the scatter plots of the PCA
+. The default is set to 3.}
+
+\item{pca.stroke.size}{Numeric. A numeric value indicating the size of the stroke of the points in the scatter PCA plots.
+The default is set to 0.1.}
+
+\item{pca.stroke.color}{Symbol. A symbol specifying the color of the stroke of the points in the scatter PCA plots.
+The default is set to 'gray'.}
+
+\item{pca.points.alpha}{Numeric. A numeric value indicating the transparency of the points in the scatter PCA plots.
+The default is set to 0.5.}
+
+\item{pca.densities.alpha}{Numeric. A numeric value indicating the transparency of the densities in the scatter PCA plots.
+The default is set to 0.5.}
+
+\item{sil.dist.measure}{Symbol. A symbol indicating which ditsance measure to be applied on the PCs to calculate silhouette.
+The options are 'euclidean', maximum', manhattan', 'canberra', 'binary' or 'minkowski'. The default is set to 'euclidean'.
+Refer to the function 'computeSilhouette' for more details.}
+
+\item{sli.nb.pcs}{Numeric. A numeric value specifying the number of PCs to be used to compute the silhouette coefficients.
+The default is set to 3. Refer to the function 'computeSilhouette' for more details. This number cannot be larger than
+'compute.nb.pcs'.}
 
 \item{ari.clustering.method}{Symbol. A symbol that indicates which clustering methods should be applied on the PCs to
-calculate the ARI. The options are 'mclust' or 'hclust' methods. The default is set to 'hclust'.}
+calculate the ARI. The options are 'mclust' or 'hclust' methods. The default is set to 'hclust'. Refer to the 'computeARI'
+for more details.}
 
-\item{ari.hclust.method}{Symbol. Indicate the agglomeration method to be used when the  'clustering.method' is 'hclust'
-method. The options are: 'ward.D', 'ward.D2', 'single', 'complete', 'average' (= UPGMA), 'mcquitty' (= WPGMA),
-'median' (= WPGMC) or centroid' (= UPGMC). Refer to the 'hclust' function from the stats R package for more details.}
+\item{ari.hclust.method}{Symbol. A symbol specifying the agglomeration method to be used when the 'clustering.method'
+is set to 'hclust' method for computing ARI. The options are: 'ward.D', 'ward.D2', 'single', 'complete', 'average' (= UPGMA),
+'mcquitty' (= WPGMA), median' (= WPGMC) or centroid' (= UPGMC). The default is set to 'complete'. Refer to the 'computeARI'
+for more details.}
 
-\item{ari.hclust.dist.measure}{Symbol. Indicates the distance measure to be used in the 'dist' function. The options are
-'euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'. Refer to the 'dist' function from the stats
-R package for more details.}
+\item{ari.hclust.dist.measure}{Symbol. A symbol indicating the distance measure to be used in the 'dist' function when
+the 'clustering.method' is set to 'hclust' method for computing ARI. The options are 'euclidean', 'maximum', 'manhattan',
+'canberra', 'binary' or 'minkowski'. The default is set to 'euclidean'. Refer to the 'computeARI' for more details.}
 
-\item{ari.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the ARI. The default is set to 3.
-This number cannot be larger than 'compute.nb.pcs'.}
+\item{ari.nb.pcs}{Numeric. A numeric value indicating the number of PCs to be used to compute the ARI. The default is
+set to 3. This number cannot be larger than 'compute.nb.pcs'.}
 
-\item{vca.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the vector correlation analysis.
-The default is set to 3. This number cannot be larger than 'compute.nb.pcs'.}
+\item{vca.nb.pcs}{Numeric. A numeric value specifying the number of PCs that should be used to compute the vector correlation
+analysis. The default is set to 3. This number cannot be larger than 'compute.nb.pcs'.}
 
-\item{lra.nb.pcs}{Numeric. Indicates the number of PCs that should be used to compute the linear regression analysis.
-The default is set to 3. This number cannot be larger than 'compute.nb.pcs'.}
+\item{lra.nb.pcs}{Numeric.  A numeric value indicating the number of PCs that should be used to compute the linear
+regression analysis between the PCs and variables.The default is set to 3. This number cannot be larger than 'compute.nb.pcs'.}
 
-\item{corr.method}{Symbol. Indicates which correlation method should be used to compute association between gene-level
-expression and a continuous variable. The options are 'pearson', 'kendall', or "spearman". The default is set to 'spearman'.}
+\item{corr.method}{Symbol. A symbol indicating which correlation method should be used to compute correlation between
+gene-level expression and a continuous variable. The options are 'pearson', 'kendall', or "spearman". The default is
+set to 'spearman'.}
 
-\item{a}{Numeric. The significance level used for the confidence intervals in the correlation. The default is set to
-0.05. Refer to the 'correls' function from the 'Rfast' R package for more details.}
+\item{a}{Numeric. A numeric value showing the significance level used for the confidence intervals in the gene level
+correlation analysis. The default is set to 0.05.}
 
-\item{rho}{Numeric. The value of the hypothesized correlation to be used in the hypothesis testing. The default is
-set to 0. Refer to the 'correls' function from the 'Rfast' R package for more details.}
+\item{rho}{Numeric. A numeric value showing the value of the hypothesized correlation to be used in the hypothesis
+testing. The default is set to 0.}
 
-\item{anova.method}{Indicates which anova method should be used to compute association between gene-level expression
-and a categorical variable. The options are 'aov' and 'welch'. The default is set to 'aov'.}
+\item{correlation.plot.ncol}{Numeric. A numeric value indicating the columns of the plot grid in the boxplots of the
+correlations. The default is set to 1.}
 
-\item{deg.plot.ncol}{Indicates the columns of the plot grid in the p-value histograms plots. The default is set to 1.}
+\item{correlation.plot.nrow}{Numeric. A numeric value indicating the rows of the plot grid in the boxplots of the
+correlations. The default is set to 3.}
 
-\item{deg.plot.nrow}{Indicates the rows of the plot grid in the p-value histograms plots. The default is set to 3.}
+\item{anova.method}{Symbol. A symbol indicating which anova method should be used to compute association between
+gene-level expression and a categorical variable. The options are 'aov' and 'welch'. The default is set to 'aov'.}
+
+\item{anova.plot.ncol}{Numeric. A numeric value indicating the columns of the plot grid in the boxplots of the
+ANOVA F-values. The default is set to 1.}
+
+\item{anova.plot.nrow}{Numeric. A numeric value indicating the rows of the plot grid in the boxplots of the
+ANOVA F-values. The default is set to 3.}
+
+\item{pcorr.method}{Symbol. A symbol indicating which correlation method should be used to compute gene-gene partial
+correlation. The options are 'pearson', 'kendall', or "spearman". The default is set to 'spearman'.}
+
+\item{pcorr.genes}{Vector. A vector comprising genes upon which the gene-gene correlation analysis will be performed.
+The vector can be logical, numeric or gene names. The default is 'NULL'.}
+
+\item{pcorr.select.genes}{If 'TRUE', the function will compute correlation between individual genes and the specified
+variable for partail pair-wise correlation analysis, then select a subset of gene based the "corr.coff.cutoff" for
+down-stream analysis. The default is set to TRUE'}
+
+\item{pcorr.reference.data}{Symbol. A symbol specifying the name of the assay to be used to select genes using the correlation
+analysis. The default is NULL. This means all the specified assays will be used.}
+
+\item{pcorr.corr.cutoff}{Numeric. A numeric value to be used as a cutoff for selecting the genes. The default is set to
+0.7.}
+
+\item{pcorr.filter.genes}{Logical. Indicates to filter gene-gene coreelation of the pair-wise partail correlations
+before generating the plots or not. The default is set to 'TRUE'.}
+
+\item{pcorr.corr.dif.cutoff}{Numeric. A numeric value to be used as a cutoff for filtering genes. The default is set to
+0.3 .}
+
+\item{pcorr.plot.ncol}{Numeric. Indicates number of columns in the plot grid. When the number of selected assay is more than
+1, the function puts all the RLE boxplots in one grid.}
+
+\item{pcorr.plot.nrow}{Numeric. Indicates number of rows in the plot grid. When the number of selected assay is more than
+3, the function puts all the RLE boxplots in one grid.}
+
+\item{deg.plot.ncol}{Numeric. A numeric value indicating the columns of the plot grid in the p-value histograms plots.
+The default is set to 1.}
+
+\item{deg.plot.nrow}{Numeric. A numeric value indicating the rows of the plot grid in the p-value histograms plots.
+The default is set to 3.}
+
+\item{gene.set.score.reference.data}{Symbol. A symbol specifying either the column name in the SummarizedExperiment object containing
+the scores of a gene set enrichment analysis or the name of the assay to be used as reference.}
+
+\item{gene.set.score.regress.out.variables}{Symbol. A symbol or a vector of symbols indicating the name(s) of the
+columns in the SummmairzedExperiment object to regress out from the data before calculating the score of a gene set.
+The default is set to NULL.}
+
+\item{gene.set.score.list}{List. A list gene set for each continuous variables to calculate the gene set enrichment
+analysis.}
+
+\item{gene.set.score.normalization}{Symbol. A symbol indicating normalization methods to be applied before computing
+gene set scoring. The default is set to 'NULL'.}
+
+\item{gene.set.score.assessment}{TTT}
+
+\item{gene.set.score.variables.to.assess}{TTT}
 
 \item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment class object.}
 
@@ -157,17 +273,19 @@ and a categorical variable. The options are 'aov' and 'welch'. The default is se
 The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
 the checkSeObj function for more details.}
 
-\item{output.file.name}{Path and name of the output file to save the assessments plots in a pdf format.}
+\item{override.check}{Logical. When set to 'TRUE', the function verifies the current SummarizedExperiment object to
+determine if a certain metric has already been computed for the current parameters. If it has, the metric will not be
+recalculated again. The default is set to 'FALSE'.}
 
-\item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
+\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
 \value{
 A SummarizedExperiment object containing all the assessments plots and metrics. If specified it will generate
 a pdf containing the assessments plots and metrics used for the assessment.
 }
 \description{
-This function applies a range of global and gene level metrics to assess the variation in biological and unwanted
-variables in the assay(s) of a SummarizedExperiment object. The result of individual metric will be plotted.
+This function applies a range of global and gene level metrics to assess the variation of specified
+variables in the assay(s) of a SummarizedExperiment object.
 }
 \details{
 Several assessment will be performed:
@@ -196,7 +314,6 @@ It will output the following plots:
 \references{
 Molania R., ..., Speed, T. P., A new normalization for Nanostring nCounter gene expression data, Nucleic Acids Research,
 2019.
-
 Molania R., ..., Speed, T. P., Removing unwanted variation from large-scale RNA sequencing data with PRPS,
 Nature Biotechnology, 2023
 }

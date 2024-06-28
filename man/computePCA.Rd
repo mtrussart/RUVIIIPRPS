@@ -17,6 +17,7 @@ computePCA(
   assess.se.obj = TRUE,
   remove.na = "assays",
   save.se.obj = TRUE,
+  override.check = FALSE,
   verbose = TRUE
 )
 }
@@ -56,6 +57,10 @@ We refer to the checkSeObj function for more details.}
 
 \item{save.se.obj}{Logical. Indicates whether to save the SVD results in the metadata of the SummarizedExperiment object
 or to output the results as list. By default it is set to 'TRUE'.}
+
+\item{override.check}{Logical. When set to 'TRUE', the function verifies the current SummarizedExperiment object to
+determine if the PCA has already been computed for the current parameters. If it has, the metric will not be recalculated.
+The default is set to FALSE.}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/assessVariablesAssociation.R
 \name{assessVariablesAssociation}
 \alias{assessVariablesAssociation}
-\title{assess the association between variables.}
+\title{Assess the association between variables.}
 \usage{
 assessVariablesAssociation(
   se.obj,
