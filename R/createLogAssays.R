@@ -9,6 +9,8 @@
 #' @param pseudo.count Numeric. A value serving as a pseudo count to be added to all measurements in the assay(s) before
 #' applying log-transformation. This helps prevent -Inf values for measurements equal to 0. The default is 1.
 #' @param replace.assays Logical. When set to 'TRUE', the assay(s) will be substituted with the log transformation.
+#' @param new.name Symbol. A symbol to add to the current assay name for the log transformed data. The default is set to
+#' 'log.' .
 #' @param apply.round If 'TRUE', the measurements of individual assays will be rounded to two decimal points. The default
 #' is 'TRUE'.
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
@@ -20,6 +22,7 @@ createLogAssays <- function(
         assay.names = 'all',
         pseudo.count = 1,
         replace.assays = FALSE,
+        new.name = 'Log.',
         apply.round = FALSE,
         verbose = TRUE
 ){
@@ -34,7 +37,7 @@ createLogAssays <- function(
 
     # assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
-        assay.names <- as.factor(names(assays(se.obj)))
+        assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else assay.names <- factor(x = assay.names, levels = assay.names)
     if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names))
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
@@ -62,13 +65,11 @@ createLogAssays <- function(
         if(isTRUE(apply.round))
             temp.data <- round(x = temp.data, digits = 2)
         ## save the data ####
-        new.assay.name <- paste0('Log_', x)
-        if (!new.assay.name %in% (names(se.obj@assays@data))) {
-            if(isTRUE(replace.assays)){
-                se.obj@assays@data[x] <- NULL
-                se.obj@assays@data[[new.assay.name]] <- temp.data
-            } else se.obj@assays@data[[new.assay.name]] <- temp.data
-        }
+        new.assay.name <- paste0(new.name, x)
+        if(isTRUE(replace.assays)){
+            se.obj@assays@data[x] <- NULL
+            se.obj@assays@data[[new.assay.name]] <- temp.data
+        } else se.obj@assays@data[[new.assay.name]] <- temp.data
     }
     printColoredMessage(message = '------------The createLogAssays function finished.',
                         color = 'white',
