@@ -18,6 +18,7 @@ printColoredMessage <- function(
         "magenta" = "\033[35m",
         "cyan"    = "\033[36m",
         "white"   = "\033[37m",
+        "orange"  = "\033[38;5;208m",  # Orange color
         "reset"   = "\033[0m",
         ""
     )
@@ -28,3 +29,4 @@ printColoredMessage <- function(
         cat('')
     }
 }
+
