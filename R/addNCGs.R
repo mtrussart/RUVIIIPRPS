@@ -55,7 +55,6 @@ addNCGs <- function(
         output.name = NULL,
         verbose = TRUE
         ){
-
     # Check inputs ####
     if(is.logical(ncg)){
         if(length(ncg) > nrow(se.obj)){
@@ -64,22 +63,24 @@ addNCGs <- function(
             stop('The "ncg" does not contain any "TRUE" value.')
         }
         printColoredMessage(
-            message = paste0(sum(ncg), 'NCGs genes are found in the SummarizedExperiment object.' ),
+            message = paste0('- ', sum(ncg), 'NCGs genes are found in the SummarizedExperiment object.' ),
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
     } else if (is.character(ncg) | is.factor(ncg)){
         ncg <- intersect(unique(ncg), row.names(se.obj))
         if(length(ncg) == 0){
-            stop('None of the "ncg" can be found in the SummarizedExperiment object. ')
+            stop('None of the genes specified in the "ncg" can be found in the SummarizedExperiment object. ')
         }
         printColoredMessage(
-            message = paste0(length(ncg), 'NCGs genes are found in the SummarizedExperiment object.' ),
+            message = paste0(length(ncg), ' NCGs genes are found in the SummarizedExperiment object.' ),
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         ncg <- row.names(se.obj) %in% ncg
     } else if (is.numeric(ncg)){
         if(max(ncg) > nrow(se.obj)){
-            stop('The "ncg" contains some number(s) that is larger than the number of rows in the SummarizedExperiment object.')
+            stop('- The "ncg" contains some number(s) that is larger than the number of rows in the SummarizedExperiment object.')
         }
         printColoredMessage(
             message = paste0(length(ncg), ' NCGs genes are found in the SummarizedExperiment object.' ),
@@ -102,36 +103,16 @@ addNCGs <- function(
         }
     }
 
-    # assessment of performance of the of NCGs  ####
+    # Assessment of performance of the of NCGs  ####
     if(isTRUE(assess.ncg)){
         ## apply log ####
-        if (isTRUE(apply.log) & !is.null(pseudo.count)){
-            printColoredMessage(
-                message = paste0(
-                    'Applying log2 + ',
-                    pseudo.count,
-                    ' (pseudo.count) on the ',
-                    assay.name,
-                    ' data.'),
-                color = 'blue',
-                verbose = verbose)
-            expr.data <- log2(assay(x = se.obj, i = assay.name) + pseudo.count)
-        } else if (isTRUE(apply.log) & is.null(pseudo.count)){
-            printColoredMessage(
-                message = paste0(
-                    'Applying log2 on the ',
-                    assay.name,
-                    ' data.'),
-                color = 'blue',
-                verbose = verbose)
-            expr.data <- log2(assay(x = se.obj, i = assay.name))
-        } else if (isFALSE(apply.log)) {
-            printColoredMessage(
-                message = paste0('The ', assay.name, ' data will be used without any log transformation.'),
-                color = 'blue',
-                verbose = verbose)
-            expr.data <- assay(x = se.obj, i = assay.name)
-        }
+        expr.data <- applyLog(
+            se.obj = se.obj,
+            assay.names = assay.name,
+            apply.log = apply.log,
+            pseudo.count = pseudo.count,
+            assessment = ' two-way ANOVA'
+        )[[assay.name]]
 
         # assessment of performance of the of NCGs  ####
         printColoredMessage(
@@ -207,9 +188,9 @@ addNCGs <- function(
         if(verbose)  print(pca.ncg)
     }
 
-    # save the results ####
+    # Save the results ####
     if(is.null(output.name)){
-        output.name <- paste0(sum(ncg), ' genes')
+        output.name <- paste0(sum(ncg), '_genes')
     }
     if(save.se.obj == TRUE){
         printColoredMessage(
@@ -226,15 +207,28 @@ addNCGs <- function(
         if(!output.name %in% names(se.obj@metadata[['NCG']][['pre.selected']])){
             se.obj@metadata[['NCG']][['pre.selected']][[output.name]] <- list()
         }
-        se.obj@metadata[['NCG']][['pre.selected']][[output.name]] <- ncg
+        if(!'gene.list' %in% names(se.obj@metadata[['NCG']][['pre.selected']][[output.name]])){
+            se.obj@metadata[['NCG']][['pre.selected']][[output.name]][['gene.list']] <- list()
+        }
+        se.obj@metadata[['NCG']][['pre.selected']][[output.name]][['gene.list']] <- ncg
+
+        if(isTRUE(assess.ncg)){
+            if(!'assessment.plot' %in% names(se.obj@metadata[['NCG']][['pre.selected']][[output.name]])){
+                se.obj@metadata[['NCG']][['pre.selected']][[output.name]][['assessment.plot']] <- list()
+            }
+
+        }
+
         printColoredMessage(
             message = 'The NCGs are saved to metadata of the SummarizedExperiment object.',
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         printColoredMessage(
             message = '------------The supervisedFindNcgTWAnova function finished.',
             color = 'white',
-            verbose = verbose)
+            verbose = verbose
+            )
         return(se.obj)
     }
 }
