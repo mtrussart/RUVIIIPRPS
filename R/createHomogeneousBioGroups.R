@@ -48,293 +48,338 @@
 #' @return A SummarizedExperiment object containing the all possible homogeneous groups in the "metadata$HGgroups$UVgroups"
 #' or a vector of all possible homogeneous groups.
 
-#' @importFrom SummarizedExperiment assay
-#' @importFrom DescTools ContCoef
+#' @importFrom SummarizedExperiment assay colData
 #' @importFrom stats kmeans quantile
 #' @importFrom knitr kable
+#' @export
 
 createHomogeneousBioGroups <- function(
         se.obj,
         bio.variables,
         clustering.method = 'kmeans',
-        nb.clusters,
+        nb.clusters = 3,
         assess.variables = TRUE,
         cat.cor.coef = c(0.9, 0.9),
         cont.cor.coef = c(0.9, 0.9),
         assess.se.obj = TRUE,
         remove.na = 'sample.annotation',
         save.se.obj = TRUE,
-        verbose = TRUE) {
-    printColoredMessage(message = '------------The createHomogeneousBioGroups function starts:',
+        verbose = TRUE
+        ){
+    printColoredMessage(message = '------------The createHomogeneousUVGroups function starts:',
                         color = 'white',
                         verbose = verbose)
-    # check some inputs ###
-    if (is.null(bio.variables)) {
+    # Check  the inputs ####
+    if(is.null(bio.variables)){
         stop('The bio.variables cannot be empty.')
-    } else if (!clustering.method %in% c('kmeans', 'cut', 'quantile')) {
-        stop('The "clustering.method" should be one of: "kmeans", "cut" or "quantile".')
-    } else if (max(cat.cor.coef) > 1 | min(cat.cor.coef) < 0) {
-        stop('The maximum value for the "cat.cor.coef" cannot be more than 1 or negative.')
-    } else if (max(cont.cor.coef) > 1 | min(cont.cor.coef) < 0) {
-        stop('The maximum value for the "cont.cor.coef" cannot be more than 1 or negative.')
-    } else if (remove.na %in% c('both', 'measuerments')) {
-        stop('The remove.na should be either "sample.annotation" or "none".')
+    } else if(!is.vector(bio.variables)){
+        stop('The "bio.variables" must be a vector.')
+    } else if(!clustering.method %in% c('kmeans', 'cut', 'quantile')){
+        stop('The clustering.method should be one of: kmeans, cut or quantile.')
+    } else if(max(cat.cor.coef) > 1){
+        stop('The maximum value for the cat.cor.coef is 1.')
+    } else if(max(cont.cor.coef) > 1){
+        stop('The maximum value for the cont.cor.coef is 1.')
+    } else if( remove.na %in% c('both', 'measuerments')){
+        stop('The remove.na should be either sample.annotation or none.')
     }
-    # assess correlation between the variables ####
+
+    # Assess association between variables ####
     if (isTRUE(assess.variables)) {
         printColoredMessage(
-            message = '-- Assess the correlation between unwanted variation variables:',
+            message = '-- Assess the correlation between biological variables:',
             color = 'magenta',
             verbose = verbose)
         se.obj <- assessVariablesAssociation(
             se.obj = se.obj,
-            bio.variables = bio.variables,
             uv.variables = NULL,
+            bio.variables = bio.variables,
             cat.cor.coef = cat.cor.coef,
             cont.cor.coef = cont.cor.coef,
             assess.se.obj = TRUE,
             remove.na = remove.na,
             verbose = verbose
-        )
+            )
         bio.variables <- se.obj$bio.variables
         se.obj <- se.obj$se.obj
     }
-    class.bio.var <- unlist(lapply(
+
+    # Find the class of biological variables ####
+    printColoredMessage(
+        message = '-- Find the class and levels of the variable(s):',
+        color = 'magenta',
+        verbose = verbose
+    )
+    class.uv.var <- unlist(lapply(
         bio.variables,
         function(x) class(se.obj[[x]])))
-    categorical.bio.var <- bio.variables[class.bio.var %in% c('factor', 'character')]
-    continuous.bio.var <- bio.variables[class.bio.var %in% c('numeric', 'integer')]
-    # cluster continuous variables ####
-    if (length(continuous.bio.var) > 0) {
-        # grammar
-        if (length(continuous.bio.var) == 1) {
-            a = 'is'
-            b = 'source'
-        } else {
-            a = 'are'
-            b = 'sources'
-        }
+    categorical.uv <- bio.variables[class.uv.var %in% c('factor', 'character')]
+    if(length(categorical.uv) > 1){
         printColoredMessage(
-            message = paste0('-- Clustering of the ', b, ' of biological variation:'),
+            message = paste0('- ', length(categorical.uv), ' categorical variables are provided.'),
+            color = 'blue',
+            verbose = verbose
+        )
+        categorical.uv <- unlist(lapply(
+            categorical.uv,
+            function(x){
+                if(length(unique(colData(se.obj))[[x]]) == 1){
+                    printColoredMessage(
+                        message = paste0('- the "', x, '" variable contains 1 levels. Then, this will be excluded.'),
+                        color = 'blue',
+                        verbose = verbose)
+                } else {
+                    printColoredMessage(
+                        message = paste0('- the "', x, '" variable contains ',  length(unique(colData(se.obj)[[x]])), ' levels.'),
+                        color = 'blue',
+                        verbose = verbose)
+                    keep.variable <- x
+                }
+                return(keep.variable)
+            }))
+    }
+    continuous.uv <- bio.variables[class.uv.var %in% c('numeric', 'integer')]
+    if(length(continuous.uv) > 0){
+        printColoredMessage(
+            message = paste0('- ', length(categorical.uv),
+                             ' continuous variables are provided.'),
+            color = 'blue',
+            verbose = verbose
+        )
+        continuous.uv <- unlist(lapply(
+            continuous.uv,
+            function(x){
+                if(var(colData(se.obj)[[x]]) == 0){
+                    printColoredMessage(
+                        message = paste0('- the variance of the "', x,
+                                         '" variable is 0 . Then, this will be excluded.'),
+                        color = 'blue',
+                        verbose = verbose
+                    )
+                } else {
+                    printColoredMessage(
+                        message = paste0('- the variance of the "', x, '" variable is ~ ',
+                                         round(x = var(colData(se.obj)[[x]]), digits = 5) , '.'),
+                        color = 'blue',
+                        verbose = verbose
+                    )
+                    keep.variable <- x
+                }
+                return(keep.variable)
+            }))
+    }
+
+    # Cluster continuous variable ####
+    if(length(continuous.uv) > 0){
+        ## check clustering value for continuous variable
+        if(nb.clusters == 1){
+            stop('The value of "nb.clusters" must be bigger than 1.')
+        } else if (is.null(nb.clusters)){
+            stop('The "nb.clusters" cannot be empty.')
+        } else if ( nb.clusters == 0) {
+            stop('The value of "nb.clusters" cannot be 0.')
+        }
+        ## cluster continuous variables ####
+        printColoredMessage(
+            message = '-- Cluster continuous sources of biological variation:',
             color = 'magenta',
             verbose = verbose
         )
-        printColoredMessage(
-            message = paste0(
-                'There ',
-                a,
-                ' ',
-                length(continuous.bio.var),
-                ' continuous ' ,
-                b ,
-                ' of biological variation:',
-                paste0(continuous.bio.var, collapse = ' & '),
-                '.'
-            ),
+        printColoredMessage(message = paste0(
+            '- each source will be divided into ', nb.clusters, ' groups using the ', clustering.method, ' method.'),
             color = 'blue',
             verbose = verbose
         )
-        if (nb.clusters == 1) {
-            stop('The value of "nb.clusters" should be more than 1.')
-        } else if (is.null(nb.clusters)) {
-            stop('The "nb.clusters" cannot be empty.')
-        } else if (nb.clusters == 0) {
-            stop('The "nb.clusters" cannot be 0.')
-        }
-        printColoredMessage(
-            message = paste0(
-                'Then, each source will be divided into ',
-                nb.clusters,
-                ' groups using ',
-                clustering.method,
-                '.'
-            ),
-            color = 'blue',
-            verbose = verbose
-        )
+        ## kmeans ####
         if (clustering.method == 'kmeans') {
             set.seed(3456)
-            bio.cont.groups <- lapply(
-                continuous.bio.var,
-                function(x) {
-                    bio.cont.clusters <- kmeans(
+            continuous.uv.groups <- lapply(
+                continuous.uv,
+                function(x){
+                    uv.cont.clusters <- stats::kmeans(
                         x = colData(se.obj)[[x]],
                         centers = nb.clusters,
                         iter.max = 1000)
-                    paste0(x, '_group', bio.cont.clusters$cluster)
+                    paste0(x, '_group', uv.cont.clusters$cluster)
                 })
-            names(bio.cont.groups) <- continuous.bio.var
-        } else if (clustering.method == 'cut') {
-            bio.cont.groups <- lapply(
-                continuous.bio.var,
+            names(continuous.uv.groups) <- continuous.uv
+            continuous.uv.groups <- as.data.frame(do.call(cbind, continuous.uv.groups))
+            continuous.uv.groups <- apply(
+                continuous.uv.groups,
+                1,
+                paste , collapse = "..")
+        }
+        ## cut ####
+        if (clustering.method == 'cut') {
+            continuous.uv.groups <- lapply(
+                continuous.uv,
                 function(x) {
-                    bio.cont.clusters <- as.numeric(cut(
-                        x = colData(se.obj)[[x]],
-                        breaks = nb.clusters,
-                        include.lowest = TRUE
-                    ))
-                    paste0(x, '_group', bio.cont.clusters)
+                    uv.cont.clusters <- as.numeric(
+                        cut(x = colData(se.obj)[[x]],
+                            breaks = nb.clusters,
+                            include.lowest = TRUE))
+                    paste0(x, '_group', uv.cont.clusters)
                 })
-            names(bio.cont.groups) <- continuous.bio.var
-        } else if (clustering.method == 'quantile') {
-            bio.cont.groups <- lapply(
-                continuous.bio.var,
+            names(continuous.uv.groups) <- continuous.uv
+            continuous.uv.groups <- as.data.frame(do.call(cbind, continuous.uv.groups))
+            continuous.uv.groups <- apply(
+                continuous.uv.groups,
+                1,
+                paste , collapse = "..")
+        }
+        ## quantile ####
+        if (clustering.method == 'quantile') {
+            continuous.uv.groups <- lapply(
+                continuous.uv,
                 function(x) {
-                    quantiles <- quantile(x = colData(se.obj)[[x]],
-                                 probs = seq(0, 1, 1 / nb.clusters))
-                    bio.cont.clusters <- as.numeric(cut(
-                            x = colData(se.obj)[[x]],
+                    quantiles <- quantile(x = colData(se.obj)[[x]], probs = seq(0, 1, 1 / nb.clusters))
+                    uv.cont.clusters <- as.numeric(
+                        cut(x = colData(se.obj)[[x]],
                             breaks = quantiles,
-                            include.lowest = TRUE
-                        ))
-                    paste0(x, '_group', bio.cont.clusters)
+                            include.lowest = TRUE))
+                    paste0(x, '_group', uv.cont.clusters)
                 })
-            names(bio.cont.groups) <- continuous.bio.var
+            names(continuous.uv.groups) <- continuous.uv
+            continuous.uv.groups <- as.data.frame(do.call(cbind, continuous.uv.groups))
+            continuous.uv.groups <- apply(
+                continuous.uv.groups,
+                1,
+                paste , collapse = "..")
         }
-        continuous.bio.groups <- as.data.frame(do.call(cbind, bio.cont.groups))
     }
-    # categorical biological variables ####
-    if (length(categorical.bio.var) > 0) {
-        printColoredMessage(
-            message = '-- Check the categorical sources:',
-            color = 'magenta',
-            verbose =  verbose
-        )
-        if (length(categorical.bio.var) == 1) {
-            a = 'is'
-            b = 'source'
-        } else {
-            a = 'are'
-            b = 'sources'
-        }
-        printColoredMessage(
-            message = paste0(
-                'There ',
-                a,
-                ' ',
-                length(categorical.bio.var),
-                ' categorical ' ,
-                b ,
-                ' of biological variation.'
-            ),
-            color = 'blue',
-            verbose = verbose
-        )
-        categorical.bio.groups <- colData(se.obj)[, categorical.bio.var, drop = FALSE]
-        categorical.bio.groups <- as.data.frame(categorical.bio.groups)
+
+    # Check categorical variable ####
+    if(length(categorical.uv) > 0){
+        categorical.uv.groups <- as.data.frame(colData(se.obj)[, categorical.uv, drop = FALSE])
     }
-    # create all possible biological groups ####
-    if (length(categorical.bio.var) > 0 &
-        length(continuous.bio.var) > 0) {
+    # Create all possible homogeneous groups ####
+    printColoredMessage(
+        message = '-- Create all possible combination of the groups:',
+        color = 'magenta',
+        verbose =  verbose
+    )
+    ## use both continuous and categorical ####
+    if(length(categorical.uv) > 0 & length(continuous.uv) > 0 ){
         printColoredMessage(
-            message = '-- The products of the groups:',
-            color = 'magenta',
-            verbose =  verbose
-        )
-        all.groups <-
-            cbind(continuous.bio.groups, categorical.bio.groups)
-        all.groups <- unname(apply(all.groups,
-                                   1,
-                                   paste , collapse = ".."))
-        printColoredMessage(
-            message = paste0(
-                'In totall, ',
-                length(unique(all.groups)),
-                ' homogeneous biological groups are created:'),
+            message = '- create all possible combination of the groups using both continuous and categorical variables:',
             color = 'blue',
-            verbose = verbose
-        )
-        if (verbose)
-            print(kable(table(all.groups), caption = 'Homogeneous biological groups'))
-        all.groups <- gsub('_', '-', all.groups)
-    } else if (length(categorical.bio.var) == 0 &
-               length(continuous.bio.var) > 0) {
-        printColoredMessage(
-            message = '-- The products of the groups:',
-            color = 'magenta',
             verbose =  verbose
         )
+        all.groups <- categorical.uv.groups
+        all.groups$cont <- continuous.uv.groups
         all.groups <- unname(apply(
-            continuous.bio.groups,
+            all.groups,
             1,
-            paste , collapse = ".."))
+            paste , collapse = ".."
+        ))
         printColoredMessage(
             message = paste0(
-                'In totall, ',
+                '- in totall, ',
                 length(unique(all.groups)),
-                ' homogeneous biological groups are created:'),
-            color = 'grey',
+                ' homogeneous groups  are created:'),
+            color = 'blue',
             verbose = verbose
         )
-        if (verbose)
-            print(kable(table(all.groups), caption = 'Homogeneous biological groups'))
-        all.groups <- gsub('_', '-', all.groups)
-    } else if (length(categorical.bio.var) > 0 &
-               length(continuous.bio.var) == 0) {
-        printColoredMessage(
-            message = '-- The products of the groups:',
-            color = 'magenta',
-            verbose =  verbose
-        )
-        all.groups <- unname(apply(categorical.bio.groups,
-                                   1,
-                                   paste , collapse = ".."))
-        printColoredMessage(
-            message = paste0(
-                'In totall, ',
-                length(unique(all.groups)),
-                ' homogeneous biological groups are created:'),
-            color = 'grey',
-            verbose = verbose
-        )
-        if (verbose)
-            print(kable(table(all.groups), caption = 'Homogeneous biological groups'))
+        cat("", file = stdout(), sep = "")
+        if(isTRUE(verbose))
+            print(x = kable(table(all.groups), caption = 'homogeneous groups'))
         all.groups <- gsub('_', '-', all.groups)
     }
-    # save the results ####
-    ##  add results to the SummarizedExperiment object ####
+    ## use only continuous ####
+    if (length(categorical.uv) == 0 & length(continuous.uv) > 0){
+        printColoredMessage(
+            message = '- create all possible combination of the groups using continuous variables:',
+            color = 'blue',
+            verbose =  verbose
+        )
+        all.groups <- continuous.uv.groups
+        printColoredMessage(
+            message = paste0(
+                '- in totall, ',
+                length(unique(all.groups)),
+                ' homogeneous groups are created:'),
+            color = 'blue',
+            verbose = verbose
+        )
+        if(isTRUE(verbose))
+            print(kable(table(all.groups), caption = 'homogeneous groups'))
+        all.groups <- gsub('_', '-', all.groups)
+    }
+    ## use only categorical ####
+    if(length(categorical.uv) > 0 & length(continuous.uv) == 0){
+        printColoredMessage(
+            message = '- create all possible combination of the groups using categorical variables:',
+            color = 'blue',
+            verbose =  verbose
+        )
+        all.groups <- apply(
+            categorical.uv.groups,
+            1,
+            paste , collapse = "..")
+        printColoredMessage(
+            message = paste0(
+                'In totall, ',
+                length(unique(all.groups)),
+                ' homogeneous groups are created:'),
+            color = 'blue',
+            verbose = verbose)
+        if(isTRUE(verbose))
+            print(kable(table(all.groups), caption = 'homogeneous groups'))
+        all.groups <- gsub('_', '-', all.groups)
+    }
+    ## error ####
+    if(length(categorical.uv) == 0 & length(continuous.uv) == 0){
+        stop('There is no categorical or continuous variables to create homogeneous groups.')
+    }
+
+    # Save the results ####
+    ## add results to the SummarizedExperiment object ####
     out.put.name <- paste0(
-        'HBIOG:',
         length(unique(all.groups)),
-        ' Gro||Var_',
+        ' groups|',
         paste0(bio.variables, collapse = '&'),
-        '||Clust:',
+        '|Clus:',
         clustering.method,
-        '_nb.clust:',
-        nb.clusters,
-        '.'
+        '|nb:',
+        nb.clusters
     )
     printColoredMessage(message = '-- Save the results',
                         color = 'magenta',
                         verbose = verbose)
-    if (isTRUE(save.se.obj)) {
+    if(isTRUE(save.se.obj)){
         printColoredMessage(
-            message = '-- Saving the homogeneous groups to the metadata of the SummarizedExperiment object.',
+            message = '- save the homogeneous groups to the metadata of the SummarizedExperiment object.',
             color = 'blue',
             verbose = verbose
         )
-        ## Check if metadata NCG already exists
-        if (length(se.obj@metadata$HGgroups) == 0) {
-            se.obj@metadata[['HGgroups']] <- list()
+        if(!'HomogeneousGroups' %in%  names(se.obj@metadata)) {
+            se.obj@metadata[['HomogeneousGroups']] <- list()
         }
-        se.obj@metadata[['HGgroups']][['BioGroups']][[out.put.name]] <- all.groups
-        printColoredMessage(message = 'The homogeneous groups are saved to the metadata of the SummarizedExperiment object.',
-                            color = 'blue',
-                            verbose = verbose)
-        printColoredMessage(message = '------------The createHomogeneousBioGroups function finished.',
-                            color = 'white',
-                            verbose = verbose)
+        if(!'BiologicalVariables' %in%  names(se.obj@metadata[['HomogeneousGroups']]) ) {
+            se.obj@metadata[['HomogeneousGroups']][['BiologicalVariables']] <- list()
+        }
+        se.obj@metadata[['HomogeneousGroups']][['BiologicalVariables']][[out.put.name]] <- all.groups
+        printColoredMessage(
+            message = '- The homogeneous groups are saved to the metadata of the SummarizedExperiment object.',
+            color = 'blue',
+            verbose = verbose)
+        printColoredMessage(
+            message = '------------The createHomogeneousUVGroups function finished.',
+            color = 'white',
+            verbose = verbose)
         return(se.obj)
     }
-    ##  output results as vector  ####
+    ## save the output as a vector ####
     if(isFALSE(save.se.obj)){
         printColoredMessage(
             message = '-- The homogeneous groups are outputed as a vector.',
             color = 'blue',
-            verbose = verbose)
-        printColoredMessage(message = '------------The createHomogeneousBioGroups function finished.',
+            verbose = verbose
+        )
+        printColoredMessage(message = '------------The createHomogeneousUVGroups function finished.',
                             color = 'white',
-                            verbose = verbose)
+                            verbose = verbose
+        )
         return(all.groups)
     }
 }
