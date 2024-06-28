@@ -1,4 +1,4 @@
-#' plot the adjusted rand index (ARI).
+#' Generats barplot the adjusted rand index (ARI).
 
 #' @author Ramyar Molania
 
@@ -50,7 +50,7 @@ plotARI <- function(
     printColoredMessage(message = '------------The plotARI function starts:',
                         color = 'white',
                         verbose = verbose)
-    # check the inputs ####
+    # Check the inputs ####
     if (is.null(assay.names)) {
         stop('The "assay.names" cannot be empty')
     } else if (is.null(variables)) {
@@ -73,39 +73,28 @@ plotARI <- function(
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
-    # check ari metric exist ####
-    m.out <- lapply(
-        levels(assay.names),
-        function(x) {
-            if (!'ARI' %in% names(se.obj@metadata[['metric']][[x]]))
-                stop(paste0('Any ARI analysis has not been computed yet on the  ', x, ' assay'))
-        })
-
-    # plots ####
+    # Plot the ARI values ####
     ## single plot ####
     if (plot.type == 'single.plot') {
-        # obtain ari ####
+        ### obtain ari ####
         printColoredMessage(
             message = paste0('-- Obtain computed ARI from the SummarizedExperiment object:'),
             color = 'magenta',
             verbose = verbose)
-        all.ari <- lapply(
-            levels(assay.names),
-            function(x) {
-                printColoredMessage(
-                    message = paste0('- Obtain the ARI for the "', x, '" data.'),
-                    color = 'blue',
-                    verbose = verbose)
-                if (!ari.method %in% names(se.obj@metadata[['metric']][[x]][['ARI']])) {
-                    stop(paste0('Any ', ari.method , ' has not been computed yet for the ', x, ' assay.'))
-                }
-                if (!variables %in% names(se.obj@metadata[['metric']][[x]][['ARI']][[ari.method]])) {
-                    stop(paste0('The ', ari.method , 'has not been computed yet for the ', variables,' variable and the ', x, ' assay.'))
-                }
-                se.obj@metadata[['metric']][[x]][['ARI']][[ari.method]][[variables]]$ari
-            })
-        names(all.ari) <- levels(assay.names)
-        ## individual plots ####
+        all.ari <- getMetricFromSeObj(
+            se.obj = se.obj,
+            slot = 'Metrics',
+            assay.names = assay.names,
+            assessment = 'ARI',
+            assessment.type = 'global.level',
+            method = ari.method,
+            variables = variables,
+            file.name = 'ari',
+            sub.file.name = NULL,
+            required.function = 'compuetARI',
+            message.to.print = 'ARI'
+            )
+        ## plot for individual assay ####
         printColoredMessage(
             message = paste0('--Generate barplot of the ARI for the individual assay (s):'),
             color = 'magenta',
@@ -119,9 +108,9 @@ plotARI <- function(
                     verbose = verbose)
                 ari.plot <- ggplot() +
                     geom_col(aes(y = all.ari[[x]], x = 1)) +
-                    ylab('Adjusted rand index ') +
-                    xlab(x) +
                     ggtitle(variables) +
+                    xlab(x) +
+                    ylab('Adjusted rand index ') +
                     theme(
                         panel.background = element_blank(),
                         axis.line = element_line(colour = 'black', linewidth = 1),
@@ -134,7 +123,8 @@ plotARI <- function(
                 return(ari.plot)
             })
         names(all.single.ari.plots) <- levels(assay.names)
-        ## overall plots ####
+
+        ## put all plots of individual assays ####
         everything <- datasets <- ari <- NULL
         if (length(assay.names) > 1) {
             printColoredMessage(
@@ -159,12 +149,27 @@ plotARI <- function(
                     axis.line = element_line(colour = 'black', linewidth = 1),
                     axis.title.x = element_text(size = 16),
                     axis.title.y = element_text(size = 16),
-                    plot.title = element_text(size = 15),
+                    plot.title = element_text(size = 18),
                     axis.text.x = element_text(
-                        size = 10,
+                        size = 14,
                         angle = 25,
                         hjust = 1),
                     axis.text.y = element_text(size = 12))
+            overall.single.ari.plot <- annotate_figure(
+                p = overall.single.ari.plot,
+                top = text_grob(
+                    label = "Adjusted rand index",
+                    color = "orange",
+                    face = "bold",
+                    size = 18),
+                bottom = text_grob(
+                    label = paste0(
+                        'Analysis: ', 'Adjusted rand index between the first PCs and the ', variables, ' variable.'),
+                    color = "black",
+                    hjust = 1,
+                    x = 1,
+                    size = 10)
+            )
             printColoredMessage(
                 message = '- The individual assay ARI barplot are combined into one.',
                 color = 'blue',
@@ -172,8 +177,10 @@ plotARI <- function(
             if(isTRUE(plot.output))
                 suppressMessages(print(overall.single.ari.plot))
         }
-    } else if (plot.type == 'combined.plot') {
-        # combine plots ####
+    }
+
+    ## combined plot ####
+    if (plot.type == 'combined.plot') {
         printColoredMessage(
             message = paste0('-- Obtain computed ARI for the from the SummarizedExperiment object:'),
             color = 'magenta',
@@ -186,22 +193,21 @@ plotARI <- function(
                     message = paste0('- Obtain ARI for the ', x, ' data.'),
                     color = 'blue',
                     verbose = verbose)
-                if (!ari.method %in% names(se.obj@metadata[['metric']][[x]][['ARI']])) {
+                if (!ari.method %in% names(se.obj@metadata[['Metrics']][[x]][['global.level']][['ARI']])) {
                     stop(paste0('The ', ari.method ,'has not been computed yet for the ', variables, ' variable and the ', x, ' assay.'))
                 }
                 for (i in variables) {
-                    if (!i %in% names(se.obj@metadata[['metric']][[x]][['ARI']][[ari.method]])) {
+                    if (!i %in% names(se.obj@metadata[['Metrics']][[x]][['global.level']][['ARI']][[ari.method]])) {
                         stop(paste0('The ', ari.method ,' has not been computed yet for the ', i, ' variable and the ', x, ' assay.'))
                     }
                 }
                 ari <- c()
                 for (i in 1:length(variables))
-                    ari[i] <-
-                    se.obj@metadata[['metric']][[x]][['ARI']][[ari.method]][[variables[i]]]$ari
+                    ari[i] <- se.obj@metadata[['Metrics']][[x]][['global.level']][['ARI']][[ari.method]][[i]]$ari
                 return(ari)
             })
         names(all.ari) <- levels(assay.names)
-        ## individual plots ####
+        ### individual plots ####
         printColoredMessage(
             message = paste0('-- Plot combined ARI'),
             color = 'magenta',
@@ -219,7 +225,7 @@ plotARI <- function(
                 row.names(all.aris) <- x
                 colnames(all.aris) <- variables
                 all.aris$datasets <- row.names(all.aris)
-                ggplot(all.aris, aes_string(x = variables[1], y = variables[2])) +
+                p.combined <- ggplot(all.aris, aes_string(x = variables[1], y = variables[2])) +
                     geom_point() +
                     ggrepel::geom_text_repel(aes(label = datasets),
                                              hjust = 0,
@@ -235,6 +241,8 @@ plotARI <- function(
                         axis.text.x = element_text(size = 12),
                         axis.text.y = element_text(size = 12)
                     )
+                if(isTRUE(plot.output) & length(assay.names) == 1) print(p.combined)
+                return(p.combined)
             })
         names(all.combined.ari.plots) <- levels(assay.names)
 
@@ -266,9 +274,25 @@ plotARI <- function(
                     axis.text.x = element_text(size = 12),
                     axis.text.y = element_text(size = 12)
                 )
+            overall.combined.ari.plot <- annotate_figure(
+                p = overall.combined.ari.plot,
+                top = text_grob(
+                    label = "Adjusted rand index",
+                    color = "orange",
+                    face = "bold",
+                    size = 18),
+                bottom = text_grob(
+                    label = paste0(
+                        'Analysis: ', 'Adjusted rand index between the first PCs and the ', variables, ' variable.'),
+                    color = "black",
+                    hjust = 1,
+                    x = 1,
+                    size = 10)
+            )
         }
     }
-    # save the results ####
+
+    # Save the results ####
     printColoredMessage(message = '-- Save the ARI barplots:',
                         color = 'magenta',
                         verbose = verbose)
@@ -278,51 +302,60 @@ plotARI <- function(
             message = '-- Save all the ARI barplots to the "metadata" in the SummarizedExperiment object:',
             color = 'blue',
             verbose = verbose)
-        if (plot.type == 'single.plot') {
-            for (i in variables) {
-                for (x in levels(assay.names)) {
-                    se.obj@metadata[['metric']][[x]][['ARI']][[ari.method]][[i]][['ari.single.plot']] <- all.single.ari.plots[[x]]
-                }
-            }
-        } else if (plot.type == 'combined.plot') {
-            for (i in variables) {
-                for (x in levels(assay.names)) {
-                    se.obj@metadata[['metric']][[x]][['ARI']][[ari.method]][[i]][['ari.combined.plot']] <- all.combined.ari.plots[[x]]
-                }
-            }
+        if(plot.type == 'single.plot'){
+            se.obj <- addMetricToSeObj(
+                se.obj = se.obj,
+                slot = 'Metrics',
+                assay.names = assay.names,
+                assessment.type = 'global.level',
+                assessment = 'ARI',
+                method = ari.method,
+                variables = variables,
+                file.name = 'single.plot',
+                results.data = all.single.ari.plots
+            )
+        } else if (plot.type == 'combined.plot'){
+            se.obj <- addMetricToSeObj(
+                se.obj = se.obj,
+                slot = 'Metrics',
+                assay.names = assay.names,
+                assessment.type = 'global.level',
+                assessment = 'ARI',
+                method = ari.method,
+                variables = paste0(variables, collapse = '&'),
+                file.name = 'combined.plot',
+                results.data = all.combined.ari.plots
+            )
         }
         printColoredMessage(
             message = paste0('- The ARI barplot of the individual assay(s) is saved to the ',
                              ' "se.obj@metadata$metric$AssayName$ARI" in the SummarizedExperiment object. '),
             color = 'blue',
             verbose = verbose)
+
         if (length(assay.names) > 1) {
-            variables <- paste0(variables, collapse = '&')
-            if (!'plot' %in%  names(se.obj@metadata)) {
-                se.obj@metadata[['plot']] <- list()
-            }
-            if (!'ARI' %in%  names(se.obj@metadata[['plot']])) {
-                se.obj@metadata[['plot']][['ARI']] <- list()
-            }
-            if (!ari.method %in%  names(se.obj@metadata[['plot']][['ARI']])) {
-                se.obj@metadata[['plot']][['ARI']][[ari.method]] <- list()
-            }
-            if (plot.type == 'single.plot') {
-                if (!'ari.single.plot' %in%  names(se.obj@metadata[['plot']][['ARI']][[ari.method]])) {
-                    se.obj@metadata[['plot']][['ARI']][[ari.method]][['ari.single.plot']] <- list()
-                }
-                if (!variables %in%  names(se.obj@metadata[['plot']][['ARI']][['ari.single.plot']])) {
-                    se.obj@metadata[['plot']][['ARI']][[ari.method]][['ari.single.plot']][[variables]] <- list()
-                }
-                se.obj@metadata[['plot']][['ARI']][[ari.method]][['ari.single.plot']][[variables]] <- overall.single.ari.plot
-            } else if (plot.type == 'combined.plot') {
-                if (!'ari.combined.plot' %in%  names(se.obj@metadata[['plot']][['ARI']][[ari.method]])) {
-                    se.obj@metadata[['plot']][['ARI']][[ari.method]][['ari.combined.plot']] <- list()
-                }
-                if (!variables %in%  names(se.obj@metadata[['plot']][['ARI']][[ari.method]][['ari.combined.plot']])) {
-                    se.obj@metadata[['plot']][['ARI']][[ari.method]][['ari.combined.plot']][[variables]] <- list()
-                }
-                se.obj@metadata[['plot']][['ARI']][[ari.method]][['ari.combined.plot']][[variables]] <- overall.combined.ari.plot
+            if(plot.type == 'single.plot'){
+                se.obj <- addOverallPlotToSeObj(
+                    se.obj = se.obj,
+                    slot = 'Plots',
+                    assessment.type = 'global.level',
+                    assessment = 'ARI',
+                    method = ari.method,
+                    variables = variables,
+                    file.name = 'single.plot',
+                    plot.data = overall.single.ari.plot
+                )
+            } else if (plot.type == 'combined.plot'){
+                se.obj <- addOverallPlotToSeObj(
+                    se.obj = se.obj,
+                    slot = 'Plots',
+                    assessment.type = 'global.level',
+                    assessment = 'ARI',
+                    method = ari.method,
+                    variables = paste0(variables, collapse = '&'),
+                    file.name = 'combined.plot',
+                    plot.data = overall.combined.ari.plot
+                )
             }
             printColoredMessage(
                 message = paste0('- The combined ARI barplot all the assays is saved to the ',
@@ -335,8 +368,9 @@ plotARI <- function(
                             verbose = verbose)
         return(se.obj = se.obj)
 
-        ## return only the adjusted rand index results ####
+
     }
+    ## return only the adjusted rand index results ####
     if (isFALSE(save.se.obj)) {
         printColoredMessage(
             message = paste0('-All the ARI plots re saved as list.'),
