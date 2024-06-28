@@ -85,32 +85,43 @@ computeSilhouette <- function(
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
-    # Silhouette coefficients on all assays ####
+    # Compute silhouette coefficients on all assays ####
     printColoredMessage(
         message = paste0('-- Compute silhouette coefficient using the first ',
                          nb.pcs, ' PCS for the ', variable, ' variable.') ,
         color = 'magenta',
         verbose = verbose)
-    sil.coef <- lapply(
+    if(isTRUE(fast.pca)){
+        method = 'fast.svd'
+    } else method = 'svd'
+
+    ## obtain the PCA data from SummarizedExperiment ####
+    all.pca.data <- getMetricFromSeObj(
+        se.obj = se.obj,
+        assay.names = assay.names,
+        slot = 'Metrics',
+        assessment = 'PCA',
+        assessment.type = 'global.level',
+        method = method,
+        variables = 'general',
+        file.name = 'data',
+        sub.file.name = 'svd',
+        required.function = 'computePCA',
+        message.to.print = 'PCs'
+    )
+    ## compute average silhouette coefficients for all assay(s)  ####
+    all.sil.coef <- lapply(
         levels(assay.names),
         function(x) {
             printColoredMessage(
-                message = paste0('- Compute silhouette coefficient for the "', x, '" data.'),
-                color = 'blue',
+                message = paste0('- Compute silhouette coefficient for the "', x, '" data:'),
+                color = 'orange',
                 verbose = verbose)
             printColoredMessage(
                 message = paste0('* obtain the first ', nb.pcs, ' computed PCs.'),
                 color = 'blue',
                 verbose = verbose)
-            if (fast.pca) {
-                if (!'fast.pca' %in% names(se.obj@metadata[['metric']][[x]][['PCA']]))
-                    stop('To compute the Silhouette coefficient, the fast PCA must be computed first on the assay ', x, '.' )
-                pca.data <- se.obj@metadata[['metric']][[x]][['PCA']][['fast.pca']][['pca.data']]$svd$u
-            } else {
-                if (!'pca' %in% names(se.obj@metadata[['metric']][[x]][['pca']]))
-                    stop('To compute the Silhouette coefficient, the PCA must be computed first on the assay ', x, ' .')
-                pca.data <- se.obj@metadata[['metric']][[x]][['PCA']][['pca']][['pca.data']]$svd$u
-            }
+            pca.data <- all.pca.data[[x]]$u
             if(ncol(pca.data) < nb.pcs){
                 printColoredMessage(
                     message = paste0('The number of PCs of the assay', x, 'are ', ncol(pca.data), '.'),
@@ -135,7 +146,7 @@ computeSilhouette <- function(
             avg.width <- summary(silhouette(as.numeric(as.factor(se.obj@colData[, variable])), d.matrix))$avg.width
             return(avg.width)
         })
-    names(sil.coef) <- levels(assay.names)
+    names(all.sil.coef) <- levels(assay.names)
 
     # Save the results ####
     printColoredMessage(
@@ -146,50 +157,36 @@ computeSilhouette <- function(
     if (isTRUE(save.se.obj)) {
         printColoredMessage(
             message = '- Save the silhouette coefficients of each assay(s) to the "metadata" in the SummarizedExperiment object:',
-            color = 'blue',
-            verbose = verbose)
-
-        for (x in levels(assay.names)) {
-            ## check if metadata metric already exist
-            if (length(se.obj@metadata) == 0) {
-                se.obj@metadata[['metric']] <- list()
-            }
-            ## check if metadata metric already exist for this assay
-            if (!'metric' %in% names(se.obj@metadata)) {
-                se.obj@metadata[['metric']] <- list()
-            }
-            ## check if metadata metric already exist for this assay
-            if (!x %in% names(se.obj@metadata[['metric']])) {
-                se.obj@metadata[['metric']][[x]] <- list()
-            }
-            ## check if metadata metric already exist for this assay and this metric
-            if (!'Silhouette' %in% names(se.obj@metadata[['metric']][[x]] )) {
-                se.obj@metadata[['metric']][[x]][['Silhouette']] <- list()
-            }
-            ## check if metadata metric already exist for this assay and this metric
-            if (!paste0('sil.', dist.measure) %in% names(se.obj@metadata[['metric']][[x]][['Silhouette']])) {
-                se.obj@metadata[['metric']][[x]][['Silhouette']][[paste0('sil.', dist.measure)]] <- list()
-            }
-            ## check if metadata metric already exist for this assay, this metric and this variable
-            se.obj@metadata[['metric']][[x]][['Silhouette']][[paste0('sil.', dist.measure)]][[variable]]$sil.coef <- sil.coef[[x]]
-        }
+            color = 'orange',
+            verbose = verbose
+            )
+        se.obj <- addMetricToSeObj(
+            se.obj = se.obj,
+            slot = 'Metrics',
+            assay.names = assay.names,
+            assessment.type = 'global.level',
+            assessment = 'Silhouette',
+            method = paste0('sil.', dist.measure),
+            variables = variable,
+            file.name = 'silhouette.coeff',
+            results.data = all.sil.coef
+        )
         printColoredMessage(
-            message = paste0('- The silhouette coefficients of the induvial assay(s) is saved to the .',
+            message = paste0('* The silhouette coefficients of the induvial assay(s) is saved to the .',
                              ' ".se.obj@metadata$metric$RawCount$Silhouette" in the SummarizedExperiment objec.'),
             color = 'blue',
-            verbose = verbose)
-
+            verbose = verbose
+            )
         printColoredMessage(message = '------------The computeSilhouette function finished.',
                             color = 'white',
                             verbose = verbose)
         return(se.obj = se.obj)
-
     }
     ## return only the correlation result ####
     if (isFALSE(save.se.obj)) {
         printColoredMessage(message = '------------The computeSilhouette function finished.',
                             color = 'white',
                             verbose = verbose)
-        return(sil.coef = sil.coef)
+        return(all.sil.coef = all.sil.coef)
     }
 }
