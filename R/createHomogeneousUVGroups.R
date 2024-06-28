@@ -40,8 +40,6 @@
 #' Correlation is computed using the ContCoef function from the DescTools R package. If the correlation between a pair of
 #' variables exceeds the cut-off, only the variable with the highest variance will be retained, and the other will be
 #' excluded from further analysis. By default, both values are set to 0.9.
-
-
 #' @param assess.se.obj Logical. Whether to assess the SummarizedExperiment object or not. If 'TRUE', the function
 #' 'checkSeobj' will be applied. The default is 'TRUE'.
 #' @param remove.na Symbol. Indicates whether to remove missing values from the 'uv.variables'. The options are
@@ -55,10 +53,10 @@
 #' @return A SummarizedExperiment object containing the all possible homogeneous groups in the "metadata$HGgroups$UVgroups"
 #' or a vector of the possible homogeneous groups.
 
-#' @importFrom SummarizedExperiment assay
+#' @importFrom SummarizedExperiment assay colData
 #' @importFrom stats kmeans quantile
-#' @importFrom DescTools ContCoef
 #' @importFrom knitr kable
+#' @export
 
 createHomogeneousUVGroups <- function(
         se.obj,
@@ -71,11 +69,12 @@ createHomogeneousUVGroups <- function(
         assess.se.obj = TRUE,
         remove.na = 'sample.annotation',
         save.se.obj = TRUE,
-        verbose = TRUE) {
+        verbose = TRUE
+        ){
     printColoredMessage(message = '------------The createHomogeneousUVGroups function starts:',
                         color = 'white',
                         verbose = verbose)
-    # check inputs ####
+    # Check  the inputs ####
     if(is.null(uv.variables)){
         stop('The uv.variables cannot be empty.')
     } else if(!is.vector(uv.variables)){
@@ -89,7 +88,8 @@ createHomogeneousUVGroups <- function(
     } else if( remove.na %in% c('both', 'measuerments')){
         stop('The remove.na should be either sample.annotation or none.')
     }
-    # assess variables correlation ####
+
+    # Assess association between variables ####
     if (isTRUE(assess.variables)) {
         printColoredMessage(
             message = '-- Assess the correlation between unwanted variation variables:',
@@ -107,13 +107,70 @@ createHomogeneousUVGroups <- function(
         uv.variables <- se.obj$uv.variables
         se.obj <- se.obj$se.obj
     }
-    # class of  uv variables ####
+
+    # Find the class of unwanted variables ####
+    printColoredMessage(
+        message = '-- Find the class and levels of the variable(s):',
+        color = 'magenta',
+        verbose = verbose
+    )
     class.uv.var <- unlist(lapply(
         uv.variables,
         function(x) class(se.obj[[x]])))
     categorical.uv <- uv.variables[class.uv.var %in% c('factor', 'character')]
+    if(length(categorical.uv) > 1){
+        printColoredMessage(
+            message = paste0('- ', length(categorical.uv), ' categorical variables are provided.'),
+            color = 'blue',
+            verbose = verbose
+            )
+        categorical.uv <- unlist(lapply(
+            categorical.uv,
+            function(x){
+                if(length(unique(colData(se.obj))[[x]]) == 1){
+                    printColoredMessage(
+                        message = paste0('- the "', x, '" variable contains 1 levels. Then, this will be excluded.'),
+                        color = 'blue',
+                        verbose = verbose)
+                } else {
+                    printColoredMessage(
+                        message = paste0('- the "', x, '" variable contains ',  length(unique(colData(se.obj)[[x]])), ' levels.'),
+                        color = 'blue',
+                        verbose = verbose)
+                    keep.variable <- x
+                }
+                return(keep.variable)
+            }))
+    }
     continuous.uv <- uv.variables[class.uv.var %in% c('numeric', 'integer')]
-    ## check continuous variable ####
+    if(length(continuous.uv) > 0){
+        printColoredMessage(
+            message = paste0('- ', length(categorical.uv), ' continuous variables are provided.'),
+            color = 'blue',
+            verbose = verbose
+        )
+        continuous.uv <- unlist(lapply(
+            continuous.uv,
+            function(x){
+                if(var(colData(se.obj)[[x]]) == 0){
+                    printColoredMessage(
+                        message = paste0('- the variance of the "', x, '" variable is 0 . Then, this will be excluded.'),
+                        color = 'blue',
+                        verbose = verbose
+                        )
+                } else {
+                    printColoredMessage(
+                        message = paste0('- the variance of the "', x, '" variable is ~ ',  round(x = var(colData(se.obj)[[x]]), digits = 5) , '.'),
+                        color = 'blue',
+                        verbose = verbose
+                    )
+                    keep.variable <- x
+                }
+                return(keep.variable)
+            }))
+    }
+
+    # Cluster continuous variable ####
     if(length(continuous.uv) > 0){
         ## check clustering value for continuous variable
         if(nb.clusters == 1){
@@ -123,36 +180,18 @@ createHomogeneousUVGroups <- function(
         } else if ( nb.clusters == 0) {
             stop('The value of "nb.clusters" cannot be 0.')
         }
-        ### grammar
-        if(length(continuous.uv) == 1){
-            a = 'is'
-            b = 'source'
-        } else {
-            a = 'are'
-            b = 'sources'
-        }
-        ### clustering ####
+        ## cluster continuous variables ####
         printColoredMessage(
-            message = paste0('-- Clustering of the ', b, ' of unwanted variation:'),
+            message = '-- Cluster continuous sources of unwanted variation:',
             color = 'magenta',
-            verbose = verbose)
-            printColoredMessage(
-                message = paste0(
-                    'There ',
-                    a,
-                    ' ',
-                    length(continuous.uv),
-                    ' continuous ' ,
-                    b ,
-                    ' of unwanted variation:',
-                    paste0(continuous.uv, collapse = ' & '),
-                    '.'),
-                color = 'blue',
-                verbose = verbose)
+            verbose = verbose
+            )
             printColoredMessage(message = paste0(
-                'Then, each source will be divided into ', nb.clusters, ' groups using ', clustering.method, '.'),
+                '- each source will be divided into ', nb.clusters, ' groups using the ', clustering.method, ' method.'),
                 color = 'blue',
-                verbose = verbose)
+                verbose = verbose
+                )
+            ## kmeans ####
             if (clustering.method == 'kmeans') {
                     set.seed(3456)
                     continuous.uv.groups <- lapply(
@@ -170,7 +209,9 @@ createHomogeneousUVGroups <- function(
                         continuous.uv.groups,
                         1,
                         paste , collapse = "..")
-            } else if (clustering.method == 'cut') {
+            }
+            ## cut ####
+            if (clustering.method == 'cut') {
                 continuous.uv.groups <- lapply(
                     continuous.uv,
                     function(x) {
@@ -186,7 +227,9 @@ createHomogeneousUVGroups <- function(
                     continuous.uv.groups,
                     1,
                     paste , collapse = "..")
-            } else if (clustering.method == 'quantile') {
+            }
+            ## quantile ####
+            if (clustering.method == 'quantile') {
                 continuous.uv.groups <- lapply(
                     continuous.uv,
                     function(x) {
@@ -204,42 +247,23 @@ createHomogeneousUVGroups <- function(
                     1,
                     paste , collapse = "..")
             }
-        }
-    ## check categorical variable ####
-    if(length(categorical.uv) > 0){
-        printColoredMessage(
-            message = '-- Check the categorical sources:',
-            color = 'magenta',
-            verbose =  verbose
-        )
-        if (length(categorical.uv) == 1) {
-            a = 'is'
-            b = 'source'
-        } else {
-            a = 'are'
-            b = 'sources'
-        }
-        printColoredMessage(
-            message = paste0(
-                'There ',
-                a,
-                ' ',
-                length(categorical.uv),
-                ' categorical ' ,
-                b ,
-                ' of unwanted variation.'
-            ),
-            color = 'blue',
-            verbose = verbose
-        )
-        categorical.uv.groups <- colData(se.obj)[, categorical.uv, drop = FALSE]
-        categorical.uv.groups <- as.data.frame(categorical.uv.groups)
     }
-    # create all possible groups ####
+
+    # Check categorical variable ####
+    if(length(categorical.uv) > 0){
+        categorical.uv.groups <- as.data.frame(colData(se.obj)[, categorical.uv, drop = FALSE])
+    }
+    # Create all possible homogeneous groups ####
+    printColoredMessage(
+        message = '-- Create all possible combination of the groups:',
+        color = 'magenta',
+        verbose =  verbose
+        )
+    ## use both continuous and categorical ####
     if(length(categorical.uv) > 0 & length(continuous.uv) > 0 ){
         printColoredMessage(
-            message = '-- The products of the groups:',
-            color = 'magenta',
+            message = '- create all possible combination of the groups using both continuous and categorical variables:',
+            color = 'blue',
             verbose =  verbose
         )
         all.groups <- categorical.uv.groups
@@ -251,34 +275,42 @@ createHomogeneousUVGroups <- function(
         ))
         printColoredMessage(
             message = paste0(
-                'In totall, ',
+                '- in totall, ',
                 length(unique(all.groups)),
-                ' homogeneous groups with respect to sources of unwanted variation are created:'),
+                ' homogeneous groups  are created:'),
             color = 'blue',
             verbose = verbose
         )
-        if(verbose) print(kable(table(all.groups), caption = 'homogeneous groups'))
+        cat("", file = stdout(), sep = "")
+        if(isTRUE(verbose))
+            print(x = kable(table(all.groups), caption = 'homogeneous groups'))
         all.groups <- gsub('_', '-', all.groups)
-    } else if (length(categorical.uv) == 0 & length(continuous.uv) > 0){
+    }
+    ## use only continuous ####
+    if (length(categorical.uv) == 0 & length(continuous.uv) > 0){
         printColoredMessage(
-            message = '-- The products of the groups:',
-            color = 'magenta',
+            message = '- create all possible combination of the groups using continuous variables:',
+            color = 'blue',
             verbose =  verbose
         )
         all.groups <- continuous.uv.groups
         printColoredMessage(
             message = paste0(
-                'In totall, ',
+                '- in totall, ',
                 length(unique(all.groups)),
-                ' homogeneous groups with respect to sources of unwanted variation are created:'),
+                ' homogeneous groups are created:'),
             color = 'blue',
-            verbose = verbose)
-        if(verbose) print(kable(table(all.groups), caption = 'homogeneous groups'))
+            verbose = verbose
+            )
+        if(isTRUE(verbose))
+            print(kable(table(all.groups), caption = 'homogeneous groups'))
         all.groups <- gsub('_', '-', all.groups)
-    } else if(length(categorical.uv) > 0 & length(continuous.uv) == 0){
+    }
+    ## use only categorical ####
+    if(length(categorical.uv) > 0 & length(continuous.uv) == 0){
         printColoredMessage(
-            message = '-- The products of the groups:',
-            color = 'magenta',
+            message = '- create all possible combination of the groups using categorical variables:',
+            color = 'blue',
             verbose =  verbose
         )
         all.groups <- apply(
@@ -289,37 +321,47 @@ createHomogeneousUVGroups <- function(
             message = paste0(
                 'In totall, ',
                 length(unique(all.groups)),
-                ' homogeneous groups with respect to sources of unwanted variation are created:'),
+                ' homogeneous groups are created:'),
             color = 'blue',
             verbose = verbose)
-        if(verbose) print(kable(table(all.groups), caption = 'homogeneous groups'))
+        if(isTRUE(verbose))
+            print(kable(table(all.groups), caption = 'homogeneous groups'))
         all.groups <- gsub('_', '-', all.groups)
     }
-    # add results to the SummarizedExperiment object ####
+    ## error ####
+    if(length(categorical.uv) == 0 & length(continuous.uv) == 0){
+        stop('There is no categorical or continuous variables to create homogeneous groups.')
+    }
+
+    # Save the results ####
+    ## add results to the SummarizedExperiment object ####
     out.put.name <- paste0(
         length(unique(all.groups)),
-        ' groups||UV',
+        ' groups|',
         paste0(uv.variables, collapse = '&'),
-        '||Clus:',
+        '|Clus:',
         clustering.method,
-        '_nb.clus:',
-        nb.clusters,
-        '.')
+        '|nb:',
+        nb.clusters
+        )
     printColoredMessage(message = '-- Save the results',
         color = 'magenta',
         verbose = verbose)
-    if(save.se.obj == TRUE){
+    if(isTRUE(save.se.obj)){
         printColoredMessage(
-            message = '-- Save the homogeneous groups to the metadata of the SummarizedExperiment object.',
+            message = '- save the homogeneous groups to the metadata of the SummarizedExperiment object.',
             color = 'blue',
-            verbose = verbose)
-        ## Check if metadata NCG already exists
-        if(length(se.obj@metadata$HGgroups) == 0 ) {
-            se.obj@metadata[['HGgroups']] <- list()
+            verbose = verbose
+            )
+        if(!'HomogeneousGroups' %in%  names(se.obj@metadata)) {
+            se.obj@metadata[['HomogeneousGroups']] <- list()
         }
-        se.obj@metadata[['HGgroups']][['UVgroups']][[out.put.name]] <- all.groups
+        if(!'UnwantedVariables' %in%  names(se.obj@metadata[['HomogeneousGroups']]) ) {
+            se.obj@metadata[['HomogeneousGroups']][['UnwantedVariables']] <- list()
+        }
+        se.obj@metadata[['HomogeneousGroups']][['UnwantedVariables']][[out.put.name]] <- all.groups
         printColoredMessage(
-            message = 'The homogeneous groups are saved to the metadata of the SummarizedExperiment object.',
+            message = '- The homogeneous groups are saved to the metadata of the SummarizedExperiment object.',
             color = 'blue',
             verbose = verbose)
         printColoredMessage(
@@ -327,15 +369,18 @@ createHomogeneousUVGroups <- function(
             color = 'white',
             verbose = verbose)
         return(se.obj)
-    } else{
+    }
+    ## save the output as a vector ####
+    if(isFALSE(save.se.obj)){
         printColoredMessage(
             message = '-- The homogeneous groups are outputed as a vector.',
             color = 'blue',
-            verbose = verbose)
-       printColoredMessage(
-        message = '------------The createHomogeneousUVGroups function finished.',
-        color = 'white',
-        verbose = verbose)
+            verbose = verbose
+            )
+       printColoredMessage(message = '------------The createHomogeneousUVGroups function finished.',
+                           color = 'white',
+                           verbose = verbose
+                           )
     return(all.groups)
     }
 }
