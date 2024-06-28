@@ -15,12 +15,13 @@
 #' @param assay.names Symbol. A symbol or list of symbols for the selection of the name(s) of the assay(s) in the
 #' SummarizedExperiment object to calculate regression analysis. The default is "all, which indicates all
 #' the assays of the SummarizedExperiment object will be selected.
-#' @param variable Symbol. Indicates a name of the column in the sample annotation of the SummarizedExperiment object.
-#' The variable must be a continuous variable.
+#' @param variable Symbol. A symbol indicating the name of the column in the sample annotation of the SummarizedExperiment object.
+#' The variable must be a continuous variable such as library size, tumor purity, ... .
 #' @param fast.pca Logical. Indicates whether to use the computed fast PCA or PCA results computed by the computePCA function. The
 #' default is 'TRUE'.
-#' @param nb.pcs Numeric. The number of first PCs to use to plot the vector correlation. The default is 10.
-#' @param save.se.obj Logical. Indicates whether to save the vector correlation plots to the meta data of the
+#' @param nb.pcs Numeric. A numeric value specifying the number of first PCs to be used to compute the vector correlation.
+#' The default is set to 10.
+#' @param save.se.obj Logical. Indicates whether to save the vector correlation plots to the 'metadata' of the
 #' SummarizedExperiment object or to output the result as list. By default it is set to TRUE.
 #' @param verbose Logical. If TRUE, displaying process messages is enabled.
 
@@ -43,8 +44,7 @@ computePCVariableRegression <- function(
     printColoredMessage(message = '------------The computePCVariableRegression function starts:',
                         color = 'white',
                         verbose = verbose)
-
-    # check the inputs ####
+    # Check the inputs ####
     if (is.null(assay.names)) {
         stop('The "assay.names" cannot be empty.')
     } else if (is.list(assay.names)){
@@ -66,7 +66,7 @@ computePCVariableRegression <- function(
                     ', then "computePCA"-->"computePCVariableRegression".'))
     }
 
-    # assays ####
+    # Check the assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else  assay.names <- factor(x = assay.names , levels = assay.names)
@@ -80,79 +80,69 @@ computePCVariableRegression <- function(
                           nb.pcs, ' PCs (cumulatively) and the "', variable, 'variable:' ),
         color = 'magenta',
         verbose = verbose)
+    ## obtain computed PCs from the SummarizedExperiment object ####
+    printColoredMessage(
+        message = paste0('- Obtain the first ', nb.pcs, ' computed PCs from the SummarizedExperiment object.'),
+        color = 'blue',
+        verbose = verbose
+    )
+    if(isTRUE(fast.pca)){
+        method = 'fast.svd'
+    } else method = 'svd'
+    all.pca.data <- getMetricFromSeObj(
+        se.obj = se.obj,
+        assay.names = assay.names,
+        slot = 'Metrics',
+        assessment = 'PCA',
+        assessment.type = 'global.level',
+        method = method,
+        variables = 'general',
+        file.name = 'data',
+        sub.file.name = 'svd',
+        required.function = 'computePCA',
+        message.to.print = 'PCs'
+    )
+    ## obtain linear regression and obtain Rseq ####
     all.r.squared <- lapply(
         levels(assay.names),
         function(x) {
             printColoredMessage(
                 message = paste0('- Compute the linear regression for the "', x , '" data:'),
-                color = 'blue',
+                color = 'orange',
                 verbose = verbose)
             printColoredMessage(
-                message = paste0('- Obtain the first ', nb.pcs, ' computed PCs.'),
-                color = 'blue',
-                verbose = verbose)
-            if (fast.pca) {
-                if (!'fast.pca' %in% names(se.obj@metadata[['metric']][[x]][['PCA']]))
-                    stop('To compute the regression,the fast PCA must be computed first on the assay ', x, ' .')
-                pca.data <- se.obj@metadata[['metric']][[x]][['PCA']][['fast.pca']][['pca.data']]$svd$u[colnames(se.obj),]
-            } else {
-                if (!'pca' %in% names(se.obj@metadata[['metric']][[x]][['PCA']]))
-                    stop('To compute the regression, the PCA must be computed first on the assay ', x, ' .')
-                pca.data <- se.obj@metadata[['metric']][[x]][['PCA']][['pca']][['pca.data']]$svd$u[colnames(se.obj), ]
-            }
-            if(ncol(pca.data) < nb.pcs){
-                printColoredMessage(
-                    message = paste0('The number of PCs of the assay', x, 'are ', ncol(pca.data), '.'),
-                    color = 'blue',
-                    verbose = verbose)
-                stop(paste0('The number of PCs of the assay ', x, ' are less than', nb.pcs, '.',
-                            'Re-run the computePCA function with nb.pcs = ', nb.pcs, '.'))
-            }
-            printColoredMessage(
-                message = '- Compute the R squared of the linear regression analysis.',
+                message = '* compute the R squared of the linear regression analysis.',
                 color = 'blue',
                 verbose = verbose)
             r.squared <- sapply(
                 1:nb.pcs,
-                function(y) lm.ls <- summary(lm(se.obj@colData[, variable] ~ pca.data[, 1:y]))$r.squared)
+                function(y) lm.ls <- summary(lm(se.obj@colData[[variable]] ~ all.pca.data[[x]]$u[, 1:y]))$r.squared)
             return(r.squared)
         })
     names(all.r.squared) <- levels(assay.names)
 
-    # save the results ####
+    # Save the results ####
     printColoredMessage(
         message = '-- Save all the R squared of the linear regression analysis:',
         color = 'magenta',
         verbose = verbose)
     ## add results to the SummarizedExperiment object ####
-    if (save.se.obj == TRUE) {
+    if (isTRUE(save.se.obj)) {
         printColoredMessage(
             message = '- Save all the R squared of the linear regression analysis for each assay(s) the "metadata" of the SummarizedExperiment object.',
             color = 'blue',
             verbose = verbose)
-        for (x in levels(assay.names)) {
-            ## check if metadata metric already exist
-            if (length(se.obj@metadata) == 0) {
-                se.obj@metadata[['metric']] <- list()
-            }
-            ## check if metadata metric already exist for this assay
-            if (!'metric' %in% names(se.obj@metadata)) {
-                se.obj@metadata[['metric']] <- list()
-            }
-            ## check if metadata metric already exist for this assay
-            if (!x %in% names(se.obj@metadata[['metric']])) {
-                se.obj@metadata[['metric']][[x]] <- list()
-            }
-            ## check if metadata metric already exist for this assay and this metric
-            if (!'LRA' %in% names(se.obj@metadata[['metric']][[x]])) {
-                se.obj@metadata[['metric']][[x]][['LRA']] <- list()
-            }
-            if (!'rseq' %in% names(se.obj@metadata[['metric']][[x]][[variable]])) {
-                se.obj@metadata[['metric']][[x]][['LRA']][[variable]][['rseq']] <- list()
-            }
-            ## Check if metadata metric already exist for this assay, this metric and this variable
-            se.obj@metadata[['metric']][[x]][['LRA']][[variable]][['rseq']] <- all.r.squared[[x]]
-        }
+        se.obj <- addMetricToSeObj(
+            se.obj = se.obj,
+            slot = 'Metrics',
+            assay.names = assay.names,
+            assessment.type = 'global.level',
+            assessment = 'LRA',
+            method = method,
+            variables = variable,
+            file.name = 'r.squared',
+            results.data = all.r.squared
+            )
         printColoredMessage(
             message = paste0('- The the R squared for the individal assay(s) are saved to the',
                              ' "se.obj@metadata$metric$AssayName$LRA$Varible$rseq" in the SummarizedExperiment object.'),

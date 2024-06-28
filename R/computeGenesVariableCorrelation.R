@@ -1,4 +1,4 @@
-#' compute the correlation between individual gene expression and a continuous variable.
+#' Compute the correlation between individual gene expression and a continuous variable.
 
 #' @author Ramyar Molania
 
@@ -6,15 +6,12 @@
 #' This function computes Spearman or Pearson correlations between individual gene-level expression of each assay and
 #' a continuous variable in SummarizedExperiment object.
 
-#' @details
-#' Additional details...
-
 #' @param se.obj A SummarizedExperiment object.
 #' @param assay.names Symbol. A symbol or vector of symbols for the selection of the name(s) of the assay(s) of the
 #' SummarizedExperiment object to compute the correlation. By default all the assays of the SummarizedExperiment class
 #' object will be selected.
-#' @param variable Symbol. Indicates a column name of the SummarizedExperiment object that contains a continuous variable
-#' such as library size, tumor purity, ....
+#' @param variable Symbol. A symbol indicating a column name of the SummarizedExperiment object that contains a continuous
+#' variable such as library size, tumor purity, ....
 #' @param method Symbol. Indicates which correlation methods should be used. The options are 'pearson', 'kendall', or
 #' "spearman". The default is set to 'spearman'.
 #' @param a Numeric. The significance level used for the confidence intervals in the correlation, by default it is set to
@@ -23,8 +20,8 @@
 #' set to 0. We refer to the correls function from the Rfast package for more details.
 #' @param apply.log Logical. Indicates whether to apply a log-transformation to the data before computing the correlation.
 #' By default the log transformation will be selected.
-#' @param pseudo.count Numeric. A value as a pseudo count to be added to all measurements before log transformation,
-#' by default it is set to 1.
+#' @param pseudo.count Numeric. A numeric value as a pseudo count to be added to all measurements before log transformation.
+#' The default it is set to 1.
 #' @param plot.top.genes Logical. Indicates whether to plot the gene expression of the number of genes from the high or
 #' low correlation, by default it is set to FALSE.
 #' @param nb.top.genes Numeric. Defines the number of genes that show the highest or lowest correlation with variable to
@@ -35,18 +32,21 @@
 #' @param remove.na To remove NA or missing values from the assays and variable.
 #' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the current SummarizedExperiment
 #' object or to output the result. By default it is set to TRUE.
-#' @param verbose Logical. If TRUE, displaying process messages is enabled.
+#' @param override.check Logical. When set to 'TRUE', the function verifies the current SummarizedExperiment object to
+#' determine if the correlation has already been computed for the current parameters. If it has, the metric will not be recalculated.
+#' The default is set to FALSE.
+#' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
-#' @return A SummarizedExperiment object or a list that contains the  correlation coefficients on the continuous variable.
+#' @return A SummarizedExperiment object or a list that contains the correlation coefficients on the continuous variable.
 
 #' @references
 #' Molania R., ..., Speed, T. P., Removing unwanted variation from large-scale RNA sequencing data with PRPS,
 #' Nature Biotechnology, 2023
 
 #' @importFrom SummarizedExperiment assays assay colData
+#' @importFrom tidyr pivot_longer %>%
 #' @importFrom Rfast correls
 #' @importFrom stats var
-#' @importFrom tidyr pivot_longer %>%
 #' @import ggplot2
 #' @export
 
@@ -65,234 +65,229 @@ computeGenesVariableCorrelation <- function(
         assess.se.obj = TRUE,
         remove.na = 'both',
         save.se.obj = TRUE,
+        override.check = FALSE,
         verbose = TRUE
         ){
     printColoredMessage(message = '------------The computeGenesVariableCorrelation function starts:',
                         color = 'white',
                         verbose = verbose)
-    # check the inputs ####
-    if (is.null(assay.names)) {
-        stop('The "assay.names" cannot be empty.')
-    } else if (is.list(assay.names)){
-        stop('The "assay.names" must be a vector of the assay names(s) or "assay.names = all".')
-    } else if (is.null(variable)) {
-        stop('The "variable" cannot be empty.')
-    } else if (!class(se.obj@colData[, variable]) %in% c('numeric', 'integer')) {
-        stop(paste0('The ', variable, 'should be a continuous variable.'))
-    } else if (!method %in% c('pearson', 'spearman')) {
-        stop('The method must be one of the "pearson" or "spearman".')
-    }
-    if (var(se.obj[[variable]]) == 0) {
-        stop(paste0('The ', variable, ' appears to have no variation.'))
-    }
 
-    # assays ####
-    if (length(assay.names) == 1 && assay.names == 'all') {
-        assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
-    } else  assay.names <- factor(x = assay.names , levels = assay.names)
-    if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
-        stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
-    }
-
-    # check SummarizedExperiment object ####
-    if (assess.se.obj) {
-        se.obj <- checkSeObj(
+    # Check to override or not ####
+    if(isTRUE(override.check)){
+        override.check <- overrideCheck(
             se.obj = se.obj,
+            slot = 'Metrics',
             assay.names = assay.names,
-            variables = variable,
-            remove.na = remove.na,
+            assessment.type = 'gene.level',
+            assessment = 'Correlation',
+            method = method,
+            variable = variable,
+            file.name = 'correlations.pvalues'
+        )
+        if(is.logical(override.check)){
+            compute.metric <- FALSE
+        } else if (is.list(override.check)) {
+            compute.metric <- TRUE
+            assay.names <- override.check$selected.assays
+        }
+    } else if (isFALSE(override.check)) compute.metric <- TRUE
+
+    if(isTRUE(compute.metric)){
+        # Check the inputs ####
+        if (is.null(assay.names)) {
+            stop('The "assay.names" cannot be empty.')
+        } else if (is.list(assay.names)){
+            stop('The "assay.names" must be a vector of the assay names(s) or "assay.names = all".')
+        } else if (is.null(variable)) {
+            stop('The "variable" cannot be empty.')
+        } else if (!class(se.obj@colData[, variable]) %in% c('numeric', 'integer')) {
+            stop(paste0('The ', variable, 'should be a continuous variable.'))
+        } else if (!method %in% c('pearson', 'spearman')) {
+            stop('The method must be one of the "pearson" or "spearman".')
+        }
+        if (var(se.obj[[variable]]) == 0) {
+            stop(paste0('The ', variable, ' appears to have no variation.'))
+        }
+
+        # Check the assays ####
+        if (length(assay.names) == 1 && assay.names == 'all') {
+            assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
+        } else  assay.names <- factor(x = assay.names , levels = assay.names)
+        if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
+            stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
+        }
+
+        # Check SummarizedExperiment object ####
+        if (assess.se.obj) {
+            se.obj <- checkSeObj(
+                se.obj = se.obj,
+                assay.names = assay.names,
+                variables = variable,
+                remove.na = remove.na,
+                verbose = verbose)
+        }
+
+        # Data transformation ####
+        printColoredMessage(
+            message = '-- Data log transformation:',
+            color = 'magenta',
             verbose = verbose)
-    }
+        all.assays <- applyLog(
+            se.obj = se.obj,
+            assay.names = levels(assay.names),
+            apply.log = apply.log,
+            pseudo.count = pseudo.count,
+            assessment = 'correlation',
+            verbose = verbose
+        )
 
-    # data transformation ####
-    printColoredMessage(
-        message = '-- Data log transformation:',
-        color = 'magenta',
-        verbose = verbose)
-    all.assays <- lapply(
-        levels(assay.names),
-        function(x){
-            # log transformation ####
-            if (apply.log & !is.null(pseudo.count)) {
+        # Compute correlation analyses ####
+        printColoredMessage(
+            message = paste0('Perform ' , method,' correlation between individual genes expression of the assay(s) and the "',
+                             variable, '" variable.'),
+            color = 'magenta',
+            verbose = verbose)
+        all.correlations <- lapply(
+            levels(assay.names),
+            function(x) {
+                # correlation ####
                 printColoredMessage(
-                    message = paste0('- Apply log2 + ', pseudo.count,  ' (pseudo.count) on the "', x, '" data.'),
+                    message = paste0('- Perform the correlation on the "', x, '" data and obtain the coefficients.'),
                     color = 'blue',
                     verbose = verbose)
-                expr <- log2(assay(x = se.obj, i = x) + pseudo.count)
-            } else if (apply.log & is.null(pseudo.count)){
-                printColoredMessage(
-                    message = paste0('- Apply log2 transformation on the "', x, '" data.'),
-                    color = 'blue',
-                    verbose = verbose)
-                expr <- log2(assay(x = se.obj, i = x))
-            } else {
-                printColoredMessage(
-                    message = paste0('- The "', x, '" data will be used without log transformation.'),
-                    color = 'blue',
-                    verbose = verbose)
-                printColoredMessage(
-                    message = 'Please note, the assay should be in log scale before performing the correlation analysis.',
-                    color = 'red',
-                    verbose = verbose)
-                expr <- assay(x = se.obj, i = x)
-            }
-        })
-    names(all.assays) <- levels(assay.names)
+                corr.genes.var <- correls(
+                    y = se.obj@colData[, variable],
+                    x = t(all.assays[[x]]),
+                    type = method,
+                    a = a ,
+                    rho = rho
+                )
+                row.names(corr.genes.var) <- row.names(se.obj)
+                # round the correlation obtained to 2 digits ####
+                if (isTRUE(apply.round)) {
+                    corr.genes.var <- cbind(
+                        round(x = corr.genes.var[, 1:4], digits = 2),
+                        corr.genes.var[, 5, drop = FALSE])
+                }
+                # plot highly affected genes ####
+                if (isTRUE(plot.top.genes)) {
+                    printColoredMessage(
+                        message = paste0('- Plot top ' , nb.top.genes,
+                                         ' highly correlated (positive and negative) genes with the ', variable,'.'),
+                        color = 'blue',
+                        verbose = verbose)
+                    temp.corr <- corr.genes.var[order(corr.genes.var[, 'correlation'], decreasing = TRUE, na.last = TRUE) , ]
+                    ### positive correlation ####
+                    p.pos <- as.data.frame(t(all.assays[[x]][row.names(temp.corr)[c(1:nb.top.genes)],]))
+                    p.pos[, 'variable'] <- se.obj@colData[[variable]]
+                    p.pos <- p.pos %>%
+                        pivot_longer(
+                            -variable,
+                            names_to = 'genes',
+                            values_to = 'expr')
+                    p.pos <- ggplot(p.pos, aes(x = variable, y = expr)) +
+                        geom_point() +
+                        ylab(expression(Log[2] ~ 'gene expression')) +
+                        xlab(variable) +
+                        geom_smooth(method = 'lm', formula = y~x, colour = 'red') +
+                        facet_wrap(~ genes) +
+                        ggtitle(paste0("Top highly positively correlated genes with ", variable,'\n in the assay ', x)) +
+                        theme(panel.background = element_blank(),
+                              axis.line = element_line(colour = 'black', size = 1),
+                              axis.title.x = element_text(size = 14),
+                              axis.title.y = element_text(size = 14),
+                              axis.text.x = element_text(size = 10),
+                              axis.text.y = element_text(size = 12),
+                              strip.text.x = element_text(size = 10),
+                              plot.title = element_text(size = 14))
+                    print(p.pos)
 
-    # correlation analyses ####
-    printColoredMessage(
-        message = paste0('Perform ' , method,' correlation between individual genes expression of the assay(s) and the "',
-                         variable, '" variable.'),
-        color = 'magenta',
-        verbose = verbose)
-    cor.all <- lapply(
-        levels(assay.names),
-        function(x) {
-            # correlation ####
+                    # negative correlation ####
+                    temp.corr <- corr.genes.var[order(corr.genes.var[, 'correlation'],
+                                                      decreasing = FALSE,
+                                                      na.last = TRUE) ,]
+                    p.neg <- as.data.frame(t(all.assays[[x]][row.names(temp.corr)[c(1:nb.top.genes)],]))
+                    p.neg[, 'variable'] <- se.obj@colData[, variable]
+                    p.neg <- p.neg %>%
+                        tidyr::pivot_longer(
+                            -variable,
+                            names_to = 'genes',
+                            values_to = 'expr')
+                    p.neg <- ggplot(p.neg, aes(x = variable, y = expr)) +
+                        geom_point() +
+                        ylab(expression(Log[2] ~ 'gene expression')) +
+                        xlab(variable) +
+                        geom_smooth(method = 'lm', formula = y~x, colour = 'red') +
+                        facet_wrap(~ genes) +
+                        ggtitle(paste0('Top highly negatively correlated genes with the variable ', variable, '\n in the assay ', x)) +
+                        theme( panel.background = element_blank(),
+                               axis.line = element_line(colour = 'black', size = 1),
+                               axis.title.x = element_text(size = 14),
+                               axis.title.y = element_text(size = 14),
+                               axis.text.x = element_text(size = 10),
+                               axis.text.y = element_text(size = 12),
+                               strip.text.x = element_text(size = 10),
+                               plot.title = element_text(size = 14))
+
+                    print(p.neg)
+                    rm(temp.corr)
+                }
+                return(corr.genes.var[ , c('p-value', 'correlation')])
+            })
+        names(all.correlations) <- levels(assay.names)
+
+        # Save the results ####
+        printColoredMessage(
+            message = '-- Save the correlation results:',
+            color = 'magenta',
+            verbose = verbose)
+        ## add results to the SummarizedExperiment object ####
+        if (isTRUE(save.se.obj)) {
             printColoredMessage(
-                message = paste0('- Perform the correlation on the "', x, '" data and obtain the coefficients.'),
+                message = '- The correlation results for the indiviaul assay(s) are saved to the "metadata" of the SummarizedExperiment object.',
+                color = 'blue',
+                verbose = verbose
+                )
+            se.obj <- addMetricToSeObj(
+                se.obj = se.obj,
+                slot = 'Metrics',
+                assay.names = assay.names,
+                assessment.type = 'gene.level',
+                assessment = 'Correlation',
+                method = method,
+                variables = variable,
+                file.name = 'correlations.pvalues',
+                results.data = all.correlations
+            )
+            printColoredMessage(
+                message = paste0('- The correlation results of all the assays are saved to the ',
+                                 ' "se.obj@metadata$metric$AssayName$Correlation$', method, '$library.size" in the SummarizedExperiment object.'),
                 color = 'blue',
                 verbose = verbose)
-            corr.genes.var <- correls(
-                y = se.obj@colData[, variable],
-                x = t(all.assays[[x]]),
-                type = method,
-                a = a ,
-                rho = rho)
-            row.names(corr.genes.var) <- row.names(se.obj)
-            # round the correlation obtained to 2 digits ####
-            if (isTRUE(apply.round)) {
-                corr.genes.var <- cbind(
-                    round(x = corr.genes.var[, 1:4], digits = 2),
-                    corr.genes.var[, 5, drop = FALSE])
-            }
-            # plot highly affected genes ####
-            if (isTRUE(plot.top.genes)) {
-                printColoredMessage(
-                    message = paste0('- Plot top ' , nb.top.genes,
-                        ' highly correlated (positive and negative) genes with the ', variable,'.'),
-                    color = 'blue',
-                    verbose = verbose)
-                temp.corr <- corr.genes.var[order(corr.genes.var[, 'correlation'], decreasing = TRUE, na.last = TRUE) , ]
-                ### positive correlation ####
-                p.pos <- as.data.frame(t(all.assays[[x]][row.names(temp.corr)[c(1:nb.top.genes)],]))
-                p.pos[, 'variable'] <- se.obj@colData[, variable]
-                p.pos <- p.pos %>%
-                    pivot_longer(
-                    -variable,
-                    names_to = 'genes',
-                    values_to = 'expr')
-                p.pos <- ggplot(p.pos, aes(x = variable, y = expr)) +
-                    geom_point() +
-                    ylab(expression(Log[2] ~ 'gene expression')) +
-                    xlab(variable) +
-                    geom_smooth(method = 'lm', formula = y~x, colour = 'red') +
-                    facet_wrap(~ genes) +
-                    ggtitle(paste0("Top highly positively correlated genes with ", variable,'\n in the assay ', x)) +
-                    theme(panel.background = element_blank(),
-                          axis.line = element_line(colour = 'black', size = 1),
-                          axis.title.x = element_text(size = 14),
-                          axis.title.y = element_text(size = 14),
-                          axis.text.x = element_text(size = 10),
-                          axis.text.y = element_text(size = 12),
-                          strip.text.x = element_text(size = 10),
-                          plot.title = element_text(size = 14))
-                print(p.pos)
 
-                # negative correlation ####
-                temp.corr <- corr.genes.var[order(corr.genes.var[, 'correlation'],
-                                         decreasing = FALSE,
-                                         na.last = TRUE) ,]
-                p.neg <- as.data.frame(t(all.assays[[x]][row.names(temp.corr)[c(1:nb.top.genes)],]))
-                p.neg[, 'variable'] <- se.obj@colData[, variable]
-                p.neg <- p.neg %>%
-                    tidyr::pivot_longer(
-                        -variable,
-                        names_to = 'genes',
-                        values_to = 'expr')
-                p.neg <- ggplot(p.neg, aes(x = variable, y = expr)) +
-                    geom_point() +
-                    ylab(expression(Log[2] ~ 'gene expression')) +
-                    xlab(variable) +
-                    geom_smooth(method = 'lm', formula = y~x, colour = 'red') +
-                    facet_wrap(~ genes) +
-                    ggtitle(paste0('Top highly negatively correlated genes with the variable ', variable, '\n in the assay ', x)) +
-                    theme( panel.background = element_blank(),
-                           axis.line = element_line(colour = 'black', size = 1),
-                           axis.title.x = element_text(size = 14),
-                           axis.title.y = element_text(size = 14),
-                           axis.text.x = element_text(size = 10),
-                           axis.text.y = element_text(size = 12),
-                           strip.text.x = element_text(size = 10),
-                           plot.title = element_text(size = 14))
-
-                print(p.neg)
-                rm(temp.corr)
-            }
-            results <- NULL
-            results <- list(corr.genes.var = corr.genes.var)
-            return(results)
-        })
-    names(cor.all) <- levels(assay.names)
-
-    # save the results ####
-    printColoredMessage(
-        message = '-- Save the correlation results:',
-        color = 'magenta',
-        verbose = verbose)
-    ## add results to the SummarizedExperiment object ####
-    if (isTRUE(save.se.obj)) {
-        printColoredMessage(
-            message = '- The correlation results for the indiviaul assay(s) are saved to the "metadata" of the SummarizedExperiment object.',
-            color = 'blue',
-            verbose = verbose)
-        for (x in levels(assay.names)) {
-            ## check if metadata metric already exist
-            if (length(se.obj@metadata) == 0) {
-                se.obj@metadata[['metric']] <- list()
-            }
-            ## check if metadata metric already exist for this assay
-            if (!'metric' %in% names(se.obj@metadata)) {
-                se.obj@metadata[['metric']] <- list()
-            }
-            ## check if metadata metric already exist for this assay
-            if (!x %in% names(se.obj@metadata[['metric']])) {
-                se.obj@metadata[['metric']][[x]] <- list()
-            }
-            ## check if metadata metric already exist for this assay and this metric
-            if (!'Correlation' %in% names(se.obj@metadata[['metric']][[x]])) {
-                se.obj@metadata[['metric']][[x]][['Correlation']] <- list()
-            }
-            ## check if metadata metric already exist for this assay and this metric
-            if (!method %in% names(se.obj@metadata[['metric']][[x]][['Correlation']])) {
-                se.obj@metadata[['metric']][[x]][['Correlation']][[method]] <- list()
-            }
-            ## check if metadata metric already exist for this assay, this metric and this variable
-            se.obj@metadata[['metric']][[x]][['Correlation']][[method]][[variable]]$cor.coef <-
-                cor.all[[x]][['corr.genes.var']][ , c('p-value', 'correlation')]
+            printColoredMessage(message = '------------The computeGenesVariableCorrelation function finished.',
+                                color = 'white',
+                                verbose = verbose)
+            return(se.obj = se.obj)
         }
-        printColoredMessage(
-            message = paste0('- The correlation results of all the assays are saved to the ',
-                             ' "se.obj@metadata$metric$AssayName$Correlation$', method, '$library.size" in the SummarizedExperiment object.'),
-            color = 'blue',
-            verbose = verbose)
-
+        ## output the results as list ####
+        if (isFALSE(save.se.obj)) {
+            printColoredMessage(
+                message = '-The correlation results for indiviaul assay are saved as list.',
+                color = 'blue',
+                verbose = verbose
+                )
+            printColoredMessage(message = '------------The computeGenesVariableCorrelation function finished.',
+                color = 'white',
+                verbose = verbose
+                )
+            return(all.correlations)
+        }
+    } else {
         printColoredMessage(message = '------------The computeGenesVariableCorrelation function finished.',
-                            color = 'white',
-                            verbose = verbose)
-        return(se.obj = se.obj)
-
-        # return only the correlation result ####
-    }
-    if (isFALSE(save.se.obj)) {
-        printColoredMessage(
-            message = 'The correlation results for indiviaul assay are saved as list.',
-            color = 'blue',
-            verbose = verbose)
-        printColoredMessage(
-            message = '------------The computeGenesVariableCorrelation function finished.',
             color = 'white',
-            verbose = verbose)
-        return(gene.corr.var = cor.all)
+            verbose = verbose
+            )
+        return(se.obj = se.obj)
     }
 }
