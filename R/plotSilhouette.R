@@ -17,7 +17,7 @@
 #' the assays of the SummarizedExperiment object will be selected.
 #' @param variables Symbol. Indicates one or two column names in the SummarizedExperiment object that contains categorical
 #' variables such as sample subtypes or batches.
-#' @param silhouette.method Symbol. Indicates what computed ARI methods should be used for plotting. The "ari.method" must be
+#' @param silhouette.method Symbol. A symbol Indicates what computed ARI methods should be used for plotting. The "ari.method" must be
 #' specified based on the "computeARI" function. The default is "hclust.complete.euclidian", which is the default of the
 #' the "computeARI" function. We refer to the "computeARI" function for more detail
 #' @param plot.type Symbol.Indicates how to plot the adjusted rand index. The options are "single.plot" and "combined.plot".
@@ -73,43 +73,33 @@ plotSilhouette <- function(
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
-    # Check Silhouette metric exist ####
-    m.out <- lapply(
-        levels(assay.names),
-        function(x) {
-            if (!'Silhouette' %in% names(se.obj@metadata[['metric']][[x]]))
-                stop(paste0('Any Silhouette analysis has not been computed yet on the  ', x,' assay'))
-        })
-
-    # Plots ####
+    # Plot the Silhouette values ####
     ## single plot ####
     if (plot.type == 'single.plot') {
         # obtain silhouette ####
         printColoredMessage(
-            message = paste0('--Obtain computed Silhouette from the SummarizedExperiment object:'),
+            message = paste0('-- Obtain computed Silhouette from the SummarizedExperiment object:'),
             color = 'magenta',
             verbose = verbose
         )
-        all.silhouette <- lapply(
-            levels(assay.names),
-            function(x) {
-                printColoredMessage(
-                    message = paste0('- Obtain the Silhouette for the "', x, '" data.'),
-                    color = 'blue',
-                    verbose = verbose
-                )
-                if (!silhouette.method %in% names(se.obj@metadata[['metric']][[x]][['Silhouette']])) {
-                    stop(paste0('Any ', silhouette.method ,' has not been computed yet for the ', x, ' assay.'))
-                }
-                if (!variables %in% names(se.obj@metadata[['metric']][[x]][['Silhouette']][[silhouette.method]])) {
-                    stop(paste0('The ', silhouette.method ,'has not been computed yet for the ', variables, ' variable and the ', x,' assay.'))
-                }
-                silhouette <- se.obj@metadata[['metric']][[x]][['Silhouette']][[silhouette.method]][[variables]]$sil.coef
-            })
-        names(all.silhouette) <- levels(assay.names)
-        ## individual plots ####
+        ### obtain silhouette ####
+        all.silhouette <- getMetricFromSeObj(
+            se.obj = se.obj,
+            slot = 'Metrics',
+            assay.names = assay.names,
+            assessment = 'Silhouette',
+            assessment.type = 'global.level',
+            method = silhouette.method,
+            variables = variables,
+            file.name = 'silhouette.coeff',
+            sub.file.name = NULL,
+            required.function = 'computeSilhouette',
+            message.to.print = 'silhouette coefficient'
+            )
+
+        ## plot for individual assay ####
         printColoredMessage(
-            message = paste0('--Generate barplot of the Silhouette coefficient for the individual assay(s):'),
+            message = paste0('-- Generate barplot of the Silhouette coefficient for the individual assay(s):'),
             color = 'magenta',
             verbose = verbose)
         all.single.silhouette.plots <- lapply(
@@ -138,7 +128,7 @@ plotSilhouette <- function(
         names(all.single.silhouette.plots) <- levels(assay.names)
         everything <- datasets <- silhou.coff <- NULL
 
-        ## Overall plots ####
+        ## put all plots of individual assays ####
         if (length(assay.names) > 1) {
             printColoredMessage(
                 message = paste0('-- Put all the silhouette coefficient togather:'),
@@ -169,6 +159,21 @@ plotSilhouette <- function(
                         angle = 25,
                         hjust = 1),
                     axis.text.y = element_text(size = 12))
+            overall.single.silhouette.plot <- annotate_figure(
+                p = overall.single.silhouette.plot,
+                top = text_grob(
+                    label = "Average silhouette coefficient",
+                    color = "orange",
+                    face = "bold",
+                    size = 18),
+                bottom = text_grob(
+                    label = paste0(
+                        'Analysis: ', 'average silhouette coefficient using the first PCs and the ', variables, ' variable.'),
+                    color = "black",
+                    hjust = 1,
+                    x = 1,
+                    size = 10)
+            )
             printColoredMessage(
                 message = '- The individual assay silhouette coefficient barplot are combined into one.',
                 color = 'blue',
@@ -177,8 +182,9 @@ plotSilhouette <- function(
                 suppressMessages(print(overall.single.silhouette.plot))
         }
 
-    } else if (plot.type == 'combined.plot') {
-        # combine plots ####
+    }
+    ## combined plot ####
+    if (plot.type == 'combined.plot') {
         printColoredMessage(
             message = paste0('-- Obtain computed silhouette for the from the SummarizedExperiment object:'),
             color = 'magenta',
@@ -188,32 +194,32 @@ plotSilhouette <- function(
             levels(assay.names),
             function(x) {
                 printColoredMessage(
-                    message = paste0('- Obtain silhouette for the ', x, ' data.'),
+                    message = paste0('- Obtain silhouette for the "', x, '" data.'),
                     color = 'blue',
                     verbose = verbose
                 )
-                if (!silhouette.method %in% names(se.obj@metadata[['metric']][[x]][['Silhouette']])) {
+                if (!silhouette.method %in% names(se.obj@metadata[['Metrics']][[x]][['global.level']][['Silhouette']])) {
                     stop(paste0('The ', silhouette.method ,'has not been computed yet for the ', variables,' variable and the ', x,' data.'))
                 }
                 for (i in variables) {
-                    if (!i %in% names(se.obj@metadata[['metric']][[x]][['Silhouette']][[silhouette.method]])) {
+                    if (!i %in% names(se.obj@metadata[['Metrics']][[x]][['global.level']][['Silhouette']][[silhouette.method]])) {
                         stop(paste0('The ', silhouette.method ,' has not been computed yet for the ', i, ' variable and the ', x,' data.'))
                     }
                 }
                 silhouette <- c()
                 for (i in 1:length(variables))
-                    silhouette[i] <-
-                    se.obj@metadata[['metric']][[x]][['Silhouette']][[silhouette.method]][[variables[i]]]$sil.coef
+                    silhouette[i] <- se.obj@metadata[['Metrics']][[x]][['global.level']][['Silhouette']][[silhouette.method]][[i]]$silhouette.coeff
                 return(silhouette)
             })
         names(all.silhouette) <- levels(assay.names)
+
         ## individual plots ####
         datasets <- NULL
         all.combined.silhouette.plots <- lapply(
             levels(assay.names),
             function(x) {
                 printColoredMessage(
-                    message = paste0('-Plot Silhouette for the ', x, ' data.'),
+                    message = paste0('- Plot combined Silhouettes for the "', x, '" data.'),
                     color = 'blue',
                     verbose = verbose
                 )
@@ -221,7 +227,7 @@ plotSilhouette <- function(
                 row.names(all.silhouettes) <- x
                 colnames(all.silhouettes) <- variables
                 all.silhouettes$datasets <- row.names(all.silhouettes)
-                ggplot(all.silhouettes, aes_string(x = variables[1], y = variables[2])) +
+                p.combined <- ggplot(all.silhouettes, aes_string(x = variables[1], y = variables[2])) +
                     geom_point() +
                     ggrepel::geom_text_repel(aes(label = datasets),
                                     hjust = 0,
@@ -237,6 +243,8 @@ plotSilhouette <- function(
                         axis.text.x = element_text(size = 12),
                         axis.text.y = element_text(size = 12)
                     )
+                if(isTRUE(plot.output) & length(assay.names) == 1) print(p.combined)
+                return(p.combined)
             })
         names(all.combined.silhouette.plots) <- levels(assay.names)
 
@@ -264,10 +272,25 @@ plotSilhouette <- function(
                     axis.title.y = element_text(size = 18),
                     plot.title = element_text(size = 15),
                     axis.text.x = element_text(size = 12),
-                    axis.text.y = element_text(size = 12)
-                )
+                    axis.text.y = element_text(size = 12))
+            overall.combined.silhouette.plot <- annotate_figure(
+                p = overall.combined.silhouette.plot,
+                top = text_grob(
+                    label = "Average silhouette coefficient",
+                    color = "orange",
+                    face = "bold",
+                    size = 18),
+                bottom = text_grob(
+                    label = paste0(
+                        'Analysis: ', 'average silhouette coefficient using the first PCs and the ', variables, ' variable.'),
+                    color = "black",
+                    hjust = 1,
+                    x = 1,
+                    size = 10)
+            )
         }
     }
+
     # Save the results ####
     printColoredMessage(message = '-- Save the silhouette  barplots:',
                         color = 'magenta',
@@ -278,48 +301,61 @@ plotSilhouette <- function(
             message = '- Save all the silhouette coefficient barplots to the "metadata" in the SummarizedExperiment object:',
             color = 'blue',
             verbose = verbose)
-        if (plot.type == 'single.plot') {
-            for (i in variables) {
-                for (x in levels(assay.names)) {
-                    se.obj@metadata[['metric']][[x]][['Silhouette']][[silhouette.method]][[i]][['sil.coef.single.plot']] <-
-                        all.single.silhouette.plots[[x]]
-                }
-            }
-        } else if (plot.type == 'combined.plot') {
-            for (i in variables) {
-                for (x in levels(assay.names)) {
-                    se.obj@metadata[['metric']][[x]][['Silhouette']][[silhouette.method]][[i]][['sil.coef.combined.plot']] <-
-                        all.combined.silhouette.plots[[x]]
-                }
-            }
+        if(plot.type == 'single.plot'){
+            se.obj <- addMetricToSeObj(
+                se.obj = se.obj,
+                slot = 'Metrics',
+                assay.names = assay.names,
+                assessment.type = 'global.level',
+                assessment = 'Silhouette',
+                method = silhouette.method,
+                variables = variables,
+                file.name = 'single.plot',
+                results.data = all.single.silhouette.plots
+            )
+        } else if (plot.type == 'combined.plot'){
+            se.obj <- addMetricToSeObj(
+                se.obj = se.obj,
+                slot = 'Metrics',
+                assay.names = assay.names,
+                assessment.type = 'global.level',
+                assessment = 'Silhouette',
+                method = silhouette.method,
+                variables = paste0(variables, collapse = '&'),
+                file.name = 'combined.plot',
+                results.data = all.combined.silhouette.plots
+            )
         }
+        printColoredMessage(
+            message = paste0('- The Silhouette barplot of the individual assay(s) is saved to the ',
+                             ' "se.obj@metadata$metric$AssayName$ARI" in the SummarizedExperiment object. '),
+            color = 'blue',
+            verbose = verbose
+            )
+
         if (length(assay.names) > 1) {
-            variables <- paste0(variables, collapse = '&')
-            if (!'plot' %in%  names(se.obj@metadata)) {
-                se.obj@metadata[['plot']] <- list()
-            }
-            if (!'Silhouette' %in%  names(se.obj@metadata[['plot']])) {
-                se.obj@metadata[['plot']][['Silhouette']] <- list()
-            }
-            if (!silhouette.method %in%  names(se.obj@metadata[['plot']][['Silhouette']])) {
-                se.obj@metadata[['plot']][['Silhouette']][[silhouette.method]] <- list()
-            }
-            if (plot.type == 'single.plot') {
-                if (!variables %in%  names(se.obj@metadata[['plot']][['Silhouette']][[silhouette.method]])) {
-                    se.obj@metadata[['plot']][['Silhouette']][[silhouette.method]][[variables]] <- list()
-                }
-                if (!'silhouette.single.plot' %in%  names(se.obj@metadata[['plot']][['Silhouette']][[silhouette.method]][[variables]])) {
-                    se.obj@metadata[['plot']][['Silhouette']][[silhouette.method]][[variables]][['silhouette.single.plot']] <- list()
-                }
-                se.obj@metadata[['plot']][['Silhouette']][[silhouette.method]][[variables]][['silhouette.single.plot']] <- overall.single.silhouette.plot
-            } else if (plot.type == 'combined.plot') {
-                if (!variables %in%  names(se.obj@metadata[['plot']][['Silhouette']][[silhouette.method]])) {
-                    se.obj@metadata[['plot']][['Silhouette']][[silhouette.method]][[variables]] <- list()
-                }
-                if (!'silhouette.combined.plot' %in%  names(se.obj@metadata[['plot']][['Silhouette']][[silhouette.method]][[variables]])) {
-                    se.obj@metadata[['plot']][['Silhouette']][[silhouette.method]][[variables]][['silhouette.combined.plot']] <- list()
-                }
-                se.obj@metadata[['plot']][['Silhouette']][[silhouette.method]][[variables]][['silhouette.combined.plot']] <- overall.combined.silhouette.plot
+            if(plot.type == 'single.plot'){
+                se.obj <- addOverallPlotToSeObj(
+                    se.obj = se.obj,
+                    slot = 'Plots',
+                    assessment.type = 'global.level',
+                    assessment = 'Silhouette',
+                    method = silhouette.method,
+                    variables = variables,
+                    file.name = 'single.plot',
+                    plot.data = overall.single.silhouette.plot
+                )
+            } else if (plot.type == 'combined.plot'){
+                se.obj <- addOverallPlotToSeObj(
+                    se.obj = se.obj,
+                    slot = 'Plots',
+                    assessment.type = 'global.level',
+                    assessment = 'Silhouette',
+                    method = silhouette.method,
+                    variables = paste0(variables, collapse = '&'),
+                    file.name = 'combined.plot',
+                    plot.data = overall.combined.silhouette.plot
+                )
             }
             printColoredMessage(
                 message = paste0('- The combined silhouette coefficient barplot all the assays is saved to the ',
