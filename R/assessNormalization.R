@@ -1529,7 +1529,7 @@ assessNormalization <- function(
         if (!'AssessmentTable' %in% names(se.obj@metadata[['NormAssessment']][[output.name]])) {
             se.obj@metadata[['NormAssessment']][[output.name]][['AssessmentTable']] <- list()
         }
-        se.obj@metadata[['NormAssessment']][[output.name]][['AssessmentMatrix']] <- all.measurements
+        se.obj@metadata[['NormAssessment']][[output.name]][['AssessmentTable']] <- all.measurements
 
         if (!'AssessmentPlot' %in% names(se.obj@metadata[['NormAssessment']][[output.name]])) {
             se.obj@metadata[['NormAssessment']][[output.name]][['AssessmentPlot']] <- list()
@@ -1539,7 +1539,7 @@ assessNormalization <- function(
         if (!'AssessmentTable' %in% names(se.obj@metadata[['NormAssessment']][[output.name]])) {
             se.obj@metadata[['NormAssessment']][[output.name]][['AssessmentTable']] <- list()
         }
-        se.obj@metadata[['NormAssessment']][[output.name]][['AssessmentPlot']] <- metrics.table
+        se.obj@metadata[['NormAssessment']][[output.name]][['AssessmentTable']] <- metrics.table
 
         printColoredMessage(
             message = '- The assessment table and plot are saved to metadata of the SummarizedExperiment object.',
