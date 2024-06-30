@@ -183,25 +183,33 @@ computeARI <- function(
                     color = 'blue',
                     verbose = verbose)
                 bic <- mclustBIC(data = pca.data)
-                mod <- Mclust(data = pca.data, x = bic, G = length(unique(se.obj@colData[[variable]])) )
+                mod <- Mclust(
+                    data = pca.data,
+                    x = bic,
+                    G = length(unique(se.obj@colData[[variable]]))
+                    )
                 printColoredMessage(
                     message = '* calculate the adjusted rand index.',
                     color = 'blue',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
                 ari <- adjustedRandIndex(mod$classification, se.obj@colData[, variable])
             } else {
                 printColoredMessage(
                     message = '* cluster the PCs using the hclust function.',
                     color = 'blue',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
                 clusters <- cutree(
                     tree = hclust(d = dist(x = pca.data, method = hclust.dist.measure), method = hclust.method),
-                    k = length(unique(se.obj@colData[, variable])))
+                    k = length(unique(se.obj@colData[, variable]))
+                    )
                 printColoredMessage(
                     message = '* calculate the adjusted rand index.',
                     color = 'blue',
-                    verbose = verbose)
-                ari <- adjustedRandIndex(clusters, se.obj@colData[, variable])
+                    verbose = verbose
+                    )
+                ari <- adjustedRandIndex(clusters, se.obj@colData[[variable]])
             }
             return(ari)
         })
