@@ -116,9 +116,12 @@ createPrPsByMnn <- function(
         )
     }
     # Assess the unwanted variable ####
-    printColoredMessage(message = '- Assess and group the unwanted variable:',
-                        color = 'magenta',
-                        verbose = verbose)
+    printColoredMessage(
+        message = '- Assess and group the unwanted variable:',
+        color = 'magenta',
+        verbose = verbose
+        )
+    initial.variable <- se.obj[[uv.variable]]
     if (class(se.obj[[uv.variable]]) %in% c('integer', 'numeric')) {
         printColoredMessage(
             message = paste0(
@@ -141,8 +144,7 @@ createPrPsByMnn <- function(
                 centers = nb.clusters,
                 iter.max = 1000
             )
-            se.obj[[uv.variable]] <-
-                factor(x = paste0(uv.variable, '_group', uv.cont.clusters$cluster))
+            se.obj[[uv.variable]] <- factor(x = paste0(uv.variable, '_group', uv.cont.clusters$cluster))
         } else if (clustering.method == 'cut') {
             uv.cont.clusters <- as.numeric(cut(
                 x = colData(se.obj)[[uv.variable]],
@@ -507,6 +509,7 @@ createPrPsByMnn <- function(
         stop('There someting wrong with PRPS sets.')
     }
 
+    se.obj[[uv.variable]] <- initial.variable
     # Save the results ####
     ## select output name ####
     out.put.name <- paste0(uv.variable,
@@ -539,15 +542,13 @@ createPrPsByMnn <- function(
         }
         ## check
         if (!'prps.data' %in% names(se.obj@metadata[['PRPS']][['un.supervised']][[prps.group]])) {
-            se.obj@metadata[['PRPS']][['un.supervised']][[prps.group]][['prps.data']] <-
-                list()
+            se.obj@metadata[['PRPS']][['un.supervised']][[prps.group]][['prps.data']] <- list()
         }
         ## check
         if (!out.put.name %in% names(se.obj@metadata[['PRPS']][['un.supervised']][[prps.group]][['prps.data']])) {
             se.obj@metadata[['PRPS']][['un.supervised']][[prps.group]][['prps.data']][[out.put.name]] <- list()
         }
-        se.obj@metadata[['PRPS']][['un.supervised']][[prps.group]][['prps.data']][[out.put.name]] <-
-            prps.data
+        se.obj@metadata[['PRPS']][['un.supervised']][[prps.group]][['prps.data']][[out.put.name]] <- prps.data
         printColoredMessage(message = '------------The createPrPsByMnn function finished.',
                             color = 'white',
                             verbose = verbose)
