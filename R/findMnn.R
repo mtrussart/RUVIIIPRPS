@@ -74,7 +74,7 @@ findMnn <- function(
         prps.group = NULL,
         save.se.obj = TRUE,
         verbose = TRUE
-) {
+        ){
     printColoredMessage(message = '------------The findMnn function starts:',
                         color = 'white',
                         verbose = verbose)
@@ -109,6 +109,8 @@ findMnn <- function(
     # Keep the original sample orders and the variable ####
     all.samples.index <- c(1:ncol(se.obj))
     ini.variable <- se.obj[[uv.variable]]
+    ini.sample.names <- colnames(se.obj)
+    colnames(se.obj) <- paste0('sample_', seq(ncol(se.obj)))
 
     # Assess and group the unwanted variable ####
     printColoredMessage(
@@ -119,8 +121,9 @@ findMnn <- function(
     if (class(se.obj[[uv.variable]]) %in% c('integer', 'numeric')) {
         ## continuous variable ####
         printColoredMessage(
-            message = paste0('- The ', uv.variable, ' is a continouse variable, then this will be divided into ',
-                             nb.clusters, ' groups using the', clustering.method,' clustering.'),
+            message = paste0(
+                '- The "', uv.variable, '" is a continouse variable, then it will be divided into ',
+                nb.clusters, ' groups using the ', clustering.method,' clustering.'),
             color = 'blue',
             verbose = verbose
         )
@@ -159,13 +162,17 @@ findMnn <- function(
     }
     ## categorical variable ####
     if (is.factor(se.obj[[uv.variable]]) | is.character(se.obj[[uv.variable]])) {
-        printColoredMessage(
-            message = paste0('- The ', uv.variable, ' is a categorical variable with  ',
-                             length(unique(se.obj[[uv.variable]])), ' levels.'),
-            color = 'blue',
-            verbose = verbose
-        )
-        se.obj[[uv.variable]] <- factor(x = se.obj[[uv.variable]])
+        if(length(unique(se.obj[[uv.variable]])) == 1){
+            stop('To create MNN, the "uv.variable" must have at least two groups/levels.')
+        } else if (length(unique(se.obj[[uv.variable]])) > 1){
+            printColoredMessage(
+                message = paste0('- The ', uv.variable, ' is a categorical variable with  ',
+                                 length(unique(se.obj[[uv.variable]])), ' levels.'),
+                color = 'blue',
+                verbose = verbose
+            )
+            se.obj[[uv.variable]] <- factor(x = se.obj[[uv.variable]])
+        }
     }
 
     # Data normalization and transformation and regression ####
@@ -181,7 +188,7 @@ findMnn <- function(
             selected.samples <- colData(se.obj)[[uv.variable]] == x
             if (!is.null(normalization) & is.null(regress.out.bio.variables)) {
                 printColoredMessage(
-                    message = paste0('- Apply the ', normalization, ' within samples from the "', x, '" group.'),
+                    message = paste0('- Apply the ', normalization, ' within the samples from the "', x, '" group.'),
                     color = 'blue',
                     verbose = verbose
                 )
@@ -199,8 +206,8 @@ findMnn <- function(
                 norm.data
             } else if (!is.null(normalization) & !is.null(regress.out.bio.variables)) {
                 printColoredMessage(
-                    message = paste0('- Apply the ', normalization, ' within samples from "', x,
-                        '" group and then regressing out ', paste0(regress.out.bio.variables, collapse = '&'), '.'),
+                    message = paste0('- Apply the ', normalization, ' within the samples from "', x,
+                        '" group and then regressing out ', paste0(regress.out.bio.variables, collapse = '&'), ' from the data.'),
                     color = 'blue',
                     verbose = verbose
                 )
@@ -229,50 +236,100 @@ findMnn <- function(
                 colnames(norm.data) <- colnames(norm.data)
                 row.names(norm.data) <- row.names(norm.data)
                 norm.data
-            } else if (is.null(normalization) & is.null(regress.out.bio.variables & apply.log)) {
-                printColoredMessage(
-                    message = paste0(
-                        '- Apply log2 transformation within samples from ', unique(colData(se.obj)[[uv.variable]][x]),
-                        ', and then finding ', ' nearest neighbours for individual samples.'),
-                    color = 'blue',
-                    verbose = verbose
-                )
-                norm.data <- log2(assay(se.obj[, selected.samples], assay.name) + pseudo.count)
+            } else if (is.null(normalization) & !is.null(regress.out.bio.variables)){
+                if(isTRUE(apply.log)){
+                    printColoredMessage(
+                        message = paste0('- Apply log and then regress out ',
+                                         paste0(regress.out.bio.variables, collapse = '&'), x, '" group from the data.'),
+                        color = 'blue',
+                        verbose = verbose
+                    )
+                    if(!is.null(pseudo.count)){
+                        norm.data <- log2(assay(se.obj[, selected.samples], assay.name) + pseudo.count)
+                        norm.data
+                    } else {
+                        norm.data <- log2(assay(se.obj[, selected.samples], i = assay.name))
+                    }
+
+                } else if (isFALSE(apply.log)){
+                    printColoredMessage(
+                        message = paste0('- Regress out ',
+                                         paste0(regress.out.bio.variables, collapse = '&'), x, '" group from the data.'),
+                        color = 'blue',
+                        verbose = verbose
+                    )
+                    norm.data <- assay(se.obj[, selected.samples], assay)
+                    norm.data
+                }
+                sample.info <- as.data.frame(colData(se.obj[, selected.samples]))
+                # regression ####
+                norm.data <- t(norm.data)
+                lm.formua <- paste('sample.info', regress.out.bio.variables, sep = '$')
+                norm.data <- lm(as.formula(paste(
+                    'norm.data',
+                    paste0(lm.formua, collapse = '+') ,
+                    sep = '~'
+                )))
+                norm.data <- t(norm.data$residuals)
+                colnames(norm.data) <- colnames(norm.data)
+                row.names(norm.data) <- row.names(norm.data)
                 norm.data
-            } else {
-                printColoredMessage(
-                    message = paste0('No any library size normalization and transformation ', 'within samples from ',
-                        unique(colData(se.obj)[[uv.variable]][x]), ', and just finding ', ' mnn for individual samples.'),
-                    color = 'blue',
-                    verbose = verbose
-                )
-                norm.data <- assay(se.obj[, selected.samples], assay)
-                norm.data
+
+            } else if (is.null(normalization) & is.null(regress.out.bio.variables)) {
+                if(isTRUE(apply.log)){
+                    printColoredMessage(
+                        message = paste0('- Apply the log2 within the samples from "', x,
+                                         '" group data.'),
+                        color = 'blue',
+                        verbose = verbose
+                    )
+                    if(!is.null(pseudo.count)){
+                        norm.data <- log2(assay(se.obj[, selected.samples], assay.name) + pseudo.count)
+                        norm.data
+                    } else {
+                        norm.data <- log2(assay(se.obj[, selected.samples], i = assay.name))
+                    }
+
+                } else if (isFALSE(apply.log)){
+                    printColoredMessage(
+                        message = paste0('No any library size normalization and transformation ', 'within samples from ',
+                                         unique(colData(se.obj)[[uv.variable]][x]), ', and just finding ', ' mnn for individual samples.'),
+                        color = 'blue',
+                        verbose = verbose
+                    )
+                    norm.data <- assay(se.obj[, selected.samples], assay)
+                    norm.data
+                }
             }
         })
     names(all.norm.data) <- groups
 
     # Find MNN between batches ####
     printColoredMessage(
-        message = '-- Find MNN across all possible pair of batches, this may take few minuets."',
+        message = '-- Find MNN across all possible pair of batches, this may take few minuets:',
         color = 'magenta',
         verbose = verbose
         )
     pairs.batch <- combn(x = groups, m = 2)
     printColoredMessage(
-        message = paste0( '- All mnn between all pairs of the sub-groups "', uv.variable, '" will be found:'),
+        message = paste0(
+            '- All MNN between all ', ncol(pairs.batch),
+            ' pairs of the sub-groups of the "', uv.variable, '" variable will be found:'),
         color = 'orange',
         verbose = verbose
-    )
-    total <- ncol(pairs.batch)
-    pb <- utils::txtProgressBar(min = 0, max = total, style = 3)
+        )
+    pb <- utils::txtProgressBar(
+        min = 0,
+        max = ncol(pairs.batch),
+        style = 3
+        )
     all.mnn <- lapply(
         1:ncol(pairs.batch),
         function(x) {
             message(' ')
             printColoredMessage(
-                message = paste0('* Find mutual nearest neighbors between the " ',
-                    pairs.batch[1, x], '" and the "', pairs.batch[2, x], '" groups.'),
+                message = paste0(
+                    '* Find MNN between the "', pairs.batch[1, x], '" and the "', pairs.batch[2, x], '" sub-groups.'),
                 color = 'blue',
                 verbose = verbose
             )
@@ -305,8 +362,18 @@ findMnn <- function(
                 group1 = rep(pairs.batch[1, x], length(mnn.samples$first)),
                 group2 = rep(pairs.batch[2, x], length(mnn.samples$second)),
                 sample.no.1 = all.samples.index[se.obj[[uv.variable]] == pairs.batch[1, x]][mnn.samples$first],
-                sample.no.2 = all.samples.index[se.obj[[uv.variable]] == pairs.batch[2, x]][mnn.samples$second]
+                sample.no.2 = all.samples.index[se.obj[[uv.variable]] == pairs.batch[2, x]][mnn.samples$second],
+                sample.no.a = as.numeric(gsub('sample_', '', colnames(all.norm.data[[pairs.batch[1, x]]])[mnn.samples$first])),
+                sample.no.b = as.numeric(gsub('sample_', '', colnames(all.norm.data[[pairs.batch[2, x]]])[mnn.samples$second]))
             )
+            # Sanity check ###
+            if(!all.equal(df$sample.no.1, df$sample.no.1.1)){
+                stop('There something wrong with the MNN.')
+            }
+            if(!all.equal(df$sample.no.2, df$sample.no.2.2)){
+                stop('There something wrong with the MNN.')
+            }
+
             printColoredMessage(
                 message = paste0('* ', nrow(df), ' mnn are found.'),
                 color = 'blue',
@@ -320,7 +387,7 @@ findMnn <- function(
         stop('MNN are not found across any batches. You may want to increase the valeu of the mnn.')
     }
 
-    # Plot mnn distribution ####
+    # Plot the distribution of MNN  ####
     p.mnn <- ggplot(all.mnn, aes(x = group1, y = group2)) +
         geom_point() +
         geom_count() +
@@ -335,8 +402,7 @@ findMnn <- function(
                 size = 12,
                 angle = 35,
                 vjust = 1,
-                hjust = 1
-            ),
+                hjust = 1),
             axis.text.y = element_text(
                 size = 12,
                 angle = 35,
@@ -354,7 +420,7 @@ findMnn <- function(
     if (isTRUE(sum(is.na(all.mnn))))
         stop('There are NA in the MNN.')
     se.obj[[uv.variable]] <- ini.variable
-
+    colnames(se.obj) <- ini.sample.names
     # Save the results ####
     ## select prps name ####
     if(is.null(prps.group)){
@@ -382,13 +448,15 @@ findMnn <- function(
         if (!prps.group %in% names(se.obj@metadata[['PRPS']][['un.supervised']])) {
             se.obj@metadata[['PRPS']][['un.supervised']][[prps.group]] <- list()
         }
+        ## check
         if (!'KnnMnn' %in% names(se.obj@metadata[['PRPS']][['un.supervised']][[prps.group]])) {
             se.obj@metadata[['PRPS']][['un.supervised']][[prps.group]][['KnnMnn']] <- list()
         }
+        ## check
         if (!'knn' %in% names(se.obj@metadata[['PRPS']][['un.supervised']][[prps.group]][['KnnMnn']])) {
-            se.obj@metadata[['PRPS']][['un.supervised']][[prps.group]][['KnnMnn']][['mnn']] <-
-                list()
+            se.obj@metadata[['PRPS']][['un.supervised']][[prps.group]][['KnnMnn']][['mnn']] <- list()
         }
+        ## check
         if (!output.name %in% names(se.obj@metadata[['PRPS']][['un.supervised']][[prps.group]][['KnnMnn']][['knn']])) {
             se.obj@metadata[['PRPS']][['un.supervised']][[prps.group]][['KnnMnn']][['mnn']][[output.name]] <- list()
         }
@@ -406,12 +474,17 @@ findMnn <- function(
     }
     ## output the results as matrix  ####
     if (isFALSE(save.se.obj)) {
-        printColoredMessage(message = '- All the mnn results are outputed as matrix.',
-                            color = 'blue',
-                            verbose = verbose)
+        printColoredMessage(
+            message = '- All the mnn results are outputed as matrix.',
+            color = 'blue',
+            verbose = verbose
+            )
         printColoredMessage(message = '------------The findMnn function finished.',
                             color = 'white',
                             verbose = verbose)
-        return(all.mnn)
+        return(list(
+            mnn = all.mnn,
+            mnn.plot = p.mnn)
+            )
     }
 }
