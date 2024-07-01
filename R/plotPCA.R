@@ -605,22 +605,22 @@ plotPCA <- function(
             message = '- The PCA plots are outputed as a list.',
             color = 'blue',
             verbose = verbose)
-    }
-    printColoredMessage(message = '------------The plotPCA function finished.',
-                        color = 'white',
-                        verbose = verbose)
-    if(length(assay.names) == 1){
-        if(plot.type == 'scatter'){
-            return(all.scat.pca.plots = all.scat.pca.plots)
-        } else return(all.boxplot.pca.plots = all.boxplot.pca.plots)
-    } else {
-        if(plot.type == 'scatter'){
-            return(pca.plots = list(
-                all.scat.pca.plots = all.scat.pca.plots.assays,
-                overall.scat.pca.plots = overall.scat.pca.plots))
-        } else return(pca.plots = list(
-            all.boxplot.pca.plots = all.boxplot.pca.plots,
-            overall.boxplot.pca.plot = overall.boxplot.pca.plot))
+        printColoredMessage(message = '------------The plotPCA function finished.',
+                            color = 'white',
+                            verbose = verbose)
+        if(length(assay.names) == 1){
+            if(plot.type == 'scatter'){
+                return(all.scat.pca.plots = all.scat.pca.plots)
+            } else return(all.boxplot.pca.plots = all.boxplot.pca.plots)
+        } else {
+            if(plot.type == 'scatter'){
+                return(pca.plots = list(
+                    all.scat.pca.plots = all.scat.pca.plots.assays,
+                    overall.scat.pca.plots = overall.scat.pca.plots))
+            } else return(pca.plots = list(
+                all.boxplot.pca.plots = all.boxplot.pca.plots,
+                overall.boxplot.pca.plot = overall.boxplot.pca.plot))
+        }
     }
 }
 
