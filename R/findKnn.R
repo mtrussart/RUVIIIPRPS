@@ -120,7 +120,7 @@ findKnn <- function(
         )
     }
     all.samples.index <- c(1:ncol(se.obj))
-    ini.variable <- se.obj[[uv.variable]]
+    initial.variable <- se.obj[[uv.variable]]
 
     # Assess and group the unwanted variable ####
     printColoredMessage(
@@ -168,12 +168,12 @@ findKnn <- function(
                 factor(x = paste0(uv.variable, '_group', uv.cont.clusters))
         }
     }
-    ## categorical variable ####
+    ## Categorical variable ####
     if (!class(se.obj[[uv.variable]]) %in% c('factor', 'character')) {
         se.obj[[uv.variable]] <- factor(x = se.obj[[uv.variable]])
     }
 
-    # check sample sizes of each group ####
+    # Check sample sizes of each group ####
     printColoredMessage(
         message = '-- Check the sample size of each subgroup of the unwanted variable:',
         color = 'magenta',
@@ -195,89 +195,126 @@ findKnn <- function(
         color = 'magenta',
         verbose = verbose
         )
-    groups <- levels(colData(se.obj)[[uv.variable]])
+    groups <- levels(se.obj[[uv.variable]])
     all.norm.data <- lapply(
         groups,
         function(x) {
             selected.samples <- colData(se.obj)[[uv.variable]] == x
-            ## normalization ####
             if (!is.null(normalization) & is.null(regress.out.bio.variables)) {
                 printColoredMessage(
-                    message = paste0('- Apply the ', normalization, ' on samples from the " ', x, '" group.'),
-                    color = 'blue',
-                    verbose = verbose
-                    )
-                norm.data <- applyOtherNormalizations(
-                        se.obj = se.obj[, selected.samples],
-                        assay.name = assay.name,
-                        method = normalization,
-                        apply.log = apply.log,
-                        pseudo.count = pseudo.count,
-                        assess.se.obj = FALSE,
-                        save.se.obj = FALSE,
-                        remove.na = 'none',
-                        verbose = FALSE
-                        )
-                return(norm.data)
-            }
-            ## normalization and regression ####
-            if (!is.null(normalization) & !is.null(regress.out.bio.variables)) {
-                printColoredMessage(
-                    message = paste0('- Apply the ', normalization, ' within samples from ', x,
-                        ' group, and then regressing out ', paste0(regress.out.bio.variables, collapse = '&'),'.'),
+                    message = paste0('- Apply the ', normalization, ' within the samples from the "', x, '" group.'),
                     color = 'blue',
                     verbose = verbose
                 )
-                # normalization
                 norm.data <- applyOtherNormalizations(
-                        se.obj = se.obj[, selected.samples],
-                        assay.name = assay.name,
-                        method = normalization,
-                        apply.log = apply.log,
-                        pseudo.count = pseudo.count,
-                        assess.se.obj = FALSE,
-                        save.se.obj = FALSE,
-                        remove.na = 'none',
-                        verbose = verbose
-                    )
+                    se.obj = se.obj[, selected.samples],
+                    assay.name = assay.name,
+                    method = normalization,
+                    apply.log = apply.log,
+                    pseudo.count = pseudo.count,
+                    assess.se.obj = FALSE,
+                    save.se.obj = FALSE,
+                    remove.na = 'none',
+                    verbose = FALSE
+                )
+                norm.data
+            } else if (!is.null(normalization) & !is.null(regress.out.bio.variables)) {
+                printColoredMessage(
+                    message = paste0(
+                        '- Apply the ', normalization, ' within the samples from "', x,
+                        '" group and then regressing out ', paste0(regress.out.bio.variables, collapse = '&'), ' from the data.'),
+                    color = 'blue',
+                    verbose = verbose
+                )
+                ## normalization ####
+                norm.data <- applyOtherNormalizations(
+                    se.obj = se.obj[, selected.samples],
+                    assay.name = assay.name,
+                    method = normalization,
+                    apply.log = apply.log,
+                    pseudo.count = pseudo.count,
+                    assess.se.obj = FALSE,
+                    save.se.obj = FALSE,
+                    remove.na = 'none',
+                    verbose = FALSE
+                )
                 sample.info <- as.data.frame(colData(se.obj[, selected.samples]))
-                # regression
+                # regression ####
                 norm.data <- t(norm.data)
-                lm.formual <- paste('sample.info', regress.out.bio.variables, sep = '$')
-                norm.data <- lm(as.formula(paste('norm.data', paste0(lm.formual, collapse = '+') , sep = '~')))
+                lm.formua <- paste('sample.info', regress.out.bio.variables, sep = '$')
+                norm.data <- lm(as.formula(paste(
+                    'norm.data',
+                    paste0(lm.formua, collapse = '+') ,
+                    sep = '~'
+                )))
                 norm.data <- t(norm.data$residuals)
                 colnames(norm.data) <- colnames(norm.data)
                 row.names(norm.data) <- row.names(norm.data)
-                return(norm.data)
-            }
-            ## log + pseudo.count ####
-            if (is.null(normalization) & is.null(regress.out.bio.variables & apply.log & !is.null(pseudo.count))) {
-                printColoredMessage(
-                    message = paste0('- Apply log2 +  ', pseudo.count , '(pseudo.count) within samples from ', x,' group.'),
-                    color = 'blue',
-                    verbose = verbose
-                )
-                norm.data <- log2(assay(x = se.obj[, selected.samples], i = assay.name) + pseudo.count)
-                return(norm.data)
-            }
-            ## log  ####
-            if (is.null(normalization) & is.null(regress.out.bio.variables & apply.log & is.null(pseudo.count))) {
-                printColoredMessage(
-                    message = paste0('- Apply log2 within samples from the "', x, '" group.'),
-                    color = 'blue',
-                    verbose = verbose
-                )
-                norm.data <- log2(assay(x = se.obj[, selected.samples], i = assay.name))
-                return(norm.data)
-            } else if (is.null(normalization) & is.null(regress.out.bio.variables & !apply.log)) {
-                printColoredMessage(
-                    message = paste0('- No any library size normalization and transformation ','within samples from ',
-                        x,'group.'),
-                    color = 'blue',
-                    verbose = verbose
-                )
-                norm.data <- assay(x = se.obj[, selected.samples], i = assay.name)
-                return(norm.data)
+                norm.data
+            } else if (is.null(normalization) & !is.null(regress.out.bio.variables)){
+                if(isTRUE(apply.log)){
+                    printColoredMessage(
+                        message = paste0('- Apply log and then regress out ',
+                                         paste0(regress.out.bio.variables, collapse = '&'), x, '" group from the data.'),
+                        color = 'blue',
+                        verbose = verbose
+                    )
+                    if(!is.null(pseudo.count)){
+                        norm.data <- log2(assay(se.obj[, selected.samples], assay.name) + pseudo.count)
+                        norm.data
+                    } else {
+                        norm.data <- log2(assay(se.obj[, selected.samples], i = assay.name))
+                    }
+
+                } else if (isFALSE(apply.log)){
+                    printColoredMessage(
+                        message = paste0('- Regress out ',
+                                         paste0(regress.out.bio.variables, collapse = '&'), x, '" group from the data.'),
+                        color = 'blue',
+                        verbose = verbose
+                    )
+                    norm.data <- assay(se.obj[, selected.samples], assay)
+                    norm.data
+                }
+                sample.info <- as.data.frame(colData(se.obj[, selected.samples]))
+                # regression ####
+                norm.data <- t(norm.data)
+                lm.formua <- paste('sample.info', regress.out.bio.variables, sep = '$')
+                norm.data <- lm(as.formula(paste(
+                    'norm.data',
+                    paste0(lm.formua, collapse = '+') ,
+                    sep = '~'
+                )))
+                norm.data <- t(norm.data$residuals)
+                colnames(norm.data) <- colnames(norm.data)
+                row.names(norm.data) <- row.names(norm.data)
+                norm.data
+
+            } else if (is.null(normalization) & is.null(regress.out.bio.variables)) {
+                if(isTRUE(apply.log)){
+                    printColoredMessage(
+                        message = paste0('- Apply the log2 within the samples from "', x,
+                                         '" group data.'),
+                        color = 'blue',
+                        verbose = verbose
+                    )
+                    if(!is.null(pseudo.count)){
+                        norm.data <- log2(assay(se.obj[, selected.samples], assay.name) + pseudo.count)
+                        norm.data
+                    } else {
+                        norm.data <- log2(assay(se.obj[, selected.samples], i = assay.name))
+                    }
+
+                } else if (isFALSE(apply.log)){
+                    printColoredMessage(
+                        message = paste0('No any library size normalization and transformation ', 'within samples from ',
+                                         unique(colData(se.obj)[[uv.variable]][x]), ', and just finding ', ' mnn for individual samples.'),
+                        color = 'blue',
+                        verbose = verbose
+                    )
+                    norm.data <- assay(se.obj[, selected.samples], assay)
+                    norm.data
+                }
             }
         })
     names(all.norm.data) <- groups
@@ -353,7 +390,11 @@ findKnn <- function(
         verbose = verbose
         )
     total <- length(unique(colData(se.obj)[[uv.variable]]))
-    pb <- utils::txtProgressBar(min = 0, max = total, style = 3)
+    pb <- utils::txtProgressBar(
+        min = 0,
+        max = total,
+        style = 3
+        )
     all.knn <- lapply(
         1:total,
         function(x) {
@@ -368,10 +409,14 @@ findKnn <- function(
             knn.index <- as.data.frame(knn.samples$nn.idx)
             colnames(knn.index) <- paste0('dataset.index', 1:c(k.nn + 1))
             selected.samples <- se.obj[[uv.variable]] == groups[x]
-            ovral.cell.no <- as.data.frame(
-                apply(knn.index, 2, function(z) all.samples.index[selected.samples][z]))
+            ovral.cell.no <- as.data.frame(apply(
+                knn.index,
+                2,
+                function(z) all.samples.index[selected.samples][z])
+                )
             colnames(ovral.cell.no) <- paste0('overal.index', 1:c(k.nn + 1))
             knn.index <- as.data.frame(cbind(ovral.cell.no , knn.index))
+
             # distance between all knn ####
             ## find knn ####
             printColoredMessage(
@@ -414,7 +459,7 @@ findKnn <- function(
             return(knn.index.dist)
         })
     all.knn <- do.call(rbind, all.knn)
-    se.obj[[uv.variable]] <- ini.variable
+    se.obj[[uv.variable]] <- initial.variable
 
     # Save the results ####
     ## select prps name ####
