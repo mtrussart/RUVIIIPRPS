@@ -367,10 +367,10 @@ findMnn <- function(
                 sample.no.b = as.numeric(gsub('sample_', '', colnames(all.norm.data[[pairs.batch[2, x]]])[mnn.samples$second]))
             )
             # Sanity check ###
-            if(!all.equal(df$sample.no.1, df$sample.no.1.1)){
+            if(!all.equal(df$sample.no.1, df$sample.no.a)){
                 stop('There something wrong with the MNN.')
             }
-            if(!all.equal(df$sample.no.2, df$sample.no.2.2)){
+            if(!all.equal(df$sample.no.2, df$sample.no.b)){
                 stop('There something wrong with the MNN.')
             }
 
