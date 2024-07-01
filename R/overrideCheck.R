@@ -49,7 +49,7 @@ overrideCheck <- function(
             verbose = verbose
         )
         compute.metric <- TRUE
-        assay.names <- assay.names
+        selected.assays <- assay.names
     } else {
         selected.assays <- c()
         for (x in levels(assay.names)) {
