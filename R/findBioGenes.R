@@ -134,7 +134,6 @@
 #' @importFrom SummarizedExperiment assay SummarizedExperiment
 #' @export
 
-
 findBioGenes <- function(
         se.obj,
         assay.name,
