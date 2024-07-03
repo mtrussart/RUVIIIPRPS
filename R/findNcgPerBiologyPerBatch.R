@@ -293,7 +293,7 @@ findNcgPerBiologyPerBatch <- function(
     } else if (isFALSE(is.logical(assess.se.obj))) {
         stop('The "assess.se.obj" must be "TRUE" or "FALSE.')
     }
-    if (is.null(assess.se.obj)) {
+    if (isFALSE(assess.se.obj)) {
         if (isTRUE(sum(uv.variables %in% colnames(colData(se.obj))) != length(uv.variables))) {
             stop('All or some of "uv.variables" cannot be found in the SummarizedExperiment object.')
         } else if (!is.null(variables.to.assess.ncg)) {
