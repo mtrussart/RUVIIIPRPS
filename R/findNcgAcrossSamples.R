@@ -304,7 +304,7 @@ findNcgAcrossSamples <- function(
         if(uv.percentile > 1 | uv.percentile < 0)
             stop('The "uv.percentile" must be a postive value between 0 and 1.')
     }
-    if (is.null(assess.se.obj)) {
+    if (isFALSE(assess.se.obj)) {
         if (isTRUE(sum(bio.variables %in% colnames(colData(se.obj))) != length(bio.variables))) {
             stop('All or some of "bio.variables" cannot be found in the SummarizedExperiment object.')
         }
