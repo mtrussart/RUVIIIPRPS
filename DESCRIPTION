@@ -59,6 +59,7 @@ Imports:
     DESeq2,
     S4Vectors,
     patchwork,
+    batchelor,
     biomaRt
 URL: https://github.com/RMolania/RUVIIIPRPS
 BugReports: https://github.com/RMolania/RUVIIIPRPS/issues
