@@ -13,7 +13,8 @@
 #' @param se.obj A summarized experiment object.
 #' @param assay.name Symbol. A symbol indicating the name of the assay in the SummarizedExperiment object. This assay
 #' should be the one that will be used as an input data for the RUV-III-PRPS normalization.
-#' @param variables TTT
+#' @param variables Symbol. A symbol or a set of symbols indicating the names of the variables in the SummarizedExperiment
+#' object. These will be used to assess the performance of NCGS.
 #' @param bio.variables Symbol. A symbol or symbols representing the label of biological variable(s), such as cancer
 #' subtypes, tumor purity, ... within the SummarizedExperiment object. This can comprise a vector containing either
 #' categorical, continuous, or a combination of both variables.
@@ -176,8 +177,8 @@ assessNCGs <- function(
     ### put all together ####
     groups <- corr <- data <- assess <- variable <- NULL
     all <- bind_rows(cont.vars.r.squareds, cat.vars.vec.corr) %>%
-        round(digits = 3) %>%
-        mutate(var = row.names(.)) %>%
+        round(digits = 3)
+    all <- mutate(.data = all, var = row.names(all)) %>%
         pivot_longer(cols = -var, values_to = 'corr', names_to = 'data') %>%
         mutate(groups = 'unwanted') %>%
         mutate(groups = ifelse(var %in% bio.variables, 'wanted', groups)) %>%
