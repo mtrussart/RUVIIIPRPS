@@ -84,11 +84,12 @@ assessW <- function(
             names(all.w),
                function(x) {
                    w <- all.w[[x]]
-                   r.squareds <- sapply(cont.vars,
-                                        function(y) {
-                                            lm.reg <- summary(lm(colData(x = se.obj)[[y]] ~ w ))
-                                            lm.reg$r.squared
-                                        })
+                   r.squareds <- sapply(
+                       cont.vars,
+                       function(y) {
+                           lm.reg <- summary(lm(colData(x = se.obj)[[y]] ~ w))
+                           lm.reg$r.squared
+                       })
                    names(r.squareds) <- cont.vars
                    r.squareds
                })
@@ -117,8 +118,8 @@ assessW <- function(
         ### put all together
         groups <- corr <- data <- assess <- variable <- NULL
         all <- bind_rows(cont.vars.r.squareds, cat.vars.vec.corr) %>%
-            round(digits = 3) %>%
-            mutate(var = row.names(.)) %>%
+            round(digits = 3)
+        all <- mutate(.data = all, var = row.names(all)) %>%
             pivot_longer(cols = -var, values_to = 'corr', names_to = 'data') %>%
             mutate(groups = 'unwanted') %>%
             mutate(groups = ifelse(var %in% bio.variables, 'wanted', groups)) %>%
@@ -169,11 +170,12 @@ assessW <- function(
             names(all.w),
             function(x) {
                 w <- all.w[[x]]
-                r.squareds <- sapply(cont.vars,
-                                     function(y) {
-                                         lm.reg <- summary(lm(colData(x = se.obj)[[y]] ~ w ))
-                                         lm.reg$r.squared
-                                     })
+                r.squareds <- sapply(
+                    cont.vars,
+                    function(y) {
+                        lm.reg <- summary(lm(colData(x = se.obj)[[y]] ~ w))
+                        lm.reg$r.squared
+                    })
                 names(r.squareds) <- cont.vars
                 r.squareds
             })
@@ -201,11 +203,15 @@ assessW <- function(
 
         ### put all together
         all.corrs <- bind_rows(cont.vars.r.squareds, cat.vars.vec.corr) %>%
-            round(digits = 3) %>%
-            mutate(variable = row.names(.)) %>%
-            pivot_longer(cols = -variable, values_to = 'corr', names_to = 'data') %>%
-            mutate(data = factor(data, levels = gsub('\\.', '_', names(se.obj@metadata$RUVIII$W)) )) %>%
-            data.frame(.)
+            round(digits = 3)
+        all.corrs <- mutate(variable = row.names(all.corrs))
+        all.corrs <- pivot_longer(
+            data = all.corrs,
+            cols = -variable,
+            values_to = 'corr',
+            names_to = 'data') %>%
+            mutate(data = factor(data, levels = gsub('\\.', '_', names(se.obj@metadata$RUVIII$W)) ))
+        all.corrs <- data.frame(all.corrs)
         p.w <- ggplot(all.corrs, aes(x = data, y = corr, group = variable)) +
             geom_line(aes(color = variable), size = 1) +
             geom_point(aes(color = variable), size = 3) +
@@ -217,7 +223,8 @@ assessW <- function(
                 axis.title.y = element_text(size = 18),
                 plot.title = element_text(size = 15),
                 axis.text.x = element_text(size = 12, angle = 25, hjust = 1),
-                axis.text.y = element_text(size = 12))
+                axis.text.y = element_text(size = 12)
+                )
         if(isTRUE(plot.output)) print(p.w)
     }
     # Save the results
