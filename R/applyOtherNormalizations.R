@@ -71,9 +71,14 @@ applyOtherNormalizations <- function(
     }
 
     # Apply normalizations ####
-    printColoredMessage(message = '-- Normalizing the data for library size:',
-                        color = 'magenta',
-                        verbose = verbose)
+    printColoredMessage(
+        message = '-- Normalizing the data for library size:',
+        color = 'magenta',
+        verbose = verbose
+        )
+    if (is.null(pseudo.count)){
+        pseudo.count <- 0
+    }
     ## CPM method ####
     if (method == 'CPM' & isTRUE(apply.log)) {
         printColoredMessage(
@@ -91,7 +96,6 @@ applyOtherNormalizations <- function(
             verbose = verbose)
         norm.data <- cpm(y = assay(se.obj, i = assay.name))
         norm.data
-
     }
     ## TMM method ####
     if (method == "TMM" & isTRUE(apply.log)) {
@@ -105,8 +109,8 @@ applyOtherNormalizations <- function(
         printColoredMessage(
                 message = paste0('Applying the ', method,' method.'),
                 color = 'blue',
-                verbose = verbose)
-
+                verbose = verbose
+                )
         norm.data <- normLibSizes(object = assay(x = se.obj, i = assay.name))
         norm.data
 
@@ -131,7 +135,6 @@ applyOtherNormalizations <- function(
             x = assay(x = se.obj, i = assay.name),
             which = method)
         norm.data
-
     }
     ## VST method ####
     if (method == 'VST') {
@@ -142,7 +145,6 @@ applyOtherNormalizations <- function(
         norm.data <- DESeq2::vst(object = assay(x = se.obj, i = assay.name))
         norm.data
     }
-
     # Save the data ####
     printColoredMessage(
         message = '-- Saving the data:',
