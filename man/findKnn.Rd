@@ -18,7 +18,7 @@ findKnn(
   k.nn = 3,
   hvg = NULL,
   normalization = "CPM",
-  regress.out.bio.variables = NULL,
+  regress.out.variables = NULL,
   apply.log = TRUE,
   pseudo.count = 1,
   assess.se.obj = TRUE,
@@ -70,7 +70,7 @@ data. The default is NULL.}
 \item{normalization}{Symbol. Indicates which normalization methods should be applied before finding the knn. The default
 is 'cpm'. If is set to NULL, no normalization will be applied.}
 
-\item{regress.out.bio.variables}{Symbol. Indicates the columns names that contain biological variables in the
+\item{regress.out.variables}{Symbol. Indicates the columns names that contain biological variables in the
 SummarizedExperiment object. These variables will be regressed out from the data before finding genes that are highly
 affected by unwanted variation variable. The default is NULL, indicates the regression will not be applied.}
 

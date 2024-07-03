@@ -14,9 +14,11 @@ findNcgsUnSupervised(
   top.rank.uv.genes = 0.5,
   bio.percentile = 0.2,
   uv.percentile = 0.2,
-  grid.nb = 20,
   grid.group = "uv",
   grid.direction = "decrease",
+  grid.nb = 20,
+  clustering.method = "kmeans",
+  nb.clusters = 3,
   normalization = "CPM",
   regress.out.variables = NULL,
   min.sample.for.mad = 3,
@@ -26,8 +28,6 @@ findNcgsUnSupervised(
   a = 0.05,
   rho = 0,
   anova.method = "aov",
-  clustering.method = "kmeans",
-  nb.clusters = 3,
   assess.ncg = TRUE,
   variables.to.assess.ncg = NULL,
   nb.pcs = 5,
@@ -36,11 +36,11 @@ findNcgsUnSupervised(
   apply.log = TRUE,
   pseudo.count = 1,
   assess.se.obj = TRUE,
+  remove.na = "both",
   assess.variable = FALSE,
   cat.cor.coef = c(0.9, 0.9),
   cont.cor.coef = c(0.9, 0.9),
   save.se.obj = TRUE,
-  remove.na = "both",
   output.name = NULL,
   ncg.group = NULL,
   plot.output = TRUE,
@@ -53,22 +53,23 @@ findNcgsUnSupervised(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.name}{Symbol. Indicates a name of an assay in the SummarizedExperiment object. The selected assay should
-be the one that will be used for the RUV-III-PRPS normalization.}
+\item{assay.name}{Symbol. A symbol indicating the name of the assays in the SummarizedExperiment object. The selected
+assay should be the one that will be used for the RUV-III-PRPS normalization.}
 
-\item{uv.variables}{Symbol. A symbol or symbols indicating name(s) of the columns in the sample annotation that contains
-unwanted variables in the SummarizedExperiment object. If there are unknown, the 'identifyUnknownUV' function can
+\item{uv.variables}{Symbol. A symbol or a vector pf symbols indicating the name(s) of the columns in the SummarizedExperiment
+that contains unwanted variables. If all unwanted variation is unknown, the 'identifyUnknownUV' function can
 estimate them.}
 
-\item{nb.ncg}{Numeric. Specifies the number of genes to be chosen as negative control genes (NCG) when the
-ncg.selection.method parameter is set to 'auto'. This value corresponds to a fraction, 'nb.ncg', of the total genes
+\item{nb.ncg}{Numeric. A numeric value specifying the number of genes to be chosen as negative control genes (NCG) when
+the 'ncg.selection.method' parameter is set to 'auto'. This value corresponds to a fraction, 'nb.ncg', of the total genes
 in the SummarizedExperiment object. By default, this fraction is set to 0.1.}
 
-\item{ncg.selection.method}{Symbol. Indicates how to select a set genes as negative control genes (NCG). For individual
-genes F-statistics (from ANOVA analysis) , correlation coefficient and Median Absolute Deviation (MAD) is calculated.
-Ideal control genes have should have possible high F-statistics and correlation coefficient,  and possible lowest MAD
-values. To summarize these statistic there two options: 'non-overlap' and 'auto'. If 'non-overlap' is selected, the possible
-non-overlap genes between 'top.rank.uv.genes' and 'top.rank.uv.genes' genes will be selected as NCG. If 'auto' selected,
+\item{ncg.selection.method}{Symbol. A symbol indicating how to select a set of genes as negative control genes (NCG).
+For individual genes F-statistics (from ANOVA analysis) , correlation coefficient and Median Absolute Deviation (MAD)
+is calculated. Ideal control genes have should have possible high F-statistics and correlation coefficient, and possible
+lowest MAD values. To summarize these statistic there two options: 'prod', 'sum', 'average', 'non.overlap', quantile and
+'auto'. If 'non-overlap' is selected, the possible non-overlap genes between 'top.rank.uv.genes' and 'top.rank.uv.genes'
+genes will be selected as NCG. If 'auto' selected,
 the function finds possible 'nb.ncg' genes as NCGs by changes the 'top.rank.uv.genes' and 'top.rank.uv.genes' automatically.}
 
 \item{top.rank.bio.genes}{Numeric. Indicates the fraction of top ranked genes that are highly affected by the biological
@@ -83,14 +84,21 @@ variation. The default is 0.8.}
 \item{uv.percentile}{Numeric. The percentile cut off to select genes that are highly affected with the unwanted
 variation. The default is 0.8.}
 
-\item{grid.nb}{Numeric. Indicates the number of genes for grid search when the 'ncg.selection.method' is auto'. The
-default is 20.}
-
 \item{grid.group}{Symbol. Indicates whether the grid search should be performed on biological, unwanted or both factors.
 The options are 'bio', 'uv' or 'both'.}
 
 \item{grid.direction}{Symbol. Indicates the grid search should be performed in decreasing or increasing order. The
 option are 'increase' or 'decrease'.}
+
+\item{grid.nb}{Numeric. Indicates the number of genes for grid search when the 'ncg.selection.method' is auto'. The
+default is 20.}
+
+\item{clustering.method}{Symbol. A symbol specifying the clustering method to be applied for grouping each continuous
+source of unwanted variables. Options include 'kmeans', 'cut', and 'quantile'. The default is 'kmeans' clustering.}
+
+\item{nb.clusters}{Numeric. A value indicating the number of groups for continuous sources of unwanted variation.
+The default is 3. This implies that each continuous source will be split into 3 groups using the specified
+'clustering.method' method.}
 
 \item{normalization}{Symbols. Indicates which normalization method to use for library size adjustment before fining
 genes that are highly affected by biological variation. The default is CPM. Refer to the 'applyOtherNormalization'
@@ -117,13 +125,6 @@ are pearson' or 'spearman'. The default is 'spearman'.}
 \item{anova.method}{Symbols. Indicates which ANOVA methods to use. The options are 'aov' or 'welch'. The default in
 'aov'. Refer to the function 'computeGenesVariableAnova' for more details.}
 
-\item{clustering.method}{Symbol. A symbol specifying the clustering method to be applied for grouping each continuous
-source of unwanted variables. Options include 'kmeans', 'cut', and 'quantile'. The default is 'kmeans' clustering.}
-
-\item{nb.clusters}{Numeric. A value indicating the number of groups for continuous sources of unwanted variation.
-The default is 3. This implies that each continuous source will be split into 3 groups using the specified
-'clustering.method' method.}
-
 \item{assess.ncg}{Logical. Indicates whether to assess the performance of selected NCG or not. This involves principal
 component analysis on the selected NCG and then explore the R^2 or vector correlation between the 'nb.pcs' first principal
 components and with biological and unwanted variables.}
@@ -148,6 +149,11 @@ centering is done by subtracting the column means of the assay from their corres
 
 \item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment class object or not.}
 
+\item{remove.na}{Symbol. Indicates whether to remove NA or missing values from either the 'assays', the 'sample.annotation',
+'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If
+'sample.annotation' is selected, the samples that contains NA or missing values for any 'uv.variables' will be excluded.
+By default, it is set to both'.}
+
 \item{assess.variable}{Logical.}
 
 \item{cat.cor.coef}{Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
@@ -167,18 +173,13 @@ excluded from further analysis. By default, both values are set to 0.9.}
 \item{save.se.obj}{Logical. Indicates whether to save the result of the function in the metadata of the
 SummarizedExperiment object or to output the result. The default is TRUE.}
 
-\item{remove.na}{Symbol. Indicates whether to remove NA or missing values from either the 'assays', the 'sample.annotation',
-'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If
-'sample.annotation' is selected, the samples that contains NA or missing values for any 'uv.variables' will be excluded.
-By default, it is set to both'.}
-
 \item{output.name}{Symbol. A symbol indicating the name of the output in the meta data of the SummarizedExperiment
 object. The default is 'NULL'. This means the function will create a name based the specified argument.}
 
 \item{ncg.group}{Symbol. A symbol indicating the name of a group of NCGs. If 'NULL', the function will select a name
 based on " ncg.group <- paste0('ncg|unsupervised')".}
 
-\item{plot.output}{Logical.}
+\item{plot.output}{Logical. If 'TRUE', the assessment plot of NCG will be printed out while the function is running.}
 
 \item{use.imf}{Logical. Indicates whether to use the intermediate file or not. The default is set to 'FALSE'.}
 

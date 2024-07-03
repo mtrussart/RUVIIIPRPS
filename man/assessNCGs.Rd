@@ -30,7 +30,8 @@ assessNCGs(
 \item{assay.name}{Symbol. A symbol indicating the name of the assay in the SummarizedExperiment object. This assay
 should be the one that will be used as an input data for the RUV-III-PRPS normalization.}
 
-\item{variables}{TTT}
+\item{variables}{Symbol. A symbol or a set of symbols indicating the names of the variables in the SummarizedExperiment
+object. These will be used to assess the performance of NCGS.}
 
 \item{bio.variables}{Symbol. A symbol or symbols representing the label of biological variable(s), such as cancer
 subtypes, tumor purity, ... within the SummarizedExperiment object. This can comprise a vector containing either

@@ -2,7 +2,7 @@
 % Please edit documentation in R/createPrPsByAnchors.R
 \name{createPrPsByAnchors}
 \alias{createPrPsByAnchors}
-\title{create PRPS sets across batches using integration anchors.}
+\title{Create PRPS sets across batches using integration anchors.}
 \usage{
 createPrPsByAnchors(
   se.obj,
@@ -15,26 +15,26 @@ createPrPsByAnchors(
   pseudo.count = 1,
   anchor.features = 2000,
   scale = TRUE,
-  min.prps.samples = 3,
-  max.prps.samples = "inf",
+  min.ps.samples = 3,
+  max.ps.samples = 5,
   max.prps.sets = 10,
-  min.score = NULL,
   normalization.method = "LogNormalize",
   sct.clip.range = NULL,
   reduction = "cca",
   l2.norm = TRUE,
-  dims = 1:10,
-  k.anchor = 3,
-  k.filter = 200,
+  dims = 1:15,
+  k.anchor = 2,
+  k.filter = 10,
   k.score = 30,
   max.features = 200,
   nn.method = "annoy",
   n.trees = 50,
   eps = 0,
   assess.se.obj = TRUE,
-  remove.na = "assays",
+  remove.na = "both",
   save.se.obj = TRUE,
-  prps.name = NULL,
+  output.name = NULL,
+  prps.group = NULL,
   verbose = TRUE
 )
 }
@@ -68,16 +68,13 @@ The default is 2000. We refer to the FindIntegrationAnchors R function for more 
 \item{scale}{Logical. Whether or not to scale the features provided. Only set to FALSE if you have previously scaled
 the features you want to use for each object in the object.list.}
 
-\item{min.prps.samples}{Numeric. The minimum number of samples to be averaged to create a pseudo-sample. The default
+\item{min.ps.samples}{Numeric. The minimum number of samples to be averaged to create a pseudo-sample. The default
 is 3. The minimum value is 2.}
 
-\item{max.prps.samples}{Numeric value indicating the maximum number of samples to be averaged for creating a pseudo-sample.
+\item{max.ps.samples}{Numeric value indicating the maximum number of samples to be averaged for creating a pseudo-sample.
 The default is 'inf'. Please note that averaging a high number of samples may lead to inaccurate PRPS estimates.}
 
 \item{max.prps.sets}{Numeric. The maximum number of PRPS sets across batches. The default in 10.}
-
-\item{min.score}{Numeric. A cut off to filter anchors based the scores that the FindIntegrationAnchors calculates.
-The default is NULL, indicating no filtration will be applied based on the scores. The value is between 0 or 1.}
 
 \item{normalization.method}{Symbol. Indicate which normalization methods should be used before finding the anchors.
 The options are "LogNormalize" or "SCT". The default is "LogNormalize".}
@@ -94,9 +91,9 @@ reduction or not. The default is 'TRUE'.}
 \item{dims}{Numeric. Indicates which dimensions to use from the CCA to specify the neighbor search space. Th default
 is 10.}
 
-\item{k.anchor}{Numeric. How many neighbors (k) to use when picking anchors. Th default is 3.}
+\item{k.anchor}{Numeric. How many neighbors (k) to use when picking anchors. Th default is set to 2.}
 
-\item{k.filter}{Numeric. How many neighbors (k) to use when filtering anchors. Th default is 200.}
+\item{k.filter}{Numeric. How many neighbors (k) to use when filtering anchors. Th default is 20.}
 
 \item{k.score}{Numeric. How many neighbors (k) to use when scoring anchors. Th default is 30.}
 
@@ -119,7 +116,11 @@ the checkSeObj function for more details.}
 \item{save.se.obj}{Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment
 object or to output the result as list. By default it is set to TRUE.}
 
-\item{prps.name}{Symbol.}
+\item{output.name}{Symbol. A symbol specifying the name of output file. If is 'NULL', the function will select a name
+based on "paste0(uv.variable, '|', 'anchor', '|', assay.name))".}
+
+\item{prps.group}{Symbol. A symbol specifying the name of the PRPS group. If is 'NULL', the function will select a name
+based on "paste0('prps|anchor|', uv.variable)".}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
