@@ -259,7 +259,7 @@ computeGeneSetScore <- function(
         }
         se.obj <- addMetricToSeObj(
             se.obj = se.obj,
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             slot = 'Metrics',
             assessment = 'GeneSetScore',
             assessment.type = 'global.level',
@@ -271,7 +271,7 @@ computeGeneSetScore <- function(
         if(isTRUE(assess.score)){
             se.obj <- addMetricToSeObj(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 slot = 'Metrics',
                 assessment = 'GeneSetScore',
                 assessment.type = 'global.level',
