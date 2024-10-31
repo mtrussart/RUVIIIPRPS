@@ -20,7 +20,6 @@
 #' computational time for the RUV-III normalization.
 #' @param max.prps.sets Numeric. A numeric value specifying the maximum number for PRPS set across each pair of batches.
 #' The default is set to 10.
-
 #' @param clustering.method Symbol.A symbol indicating the choice of clustering method for grouping the 'uv.variable'
 #' if a continuous variable is provided. Options include 'kmeans', 'cut', and 'quantile'. The default is set to 'kmeans'.
 #' @param nb.clusters Numeric. A numeric value indicating how many clusters should be found if the 'uv.variable' is a
@@ -90,10 +89,8 @@ createPrPsByMnn <- function(
         ) {
     printColoredMessage(message = '------------The createPrPsByMnn function starts:',
                         color = 'white',
-                        verbose = verbose)
-
-    # Check input ####
-
+                        verbose = verbose
+                        )
     # Assess SummarizedExperiment object ####
     if (isTRUE(assess.se.obj)) {
         se.obj <- checkSeObj(
@@ -109,7 +106,7 @@ createPrPsByMnn <- function(
         message = '- Assess and group the unwanted variable:',
         color = 'magenta',
         verbose = verbose
-    )
+        )
     initial.variable <- se.obj[[uv.variable]]
     if(is.numeric(initial.variable)){
         se.obj[[uv.variable]] <- groupContiunousVariable(
@@ -148,7 +145,7 @@ createPrPsByMnn <- function(
             ' (mnn) samples. Then, knn cannot be found.'))
     } else {
         printColoredMessage(
-            message = paste0('- all the subgroups of the unwanted variable have at least, ', mnn, ' samples'),
+            message = paste0('- all the subgroups of the unwanted variable have at least ', mnn, ' samples.'),
             color = 'blue',
             verbose = verbose
         )
@@ -283,7 +280,7 @@ createPrPsByMnn <- function(
                         color = 'blue',
                         verbose = verbose
                     )
-                    norm.data <- assay(se.obj[, selected.samples], assay)
+                    norm.data <- assay(se.obj[, selected.samples], i = assay.name)
                 }
             }
             return(norm.data)
@@ -311,10 +308,15 @@ createPrPsByMnn <- function(
                     '" and "' , pairs.batch[2 , x], '" subgroups:'),
                 color = 'orange',
                 verbose = verbose
-            )
-            data.a <- all.norm.data[[pairs.batch[1 , x]]]
-            data.b <- all.norm.data[[pairs.batch[2 , x]]]
+                )
+            data.a <- all.norm.data[[pairs.batch[1 , x]]][hvg , ]
+            data.b <- all.norm.data[[pairs.batch[2 , x]]][hvg , ]
             if(isTRUE(apply.cosine.norm)){
+                printColoredMessage(
+                    message = '- Apply cosine normalization',
+                    color = 'blue',
+                    verbose = verbose
+                    )
                 data.a <- cosineNorm(x = data.a, mode = 'matrix')
                 data.b <- cosineNorm(x = data.b, mode = 'matrix')
             }
@@ -322,7 +324,7 @@ createPrPsByMnn <- function(
             printColoredMessage(
                 message = paste0(
                     '* find knn between the "', pairs.batch[1 , x],
-                    '" using "' , pairs.batch[2 , x], '" subgroups:'),
+                    '" and "' , pairs.batch[2 , x], '" subgroups:'),
                 color = 'blue',
                 verbose = verbose
                 )
@@ -470,8 +472,8 @@ createPrPsByMnn <- function(
                 1:length(all.prps.index),
                 function(x){
                     prps.set <- all.prps.index[[x]]
-                    ps.a <- rowMeans(data.a[ , prps.set$set.a ])
-                    ps.b <- rowMeans(data.b[ , prps.set$set.b])
+                    ps.a <- rowMeans(data.a[ , prps.set$prps.index$set.a, drop = FALSE])
+                    ps.b <- rowMeans(data.b[ , prps.set$prps.index$set.b, drop = FALSE])
                     prps <- data.frame(ps.a, ps.b)
                     prps
                 })
@@ -485,6 +487,7 @@ createPrPsByMnn <- function(
             all.prps.data
         })
     all.prps.data <- do.call(cbind, all.prps.data)
+    se.obj[[uv.variable]] <- initial.variable
 
     # Save the results ####
     ## select output name ####
@@ -535,5 +538,4 @@ createPrPsByMnn <- function(
         return(prps.data = all.prps.data)
     }
 }
-
 
