@@ -171,7 +171,8 @@ createPrPsForContinuousUV <- function(
     printColoredMessage(
         message = '-- Create all possible homogeneous bioloical populations:',
         color = 'magenta',
-        verbose = verbose)
+        verbose = verbose
+        )
     homo.bio.groups <- createHomogeneousBioGroups(
         se.obj = se.obj,
         bio.variables = bio.variables,
@@ -184,14 +185,15 @@ createPrPsForContinuousUV <- function(
         save.se.obj = FALSE,
         remove.na = 'none',
         verbose = verbose
-    )
+        )
     # Create homogeneous groups of samples with respect to unwanted variation ####
     if (!is.null(other.uv.variables)) {
         printColoredMessage(
             message = paste0('-- Create all possible homogeneous sample groups with respect to the',
                 paste0(other.uv.variables, collapse = ' & '), ':'),
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         homo.uv.groups <- createHomogeneousUVGroups(
             se.obj = se.obj,
             uv.variables = other.uv.variables,
@@ -203,11 +205,13 @@ createPrPsForContinuousUV <- function(
             cont.cor.coef = cont.cor.coef,
             save.se.obj = FALSE,
             remove.na = 'none',
-            verbose = verbose)
+            verbose = verbose
+            )
         annot.data <- data.frame(
             uv.variable = se.obj[[main.uv.variable]],
             homo.uv.groups = homo.uv.groups,
-            homo.bio.groups = homo.bio.groups)
+            homo.bio.groups = homo.bio.groups
+            )
         printColoredMessage(
             message = '-- Create all possible homogeneous samples groups with respect to both bioloical and unwanted variables:',
             color = 'magenta',
@@ -293,7 +297,7 @@ createPrPsForContinuousUV <- function(
                 pivot_longer(everything(), values_to = 'uv.var', names_to = 'bio.batch') %>%
                 arrange(bio.batch, uv.var) %>%
                 mutate(groups = rep(rep(c('bottom', 'top'), each = min.sample.for.ps), length(selected.groups)))
-            prps.sets.plot <- data.frame(
+            prps.map.plot <- data.frame(
                 bio.batch = rep(main.uv.variable, ncol(se.obj)),
                 uv.var = se.obj[[main.uv.variable]],
                 groups = main.uv.variable) %>%
@@ -317,11 +321,11 @@ createPrPsForContinuousUV <- function(
                     axis.title.x = element_text(size = 16),
                     axis.title.y = element_text(size = 16),
                     axis.text.y = element_text(size = 14),
-                    axis.text.x = element_text(size = 5, angle = 25, vjust = 1, hjust = 1),
+                    axis.text.x = element_text(size = 14, angle = 90, vjust = 1, hjust = 1),
                     legend.text = element_text(size = 14),
                     legend.title = element_text(size = 18),
                     strip.text.x = element_text(size = 15))
-            print(prps.sets.plot)
+            print(prps.map.plot)
         }
     } else if (is.null(other.uv.variables)){
         printColoredMessage(
@@ -437,8 +441,8 @@ createPrPsForContinuousUV <- function(
                     axis.line = element_line(colour = 'black', linewidth = 1),
                     axis.title.x = element_text(size = 16),
                     axis.title.y = element_text(size = 16),
-                    axis.text.y = element_text(size = 12),
-                    axis.text.x = element_text(size = 12, angle = 35, vjust = 1, hjust = 1),
+                    axis.text.y = element_text(size = 14),
+                    axis.text.x = element_text(size = 14, angle = 90, vjust = 1, hjust = 1),
                     legend.text = element_text(size = 14),
                     legend.title = element_text(size = 18),
                     strip.text.y = element_text(size = 15)
