@@ -279,34 +279,36 @@ findNcgsUnSupervised <- function(
     ## apply log ####
     if (isTRUE(apply.log) & !is.null(pseudo.count)){
         printColoredMessage(
-            message = paste0('Applying log2 + ', pseudo.count,' (pseudo.count) on the ', assay.name, ' data.'),
+            message = paste0('- Applying log2 + ', pseudo.count,' (pseudo.count) on the ', assay.name, ' data.'),
             color = 'blue',
             verbose = verbose)
         expr.data <- log2(assay(x = se.obj, i = assay.name) + pseudo.count)
     } else if (isTRUE(apply.log) & is.null(pseudo.count)){
         printColoredMessage(
-            message = paste0('Applying log2 on the ', assay.name,' data.'),
+            message = paste0('- Applying log2 on the ', assay.name,' data.'),
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         expr.data <- log2(assay(x = se.obj, i = assay.name))
     } else if (isFALSE(apply.log)) {
         printColoredMessage(
             message = paste0('The ', assay.name, ' data will be used without any transformation.'),
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         expr.data <- assay(x = se.obj, i = assay.name)
     }
 
     # Finding negative control genes unsupervised ####
     if(isFALSE(use.imf)){
         printColoredMessage(
-            message = '-- Find negative control genes',
+            message = '-- Finding negative control genes',
             color = 'magenta',
             verbose = verbose
             )
         ## identify genes that are highly affected by unwanted variation ####
         printColoredMessage(
-            message = '-- Find genes that are highly affected by each source(s) of unwanted variation:',
+            message = '-- Finding genes that are highly affected by each source(s) of unwanted variation:',
             color = 'orange',
             verbose = verbose
             )
@@ -321,7 +323,7 @@ findNcgsUnSupervised <- function(
         if(isTRUE(length(categorical.uv) > 0)){
             printColoredMessage(
                 message = paste0(
-                    '- Perform ANOVA between individual gene-level ',
+                    '- Performing ANOVA between individual gene-level ',
                     'expression and each categorical source of unwanted variation: ',
                     paste0(categorical.uv, collapse = ' & '), '.'),
                 color = 'blue',
@@ -336,17 +338,17 @@ findNcgsUnSupervised <- function(
                         )
                     if(isTRUE(length(keep.samples) == 0)){
                         stop(paste0(
-                            'There are not enough samples to perfrom ANOVA between individual gene expression and the ',
-                            x, ' variable. Possible solutions is to lower min.sample.for.aov or remove',
-                            x, ' from the uv.variables and re-run the function.'))
+                            'There are not enough samples to perform ANOVA between individual gene expression and the ',
+                            x, ' variable. Possible solutions is to lower min.sample.for.aov or remove the "',
+                            x, '" from the uv.variables and re-run the function.'))
                     } else if(isTRUE(length(keep.samples) == 1)){
                         stop(paste0(
                             'There is only a single batch from in the ', x,' variable that have enough samples ',
                             min.sample.for.aov,
-                            ' (min.sample.for.aov). Possible solutions is to lower min.sample.for.aov or remove',
-                            x, ' from the uv.variables and re-run the function.'
+                            ' (min.sample.for.aov). Possible solutions is to lower min.sample.for.aov or remove the "',
+                            x, '" from the uv.variables and re-run the function.'
                         ))
-                    } else if(isTRUE(length(keep.samples) != length(unique(colData(se.obj)[[x]])))){
+                    } else if(isTRUE(length(keep.samples) != length(unique(colData(se.obj)[[x]]))) ){
                         not.coverd <- unique(colData(se.obj)[[x]])[!unique(colData(se.obj)[[x]]) %in% keep.samples]
                         printColoredMessage(
                             message = paste0(
@@ -381,7 +383,7 @@ findNcgsUnSupervised <- function(
         if(isTRUE(length(continuous.uv) > 0)){
             printColoredMessage(
                 message = paste0(
-                    '- Perform ', corr.method, ' correlation between individual gene-level ',
+                    '- Performing ', corr.method, ' correlation between individual gene-level ',
                     'expression and each continuous source of unwanted variations: ',
                     paste0(continuous.uv, collapse = '&'), '.'),
                 color = 'blue',
@@ -390,7 +392,7 @@ findNcgsUnSupervised <- function(
             if(isTRUE(ncol(se.obj) <= min.sample.for.correlation)){
                 stop(paste0('There are not enough samples (min.sample.for.correlation:',
                             min.sample.for.correlation, ') to perform correlation analysis.',
-                            ' A possible soultion in to lower min.sample.for.correlation.'))
+                            ' A possible solution is to lower the "min.sample.for.correlation" value.'))
             }
             corr.genes.uv <- lapply(
                 continuous.uv,
@@ -420,7 +422,7 @@ findNcgsUnSupervised <- function(
 
         ## find genes that are highly affected by possible biological variation ####
         printColoredMessage(
-            message = '-- Find genes that are potentially highly affected by biological variation:',
+            message = '-- Finding genes that are potentially highly affected by biological variation:',
             color = 'orange',
             verbose = verbose
         )
@@ -450,7 +452,7 @@ findNcgsUnSupervised <- function(
         ### apply mad within each homogeneous sample groups with respect to the unwanted variable ####
         printColoredMessage(
             message = paste0(
-                '- Perform MAD on individual gene expression',
+                '- Performing MAD on individual gene expression',
                 ' within each homogeneous sample groups with respect to the unwanted variables.'),
             color = 'orange',
             verbose = verbose
@@ -469,24 +471,27 @@ findNcgsUnSupervised <- function(
             verbose = verbose
             )
         #### apply mad  ####
-        homo.uv.groups <- findRepeatingPatterns(
+        selected.homo.uv.groups <- findRepeatingPatterns(
             vec = homo.uv.groups,
             n.repeat = min.sample.for.mad
             )
-        groups <- unique(homo.uv.groups)
-        if(isTRUE(length(groups) > 0)){
+        if(isTRUE(length(selected.homo.uv.groups) > 0)){
             bio.genes <- sapply(
-                groups,
+                selected.homo.uv.groups,
                 function(x){
                     index.samples <- homo.uv.groups == x
                     matrixStats::rowMads(x = data.to.use[ , index.samples, drop = FALSE])
                 })
-            bio.genes <- matrixStats::rowMaxs(bio.genes)
+            bio.genes <- matrixStats::rowMedians(bio.genes)
             bio.genes <- data.frame(bio.mad = bio.genes)
             set.seed(3322)
             bio.genes$bio.ranks <- rank(x = bio.genes$bio.mad, ties.method = 'random')
-        } else if (isTRUE(length(groups) == 0))
-            stop('There is no any homogenous sample groups with enough samples to perform MAD.')
+            } else if (isTRUE(length(selected.homo.uv.groups) == 0))
+            stop(paste0(
+                'There is no any homogenous sample groups with at least ',
+                min.sample.for.mad,
+                ' samples to perform MAD.')
+                )
     }
 
     # Intermediate file ####
@@ -585,13 +590,13 @@ findNcgsUnSupervised <- function(
     ## non.overlap approach ####
     if (ncg.selection.method == 'non.overlap'){
         printColoredMessage(
-            message = '- A set of genes will be selected as NCGs based on the "non.overlap" approach.',
+            message = '- A set of genes will be selected as NCGs using the "non.overlap" approach.',
             color = 'orange',
             verbose = verbose
             )
         printColoredMessage(
             message = paste0(
-                '*1: select top ',
+                '*1: selecting top ',
                 top.rank.bio.genes *100,
                 '% of highly affected genes by possible bioloigcal variation.'),
             color = 'blue',
@@ -609,7 +614,7 @@ findNcgsUnSupervised <- function(
         ## select genes affected by unwanted variation ####
         printColoredMessage(
             message = paste0(
-                '*2: select top ',
+                '*2: selecting top ',
                 top.rank.uv.genes * 100,
                 '% of highly affected genes by each unwanted variation.'),
             color = 'blue',
@@ -626,7 +631,8 @@ findNcgsUnSupervised <- function(
                         names(temp.data),
                         function(y){
                             index <- temp.data[[y]]$ranked.genes < top.rank.uv.genes.nb
-                            row.names(temp.data[[y]])[index] })))
+                            row.names(temp.data[[y]])[index] })
+                        ))
                 }
             })))
         printColoredMessage(
@@ -686,15 +692,15 @@ findNcgsUnSupervised <- function(
     ## auto approach ####
     if (ncg.selection.method == 'auto'){
         printColoredMessage(
-            message = '- A set of genes will be selected as NCGs based on the "auto" approach.',
+            message = '- A set of genes will be selected as NCGs using the "auto" approach.',
             color = 'blue',
             verbose = verbose
             )
         printColoredMessage(
             message = paste0(
-                '- Select top ',
+                '- Selecting top ',
                 top.rank.uv.genes * 100,
-                '% of highly affected genes by the unwanted variation, and then exclude any genes in top ',
+                '% of the most affected genes by unwanted variation, and then exclude any genes that are also in the top ',
                 top.rank.bio.genes * 100,
                 '% of highly affected genes by the bioloigcal variation.'),
             color = 'blue',
@@ -914,7 +920,7 @@ findNcgsUnSupervised <- function(
             ##### grid group: uv ####
             if (grid.group == 'uv'){
                 printColoredMessage(
-                    message = '- The grid search will be applied on unwanted factor. ',
+                    message = '- The grid search will be applied on genes that are affected by unwanted variation. ',
                     color = 'blue',
                     verbose = verbose)
                 ###### increasing order ####
@@ -922,7 +928,8 @@ findNcgsUnSupervised <- function(
                     printColoredMessage(
                         message = '- The grid search will increase the value of "top.rank.uv.genes". ',
                         color = 'blue',
-                        verbose = verbose)
+                        verbose = verbose
+                        )
                     lo <- nrow(se.obj) - top.rank.uv.genes.nb
                     pro.bar <- progress_estimated(round(lo/grid.nb, digits = 0) + 2)
                     while(eval(con) & top.rank.uv.genes.nb < nrow(se.obj)){
@@ -951,7 +958,8 @@ findNcgsUnSupervised <- function(
                     printColoredMessage(
                         message = '- The grid search will decrease the value of "top.rank.uv.genes". ',
                         color = 'blue',
-                        verbose = verbose)
+                        verbose = verbose
+                        )
                     lo <- top.rank.uv.genes.nb
                     pro.bar <- progress_estimated(round(lo/grid.nb, digits = 0) + 2)
                     while(eval(con) & top.rank.uv.genes.nb > 1){
