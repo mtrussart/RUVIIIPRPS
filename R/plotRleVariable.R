@@ -113,7 +113,7 @@ plotRleVariable <- function(
         all.rle.medians <- getMetricFromSeObj(
             se.obj = se.obj,
             slot = 'Metrics',
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             assessment = 'RLE',
             assessment.type = 'global.level',
             method = 'gene.median.center',
@@ -128,7 +128,7 @@ plotRleVariable <- function(
         all.rle.iqrs <- getMetricFromSeObj(
             se.obj = se.obj,
             slot = 'Metrics',
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             assessment = 'RLE',
             assessment.type = 'global.level',
             method = 'gene.median.center',
@@ -146,7 +146,8 @@ plotRleVariable <- function(
         printColoredMessage(
             message = paste0('-- Generate plots between the RLE medians and the "variable":'),
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         ## specify ylim ####
         if(is.null(ylim.rle.med.plot)){
             ylim.rle.med <- unlist(lapply(
@@ -223,12 +224,14 @@ plotRleVariable <- function(
             printColoredMessage(
                 message = '-- Put all the plots together:',
                 color = 'magenta',
-                verbose = verbose)
+                verbose = verbose
+                )
             overall.rle.med.var.plots <- ggpubr::ggarrange(
                 plotlist = all.rle.med.var.plots,
                 ncol = plot.ncol,
                 nrow = plot.nrow,
-                common.legend = TRUE)
+                common.legend = TRUE
+                )
             if(class(overall.rle.med.var.plots)[[1]] == 'list'){
                 plot.list <- lapply(
                     seq(length(overall.rle.med.var.plots)),
@@ -509,6 +512,11 @@ plotRleVariable <- function(
             verbose = verbose)
         return(se.obj = se.obj)
 
+        } else {
+            printColoredMessage(message = '------------The plotRleVariable function finished.',
+                                color = 'white',
+                                verbose = verbose)
+            return(se.obj = se.obj)
         }
     ## save the plots as list ####
     if (isFALSE(save.se.obj)) {
