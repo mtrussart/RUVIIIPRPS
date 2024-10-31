@@ -125,7 +125,7 @@ plotPCA <- function(
     } else method = 'svd'
     all.pca.data <- getMetricFromSeObj(
         se.obj = se.obj,
-        assay.names = assay.names,
+        assay.names = levels(assay.names),
         slot = 'Metrics',
         assessment = 'PCA',
         assessment.type = 'global.level',
@@ -138,7 +138,7 @@ plotPCA <- function(
         )
     all.pca.percentage <- getMetricFromSeObj(
         se.obj = se.obj,
-        assay.names = assay.names,
+        assay.names = levels(assay.names),
         slot = 'Metrics',
         assessment = 'PCA',
         assessment.type = 'global.level',
@@ -185,21 +185,23 @@ plotPCA <- function(
                                 scale_fill_manual(values = pca.plot.colors, name = variable) +
                                 scale_x_continuous(
                                     name = paste0('PC', pair.pcs[1, i], ' (', all.pca.percentage[[x]][pair.pcs[1, i]], '%)' ),
-                                    breaks = scales::pretty_breaks(n = 5)) +
+                                    breaks = scales::pretty_breaks(n = 5)
+                                    ) +
                                 scale_y_continuous(
                                     name = paste0('PC', pair.pcs[2, i], ' (', all.pca.percentage[[x]][pair.pcs[2, i]], '%)'),
-                                    breaks = scales::pretty_breaks(n = 5)) +
+                                    breaks = scales::pretty_breaks(n = 5)
+                                    ) +
                                 ggtitle(x) +
                                 theme_pubr() +
                                 theme(
                                     legend.background = element_blank(),
-                                    plot.title = element_text(size = 8),
+                                    plot.title = element_text(size = 12),
                                     legend.text = element_text(size = 8),
                                     legend.title = element_text(size = 10, face = "bold"),
-                                    axis.text.x = element_text(size = 6),
-                                    axis.text.y = element_text(size = 6),
-                                    axis.title.x = element_text(size = 8),
-                                    axis.title.y = element_text(size = 8),
+                                    axis.text.x = element_text(size = 7),
+                                    axis.text.y = element_text(size = 7),
+                                    axis.title.x = element_text(size = 10),
+                                    axis.title.y = element_text(size = 10),
                                     plot.margin = unit(c(0,0,0,0), 'lines'),
                                     legend.position = "none")
                             dense.x <- ggplot(mapping = aes(x = pca.data[, pair.pcs[1, i]], fill = se.obj@colData[[variable]])) +
@@ -257,12 +259,14 @@ plotPCA <- function(
                 printColoredMessage(
                     message = '-- Combine all the scatter PCA plots of all the assyas together:',
                     color = 'magenta',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
                 overall.scat.pca.plot <- c()
                 for (p in levels(assay.names)){
                     overall.scat.pca.plot <- c(
                         overall.scat.pca.plot,
-                        all.scat.pca.plots[[p]])
+                        all.scat.pca.plots[[p]]
+                        )
                 }
                 overall.scat.pca.plot <- ggarrange(
                     plotlist = overall.scat.pca.plot,
@@ -279,7 +283,7 @@ plotPCA <- function(
                                 p = overall.scat.pca.plot[[x]],
                                 top = text_grob(
                                     label = "Principal component plots",
-                                    color = "orange",
+                                    color = "black",
                                     face = "bold",
                                     size = 18),
                                 bottom = text_grob(
@@ -300,7 +304,7 @@ plotPCA <- function(
                         p = overall.scat.pca.plot,
                         top = text_grob(
                             label = "Principal component plots",
-                            color = "orange",
+                            color = "black",
                             face = "bold",
                             size = 18),
                         bottom = text_grob(
@@ -353,9 +357,9 @@ plotPCA <- function(
                         theme(
                             panel.background = element_blank(),
                             axis.line = element_line(colour = 'black', linewidth = 1),
-                            axis.title.x = element_text(size = 10),
-                            axis.title.y = element_text(size = 10),
-                            plot.title = element_text(size = 12),
+                            axis.title.x = element_text(size = 12),
+                            axis.title.y = element_text(size = 12),
+                            plot.title = element_text(size = 14),
                             axis.text.x = element_text(size = 10, angle = 25, vjust = 1, hjust = 1),
                             axis.text.y = element_text(size = 10),
                             strip.text.x = element_text(size = 12),
@@ -563,7 +567,7 @@ plotPCA <- function(
         } else results.data <- all.boxplot.pca.plots
         se.obj <- addMetricToSeObj(
             se.obj = se.obj,
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             slot = 'Metrics',
             assessment.type = 'global.level',
             assessment = 'PCA',
@@ -593,11 +597,11 @@ plotPCA <- function(
                 file.name = paste0(plot.type, '.plot'),
                 plot.data = results.data
                 )
-            printColoredMessage(message = '------------The plotPCA function finished.',
-                                color = 'white',
-                                verbose = verbose)
-            return(se.obj)
         }
+        printColoredMessage(message = '------------The plotPCA function finished.',
+                            color = 'white',
+                            verbose = verbose)
+        return(se.obj)
     }
     ## return a list ####
     if (isFALSE(save.se.obj)) {
