@@ -10,15 +10,20 @@
 #' Partial correlation is used to estimate correlation between two variables while controlling for third
 #' variables
 
-#' @param name TTT
-#' @param se.obj TTT
-#' @param assay.names TTT
-#' @param reference.score TTT
-#' @param gene.set.name TTT
-#' @param plot.output TTTT
-#' @param assess.se.obj TTT
-#' @param save.se.obj TTT
-#' @param verbose TTT
+#' @param se.obj A SummarizedExperiment object.
+#' @param assay.names Symbol or a vector of symbols specifying the name(s) of the assay(s) in the SummarizedExperiment
+#' object to calculate sample-wise scores. The default is set to "all," indicating all assays in the SummarizedExperiment
+#' object will be selected.
+#' @param reference.score Symbol.
+#' @param gene.set.name Symbol. A symbol indicating the name to be used to save the score in the SummarizedExperiment object.
+#' if 'NULL', the function will select a name as follow :
+#' gene.set.name <- paste0('singscore|',length(c(upset.genes, downset.genes)),'genes')
+#' @param plot.output Logical. Whether to plot the gene set score or not. The default is set to 'TRUE'.
+#' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment object or not. The default is set
+#' to 'TRUE'. Refer to the 'checkSeObj' function for more details.
+#' @param save.se.obj Indicates whether to save the score results in the metadata of the SummarizedExperiment object
+#' or to output the result as list. The default is set to 'TRUE'.
+#' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 #' @export
 
 plotGeneSetScore <- function(
@@ -44,13 +49,14 @@ plotGeneSetScore <- function(
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
     # Scatter plot ####
+    ref <- NULL
     if(!is.null(reference.score)){
-        all.assay.score <- sapply(
-            assay.names,
+        all.assay.score <- lapply(
+            levels(assay.names),
             function(x){
                 se.obj@metadata$Metrics[[x]]$global.level$GeneSetScore$singscore[[gene.set.name]]$score
             })
-        colnames(all.assay.score) <- assay.names
+        colnames(all.assay.score) <- levels(assay.names)
         all.assay.score <- as.data.frame(all.assay.score)
         if(!reference.score %in% levels(assay.names)){
             all.assay.score$ref <- se.obj[[reference.score]]
@@ -58,6 +64,7 @@ plotGeneSetScore <- function(
             index <- colnames(all.assay.score) %in% reference.score
             colnames(all.assay.score)[index] <- 'ref'
         }
+        scores <- NULL
         all.assay.score <- pivot_longer(data = all.assay.score, -ref, names_to = 'datasets', values_to = 'scores')
         all.assay.score$datasets <- factor(x = all.assay.score$datasets, levels = assay.names)
         p.all.scores.plot <- ggplot(data = all.assay.score, aes(x = scores, y = ref)) +
@@ -80,12 +87,13 @@ plotGeneSetScore <- function(
         if (isTRUE(plot.output)) print(p.all.scores.plot)
     }
     if(is.null(reference.score)){
-        all.assay.score <- sapply(
-            assay.names,
+        all.assay.score <- lapply(
+            levels(assay.names),
             function(x){
                 se.obj@metadata$Metrics[[x]]$global.level$GeneSetScore$singscore[[gene.set.name]]$score
             })
-        colnames(all.assay.score) <- assay.names
+        all.assay.score <- do.call(cbind, all.assay.score)
+        colnames(all.assay.score) <- levels(assay.names)
         all.assay.score <- as.data.frame(all.assay.score)
         p.all.scores.plot <- ggpairs(data = all.assay.score) +
             theme(axis.line = element_line(colour = 'black', linewidth = 1),
