@@ -38,6 +38,7 @@
 
 #' @importFrom survival survfit survdiff Surv
 #' @importFrom survminer ggsurvplot
+#' @import RColorBrewer
 #' @export
 
 computeSurvival <- function(
