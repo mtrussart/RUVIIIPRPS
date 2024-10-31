@@ -17,6 +17,7 @@
 #' SummarizedExperiment object will be selected.
 #' @param variable Symbol. Specifies the column name in the SummarizedExperiment object containing a categorical variable
 #' , such as sample types or batches
+#' @param method Symbol. A symbol that indicates which DE method should be used.
 #' @param plot.ncol Numeric. A numeric value indicating the number of columns in the plot grid. This setting applies when
 #' more than one data is provided. The default is set to 1.
 #' @param plot.nrow Numeric. A numeric value indicating the number of rows in the plot grid. This setting applies when
@@ -35,11 +36,11 @@
 #' @import ggplot2
 #' @export
 
-
 plotDGE <- function(
         se.obj,
         assay.names = 'all',
         variable,
+        method = 'limma',
         plot.ncol = 1,
         plot.nrow = 2,
         plot.output = TRUE,
@@ -73,10 +74,10 @@ plotDGE <- function(
     all.de.tests <- getMetricFromSeObj(
         se.obj = se.obj,
         slot = 'Metrics',
-        assay.names = assay.names,
+        assay.names = levels(assay.names),
         assessment = 'DGE',
         assessment.type = 'gene.level',
-        method = 'Wilcoxon',
+        method = method,
         variables = variable,
         file.name = 'p.values',
         sub.file.name = NULL,
@@ -95,7 +96,7 @@ plotDGE <- function(
                 names(all.de.tests[[x]]),
                 function(y){
                     binned <- cut(
-                        x = all.de.tests[[x]][[y]][, 3],
+                        x = all.de.tests[[x]][[y]][['pvalue']],
                         breaks = breaks,
                         include.lowest = TRUE)
                     frequency <- table(binned)[1]
@@ -175,7 +176,7 @@ plotDGE <- function(
                     p = overall.pval.histograms[[x]],
                     top = text_grob(
                         label = "Differential gene expression analysis.",
-                        color = "orange",
+                        color = "black",
                         face = "bold",
                         size = 18),
                     bottom = text_grob(
@@ -197,7 +198,7 @@ plotDGE <- function(
             p = overall.pval.histograms,
             top = text_grob(
                 label = "Differential gene expression analysis.",
-                color = "orange",
+                color = "black",
                 face = "bold",
                 size = 18),
             bottom = text_grob(
@@ -217,10 +218,10 @@ plotDGE <- function(
         se.obj <- addMetricToSeObj(
             se.obj = se.obj,
             slot = 'Metrics',
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             assessment.type = 'gene.level',
             assessment = 'DGE',
-            method = 'Wilcoxon',
+            method = method,
             variables = variable,
             file.name = 'plot',
             results.data = all.pval.histograms
@@ -239,7 +240,7 @@ plotDGE <- function(
                 slot = 'Plots',
                 assessment.type = 'gene.level',
                 assessment = 'DGE',
-                method = 'Wilcoxon',
+                method = method,
                 variables = variable,
                 file.name = 'histogram',
                 plot.data = overall.pval.histograms
