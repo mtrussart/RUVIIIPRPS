@@ -11,6 +11,7 @@
 #' @param clustering.method Symbol. A symbol specifying the clustering method to be applied for grouping each continuous
 #' source of unwanted variables. Options include 'kmeans', 'cut', and 'quantile'. The default is 'kmeans' clustering.
 #' @param perfix Symbol. A symbol to add to each groups.
+#' @param plot.output Logical. If is 'TRUE', the funtion plots the variable values colored by the groups.
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
 groupContiunousVariable <- function(
@@ -19,6 +20,7 @@ groupContiunousVariable <- function(
         nb.clusters = 3,
         clustering.method = 'kmeans',
         perfix = '_group',
+        plot.output = TRUE,
         verbose = TRUE
         ){
     # Check ####
@@ -67,11 +69,24 @@ groupContiunousVariable <- function(
             variable <- factor(x = paste0(variable, perfix, quantiles.clusters$cluster))
         }
 
-        # plot ###
-        df <- data.frame(variable = initial.values, samples.nb = 1:ncol(se.obj), group.var = variable)
-        p <- ggplot(data = df, aes(x = samples.nb, y = variable, color = group.var )) +
-            geom_point()
-        print(p)
+        # plot the output ###
+        df <- data.frame(variable = initial.values, samples.nb = 1:ncol(se.obj), Groups = variable)
+        p.plot <- ggplot(data = df, aes(x = samples.nb, y = variable, color = Groups )) +
+            geom_point() +
+            xlab('Samples') +
+            ylab(variable) +
+            theme(
+                panel.background = element_blank(),
+                axis.line = element_line(colour = 'black', linewidth = 1),
+                legend.title = element_text(size = 18),
+                legend.text = element_text(size = 16),
+                axis.title.x = element_text(size = 18),
+                axis.title.y = element_text(size = 18),
+                axis.text.x = element_text(size = 14),
+                axis.text.y = element_text(size = 14),
+
+            )
+        if(isTRUE(plot.output)) print(p.plot)
 
     } else if (isFALSE(!is.numeric(se.obj[[variable]]))) {
         variable <- colData(se.obj)[[variable]]
