@@ -91,7 +91,7 @@ computePCVariableRegression <- function(
     } else method = 'svd'
     all.pca.data <- getMetricFromSeObj(
         se.obj = se.obj,
-        assay.names = assay.names,
+        assay.names = levels(assay.names),
         slot = 'Metrics',
         assessment = 'PCA',
         assessment.type = 'global.level',
@@ -125,7 +125,8 @@ computePCVariableRegression <- function(
     printColoredMessage(
         message = '-- Save all the R squared of the linear regression analysis:',
         color = 'magenta',
-        verbose = verbose)
+        verbose = verbose
+        )
     ## add results to the SummarizedExperiment object ####
     if (isTRUE(save.se.obj)) {
         printColoredMessage(
@@ -135,7 +136,7 @@ computePCVariableRegression <- function(
         se.obj <- addMetricToSeObj(
             se.obj = se.obj,
             slot = 'Metrics',
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             assessment.type = 'global.level',
             assessment = 'LRA',
             method = method,
