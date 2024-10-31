@@ -678,7 +678,8 @@ findBioGenes <- function(
             printColoredMessage(
                 message = '-- Data transformation and normalization:',
                 color = 'magenta',
-                verbose = verbose)
+                verbose = verbose
+                )
             ## apply log ####
             if(is.null(normalization)){
                 expr.data <- applyLog(
