@@ -139,7 +139,7 @@ computeARI <- function(
     ## obtain the PCA data from SummarizedExperiment ####
     all.pca.data <- getMetricFromSeObj(
         se.obj = se.obj,
-        assay.names = assay.names,
+        assay.names = levels(assay.names),
         slot = 'Metrics',
         assessment = 'PCA',
         assessment.type = 'global.level',
@@ -232,7 +232,7 @@ computeARI <- function(
         se.obj <- addMetricToSeObj(
             se.obj = se.obj,
             slot = 'Metrics',
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             assessment.type = 'global.level',
             assessment = 'ARI',
             method = method,
