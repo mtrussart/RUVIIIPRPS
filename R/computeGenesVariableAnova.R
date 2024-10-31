@@ -133,7 +133,7 @@ computeGenesVariableAnova <- function(
         if (assess.se.obj) {
             se.obj <- checkSeObj(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variables = variable,
                 remove.na = remove.na,
                 verbose = verbose)
@@ -193,6 +193,7 @@ computeGenesVariableAnova <- function(
                         round(anova.genes.var[, 1:9], digits = 3),
                         anova.genes.var[, 10, drop = FALSE])
                 }
+                pvalue <- NULL
                 anova.genes.var <- anova.genes.var[ , c('pvalue', 'statistic')]
                 # plot top genes ####
                 if (isTRUE(plot.top.genes)) {
@@ -236,7 +237,8 @@ computeGenesVariableAnova <- function(
         printColoredMessage(
             message = '-- Save the ANOVA results :',
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         ## add results to the SummarizedExperiment object ####
         if (isTRUE(save.se.obj)) {
             printColoredMessage(
@@ -246,7 +248,7 @@ computeGenesVariableAnova <- function(
             se.obj <- addMetricToSeObj(
                 se.obj = se.obj,
                 slot = 'Metrics',
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 assessment.type = 'gene.level',
                 assessment = 'ANOVA',
                 method = method,
