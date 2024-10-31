@@ -10,6 +10,7 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 LinkingTo: Rcpp, RcppEigen
 Imports: 
+    RColorBrewer,
     ggplot2,
     GGally,
     ggforestplot,
@@ -18,6 +19,7 @@ Imports:
     ComplexHeatmap,
     ggpubr,
     ggrepel,
+    limma,
     qvalue,
     singscore,
     NbClust,
@@ -35,7 +37,6 @@ Imports:
     purrr,
     BiocParallel,
     scales,
-    RColorBrewer,
     grDevices,
     gridExtra,
     dplyr,
