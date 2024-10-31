@@ -95,7 +95,7 @@ plotGenesPartialCorrelation <- function(
     all.corr.data <- getMetricFromSeObj(
         se.obj = se.obj,
         slot = 'Metrics',
-        assay.names = assay.names,
+        assay.names = levels(assay.names),
         assessment = 'PPcorr',
         assessment.type = 'gene.level',
         method = method,
