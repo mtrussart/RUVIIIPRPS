@@ -86,7 +86,7 @@ plotSilhouette <- function(
         all.silhouette <- getMetricFromSeObj(
             se.obj = se.obj,
             slot = 'Metrics',
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             assessment = 'Silhouette',
             assessment.type = 'global.level',
             method = silhouette.method,
@@ -138,10 +138,11 @@ plotSilhouette <- function(
                 tidyr::pivot_longer(
                     everything(),
                     names_to = 'datasets',
-                    values_to = 'silhou.coff')
+                    values_to = 'silhou.coff'
+                    )
             overall.single.silhouette.plot$datasets <- factor(
                 x = overall.single.silhouette.plot$datasets,
-                levels = assay.names)
+                levels = levels(assay.names))
             overall.single.silhouette.plot <- ggplot(overall.single.silhouette.plot,
                        aes(x = datasets, y = silhou.coff)) +
                 geom_col() +
@@ -208,7 +209,8 @@ plotSilhouette <- function(
                 }
                 silhouette <- c()
                 for (i in 1:length(variables))
-                    silhouette[i] <- se.obj@metadata[['Metrics']][[x]][['global.level']][['Silhouette']][[silhouette.method]][[i]]$silhouette.coeff
+                    silhouette[i] <-
+                    se.obj@metadata[['Metrics']][[x]][['global.level']][['Silhouette']][[silhouette.method]][[variables[i]]]$silhouette.coeff
                 return(silhouette)
             })
         names(all.silhouette) <- levels(assay.names)
@@ -227,11 +229,12 @@ plotSilhouette <- function(
                 row.names(all.silhouettes) <- x
                 colnames(all.silhouettes) <- variables
                 all.silhouettes$datasets <- row.names(all.silhouettes)
-                p.combined <- ggplot(all.silhouettes, aes_string(x = variables[1], y = variables[2])) +
+                p.combined <- ggplot(all.silhouettes, aes_string(x = sym(variables[1]), y = sym(variables[2]) ) ) +
                     geom_point() +
-                    ggrepel::geom_text_repel(aes(label = datasets),
-                                    hjust = 0,
-                                    vjust = 0) +
+                    ggrepel::geom_text_repel(
+                        aes(label = datasets),
+                        hjust = 0,
+                        vjust = 0) +
                     xlab(paste0('Silhouette (', variables[1], ')')) +
                     ylab(paste0('Silhouette (', variables[2], ')')) +
                     theme(
@@ -258,7 +261,7 @@ plotSilhouette <- function(
             all.silhouette <- as.data.frame(t(as.data.frame(all.silhouette)))
             colnames(all.silhouette) <- variables
             all.silhouette$datasets <- row.names(all.silhouette)
-            overall.combined.silhouette.plot <- ggplot(all.silhouette, aes_string(x = variables[1], y = variables[2])) +
+            overall.combined.silhouette.plot <- ggplot(all.silhouette, aes_string(x = sym(variables[1]), y = sym(variables[2]))) +
                 geom_point() +
                 ggrepel::geom_text_repel(aes(label = datasets),
                                 hjust = 0,
