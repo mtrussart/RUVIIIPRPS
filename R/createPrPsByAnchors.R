@@ -136,6 +136,7 @@ createPrPsByAnchors <- function(
             verbose = verbose
             )
     }
+
     # Assess and group the unwanted variable ####
     printColoredMessage(
         message = '- Assess and group the unwanted variable:',
@@ -290,17 +291,19 @@ createPrPsByAnchors <- function(
     half.anchors <- all.anchors$sample.index1[1:rep.anchors]
     second.half.anchors <- all.anchors$sample.index2[c(rep.anchors+1):nrow(all.anchors)]
 
-    if(isTRUE(all.equal(half.anchors , second.half.anchors)))
+    if(isTRUE(all.equal(half.anchors , second.half.anchors))){
         all.anchors <- all.anchors[1:rep.anchors, ]
+    } else stop('something wrong with the anchors.')
 
     all.prps.sets <- split(
         x = all.anchors,
         f = all.anchors$sample.index1
         )
+    groups.sets <- names(all.prps.sets)
     all.prps.sets <- lapply(
-        all.prps.sets,
+        groups.sets,
         function(x) {
-            temp.anchors <- x
+            temp.anchors <- all.prps.sets[[x]]
             temp.anchors <- rbind(
                 temp.anchors,
                 do.call(rbind,
@@ -331,16 +334,14 @@ createPrPsByAnchors <- function(
                     anchor.sets = setNames(anchor.sets, anchor.datasets),
                     length.sets = length.sets))
         })
-    names(all.prps.sets) <- paste0(
-        'Anchor',
-        levels(as.factor(all.anchors$sample.index1))
-        )
+    names(all.prps.sets) <- paste0('Anchor', groups.sets)
 
     ## filter ps set
-    kepp.anchor.sets <- sapply(
-        all.prps.sets,
-        function(x) sum(x$length.sets >= min.ps.samples) >= 2)
-    all.prps.sets <- all.prps.sets[kepp.anchor.sets]
+    keep.anchor.sets <- sapply(
+        names(all.prps.sets),
+        function(x) sum(all.prps.sets[[x]]$length.sets >= min.ps.samples) >= 2)
+
+    all.prps.sets <- all.prps.sets[keep.anchor.sets]
     printColoredMessage(
         message = paste0('* ', length(all.prps.sets), ' possible PRPS stes are found.'),
         color = 'blue',
@@ -446,7 +447,7 @@ createPrPsByAnchors <- function(
         function(x)  all.prps.sets[[x]]$average.scores)
         )
     prps.coverage$prps.sets <- names(all.prps.sets)
-    index <- prps.coverage$group == paste0(groups,collapse = '_' )
+    index <- prps.coverage$group == paste0(groups, collapse = '_' )
     if(sum(index) > max.prps.sets){
         prps.coverage <- prps.coverage[index, ]
     }
@@ -486,7 +487,7 @@ createPrPsByAnchors <- function(
     ## check initial coverage ####
     printColoredMessage(
         message = '- Check the distribution of the PRPS sets across the batches.',
-        color = 'orange',
+        color = 'black',
         verbose = verbose
     )
     prps.coverage <- matrix(0, nrow = length(all.prps.sets), ncol = length(groups))
@@ -605,14 +606,17 @@ createPrPsByAnchors <- function(
         names(all.prps.sets),
         function(x) {
             prps.sets <- all.prps.sets[[x]]$anchor.sets
-            temp.data <- sapply(
+            temp.data <- lapply(
                 1:length(prps.sets),
                 function(y) {
-                    rowMeans(expr.data[, prps.sets[[y]], drop = FALSE])
+                    if(length(prps.sets[[y]]) >= min.ps.samples){
+                        rowMeans(expr.data[, prps.sets[[y]], drop = FALSE])
+                    }
                 })
+            temp.data <- do.call(cbind, temp.data)
             colnames(temp.data) <- rep(
                 x = paste0(uv.variable, '.unsu.', x),
-                length(prps.sets)
+                ncol(temp.data)
                 )
             return(temp.data)
         })
@@ -661,3 +665,6 @@ createPrPsByAnchors <- function(
         return(list(prps.data = prps.data))
     }
 }
+
+
+
