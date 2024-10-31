@@ -148,6 +148,7 @@
 #' 1, the function puts all the RLE boxplots in one grid.
 #' @param pcorr.plot.nrow Numeric. Indicates number of rows in the plot grid. When the number of selected assay is more than
 #' 3, the function puts all the RLE boxplots in one grid.
+#' @param deg.method Symbol. A symbol method that indicate which DE method should be used. The defalut is set to 'limma'.
 #' @param deg.plot.ncol Numeric. A numeric value indicating the columns of the plot grid in the p-value histograms plots.
 #' The default is set to 1.
 #' @param deg.plot.nrow Numeric. A numeric value indicating the rows of the plot grid in the p-value histograms plots.
@@ -179,7 +180,6 @@
 #' @importFrom SummarizedExperiment assays colData
 #' @importFrom gridExtra grid.arrange grid.table
 #' @importFrom ggforestplot geom_stripes
-#' @importFrom RColorBrewer brewer.pal
 #' @importFrom graphics plot.new text
 #' @export
 
@@ -201,7 +201,7 @@ assessVariation <- function(
         rle.var.plot.nrow = 2,
         rle.colors = NULL,
         fast.pca = TRUE,
-        compute.nb.pcs = 5,
+        compute.nb.pcs = 10,
         nb.pcs.toplot.pca = 3,
         center = TRUE,
         scale = FALSE,
@@ -219,8 +219,8 @@ assessVariation <- function(
         ari.hclust.method = "complete",
         ari.hclust.dist.measure = "euclidian",
         ari.nb.pcs = 3,
-        vca.nb.pcs = 3,
-        lra.nb.pcs = 3,
+        vca.nb.pcs = 10,
+        lra.nb.pcs = 10,
         corr.method = 'spearman',
         a = 0.05,
         rho = 0,
@@ -233,11 +233,12 @@ assessVariation <- function(
         pcorr.genes = NULL,
         pcorr.select.genes = FALSE,
         pcorr.reference.data = NULL,
-        pcorr.corr.cutoff = .8,
+        pcorr.corr.cutoff = 0.6,
         pcorr.filter.genes = TRUE,
-        pcorr.corr.dif.cutoff = .1,
+        pcorr.corr.dif.cutoff = 0.1,
         pcorr.plot.ncol = 2,
         pcorr.plot.nrow = 2,
+        deg.method = 'limma',
         deg.plot.ncol = 1,
         deg.plot.nrow = 1,
         gene.set.score.reference.data = NULL,
@@ -329,7 +330,7 @@ assessVariation <- function(
     if (isTRUE(assess.se.obj)) {
         se.obj <- checkSeObj(
             se.obj = se.obj,
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             variables = variables,
             remove.na = remove.na,
             verbose = verbose)
@@ -351,7 +352,8 @@ assessVariation <- function(
         printColoredMessage(
             message = paste0('- Exclude all the specified codes'),
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         metrics.table <- metrics.table[!metrics.table$Code %in% plots.to.exclude, ]
     }
     n.plots <- length(unique(paste0(metrics.table$Metrics, metrics.table$PlotTypes)))
@@ -368,7 +370,7 @@ assessVariation <- function(
         } else rle.outputs.to.return <- 'rle.med.iqr'
         se.obj <- computeRLE(
             se.obj = se.obj,
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             apply.log = apply.log,
             pseudo.count = pseudo.count,
             outputs.to.return = rle.outputs.to.return,
@@ -384,7 +386,7 @@ assessVariation <- function(
     if('rlePlot' %in% metrics.table$PlotTypes){
         se.obj <- plotRLE(
             se.obj = se.obj,
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             variable = NULL,
             variable.colors = NULL,
             ylim.rle.plot = NULL,
@@ -407,7 +409,7 @@ assessVariation <- function(
         for(i in coloredRLEplot.vars){
             se.obj <- plotRLE(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
                 variable.colors = rle.colors,
                 ylim.rle.plot = NULL,
@@ -430,7 +432,7 @@ assessVariation <- function(
         for(i in rleMedplot.vars){
             se.obj <- plotRleVariable(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
                 rle.data.type = 'rle.medians',
                 ylim.rle.med.plot = NULL,
@@ -452,7 +454,7 @@ assessVariation <- function(
         for(i in rleIqrplot.vars){
             se.obj <- plotRleVariable(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
                 rle.data.type = 'rle.iqrs',
                 ylim.rle.med.plot = NULL,
@@ -470,7 +472,7 @@ assessVariation <- function(
     if(sum(c('PCA', 'LRA', 'VCA', 'ARI', 'Silhouette')  %in% metrics.table$Metrics) > 0 ) {
         se.obj <- RUVIIIPRPS::computePCA(
             se.obj = se.obj,
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             fast.pca = fast.pca,
             nb.pcs = compute.nb.pcs,
             center = center,
@@ -491,7 +493,7 @@ assessVariation <- function(
         for(i in pca.scatter.vars){
             se.obj <- RUVIIIPRPS::plotPCA(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
                 fast.pca = fast.pca,
                 nb.pcs = nb.pcs.toplot.pca,
@@ -516,7 +518,7 @@ assessVariation <- function(
         for(i in pca.boxplot.vars){
             se.obj <- RUVIIIPRPS::plotPCA(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
                 fast.pca = fast.pca,
                 nb.pcs = nb.pcs.toplot.pca,
@@ -542,7 +544,7 @@ assessVariation <- function(
         for(i in pc.vec.corr.vars){
             se.obj <- computePCVariableCorrelation(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
                 fast.pca = fast.pca,
                 nb.pcs = vca.nb.pcs,
@@ -557,7 +559,7 @@ assessVariation <- function(
         for(i in pc.vec.corr.vars){
             se.obj <- plotPCVariableCorrelation(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
                 fast.pca = fast.pca,
                 nb.pcs = vca.nb.pcs,
@@ -574,7 +576,7 @@ assessVariation <- function(
         for(i in pc.reg.vars){
             se.obj <- computePCVariableRegression(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
                 fast.pca = fast.pca,
                 nb.pcs = lra.nb.pcs,
@@ -589,7 +591,7 @@ assessVariation <- function(
         for(i in pc.reg.vars){
             se.obj <- plotPCVariableRegression(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
                 fast.pca = fast.pca,
                 nb.pcs = lra.nb.pcs,
@@ -613,7 +615,7 @@ assessVariation <- function(
         for(i in all.sil.vars){
             se.obj <- computeSilhouette(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
                 dist.measure = sil.dist.measure,
                 fast.pca = fast.pca,
@@ -629,7 +631,7 @@ assessVariation <- function(
         for(i in sil.single.vars){
             se.obj <- plotSilhouette(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variables = i,
                 plot.type = 'single.plot',
                 silhouette.method = paste0('sil.', sil.dist.measure),
@@ -645,7 +647,7 @@ assessVariation <- function(
         for(i in sil.combined.vars){
             se.obj <- plotSilhouette(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variables = strsplit(x = i, split = '&')[[1]],
                 plot.type = 'combined.plot',
                 silhouette.method = paste0('sil.', sil.dist.measure),
@@ -669,7 +671,7 @@ assessVariation <- function(
         for(i in all.ari.vars){
             se.obj <- computeARI(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
                 clustering.method = ari.clustering.method,
                 hclust.method = ari.hclust.method,
@@ -690,7 +692,7 @@ assessVariation <- function(
         for(i in ari.single.vars){
             se.obj <- plotARI(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variables = i,
                 plot.type = 'single.plot',
                 ari.method = ari.method,
@@ -709,7 +711,7 @@ assessVariation <- function(
         for(i in ari.combined.vars){
             se.obj <- plotARI(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variables = strsplit(x = i, split = '&')[[1]],
                 plot.type = 'combined.plot',
                 ari.method = ari.method,
@@ -726,7 +728,7 @@ assessVariation <- function(
         for(i in gene.var.corr.vars){
             se.obj <- computeGenesVariableCorrelation(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
                 method = corr.method,
                 a = a,
@@ -749,7 +751,7 @@ assessVariation <- function(
         for(i in gene.var.corr.vars){
             se.obj <- plotGenesVariableCorrelation(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
                 correlation.method = corr.method,
                 plot.ncol = correlation.plot.ncol,
@@ -768,7 +770,7 @@ assessVariation <- function(
         for(i in gene.var.anova.vars){
             se.obj <- computeGenesVariableAnova(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
                 method = anova.method,
                 plot.top.genes = FALSE,
@@ -789,7 +791,7 @@ assessVariation <- function(
         for(i in gene.var.corr.vars){
             se.obj <- plotGenesVariableAnova(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
                 anova.method = anova.method,
                 plot.ncol = anova.plot.ncol,
@@ -808,8 +810,9 @@ assessVariation <- function(
         for(i in dge.vars){
             se.obj <- computeDGE(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
+                method = deg.method,
                 apply.log = apply.log,
                 pseudo.count = pseudo.count,
                 assess.se.obj = FALSE,
@@ -827,8 +830,9 @@ assessVariation <- function(
         for(i in dge.vars){
             se.obj <- plotDGE(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
+                method = deg.method,
                 plot.ncol = deg.plot.ncol,
                 plot.nrow = deg.plot.nrow,
                 plot.output = FALSE,
@@ -846,7 +850,7 @@ assessVariation <- function(
         for(i in pcorr.vars){
             se.obj <- computeGenesPartialCorrelation(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variable = i,
                 method = pcorr.method,
                 genes = pcorr.genes[[i]],
@@ -879,7 +883,7 @@ assessVariation <- function(
                     } else if (j == 'histogram') plot.type = 'histogram'
                     se.obj <- plotGenesPartialCorrelation(
                         se.obj = se.obj,
-                        assay.names = assay.names,
+                        assay.names = levels(assay.names),
                         variable = i,
                         method = pcorr.method,
                         plot.type = plot.type,
@@ -903,7 +907,7 @@ assessVariation <- function(
             for(i in gene.set.vars){
                 se.obj <- computeGeneSetScore(
                     se.obj = se.obj,
-                    assay.names = assay.names,
+                    assay.names = levels(assay.names),
                     upset.genes = gene.set.score.list[[i]]$upset.genes,
                     downset.genes = gene.set.score.list[[i]]$downset.genes,
                     apply.log = apply.log,
@@ -931,7 +935,7 @@ assessVariation <- function(
         for(i in gene.set.vars){
             se.obj <- plotGeneSetScore(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 reference.score = gene.set.score.reference.data,
                 gene.set.name = i,
                 plot.output = FALSE,
