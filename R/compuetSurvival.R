@@ -5,7 +5,6 @@
 #' @description
 #' This function computes gene-level and variable-level survival analysis.
 
-
 #' @param se.obj A SummarizedExperiment object.
 #' @param assay.names Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
 #' SummarizedExperiment object to compute the survival. The default is set to "all, which indicates all the assays of the

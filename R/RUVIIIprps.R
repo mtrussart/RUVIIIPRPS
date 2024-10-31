@@ -313,9 +313,12 @@ RUVIIIprps <- function(
         ### supervised ####
         if(prps.type == 'supervised'){
             printColoredMessage(
-                message = paste0('- The prps group "', prps.group, '" has ',
-                                 length(se.obj@metadata$PRPS$supervised[[prps.group]]$prps.data),
-                                 ' PRPS sub_group(s).'),
+                message = paste0(
+                    '- The prps group "',
+                    prps.group,
+                    '" has ',
+                    length(se.obj@metadata$PRPS$supervised[[prps.group]]$prps.data),
+                    ' PRPS sub_group(s).'),
                 color = 'blue',
                 verbose = verbose
             )
@@ -340,9 +343,12 @@ RUVIIIprps <- function(
         ### un supervised ####
         if (prps.type == 'un.supervised'){
             printColoredMessage(
-                message = paste0('- The prps group "', prps.group, '" has ',
-                                 length(se.obj@metadata$PRPS$un.supervised[[prps.group]]$prps.data),
-                                 ' PRPS sub_group(s).'),
+                message = paste0(
+                    '- The prps group "',
+                    prps.group,
+                    '" has ',
+                    length(se.obj@metadata$PRPS$un.supervised[[prps.group]]$prps.data),
+                    ' PRPS sub_group(s).'),
                 color = 'blue',
                 verbose = verbose
             )
@@ -384,7 +390,9 @@ RUVIIIprps <- function(
                 prps.data <- Filter(Negate(is.null), prps.data)
             }
             printColoredMessage(
-                message = paste0(length(prps.data), ' supervised/unsupervised PRPS set(s) are found in the SummarizedExperiment object.'),
+                message = paste0(
+                    length(prps.data),
+                    ' supervised/unsupervised PRPS set(s) are found in the SummarizedExperiment object.'),
                 color = 'blue',
                 verbose = verbose
                 )
