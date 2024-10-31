@@ -96,8 +96,27 @@ findMnn <- function(
         stop('The "uv.variable" variable cannot be found in the SummarizedExperiment object.')
     }
     if (!is.null(hvg)) {
-        if (sum(hvg %in% row.names(se.obj)) != length(hvg))
-            stop('All the hvg genes are not found in the SummarizedExperiment object.')
+        if(is.logical(hvg)){
+            if(sum(hvg) == 0){
+                stop('The "hvg" does not contain any genes.')
+            } else if (sum(hvg) <= 3){
+                stop('The number of "hvg" must be at least 3')
+            } else if (length(hvg) > nrow(se.obj)){
+                stop('The length of the "hvg" cannot be larger than the row numbers of the SammarizedExperiment object.')
+            }
+        }
+        if(is.character(hvg)){
+            if (sum(hvg %in% row.names(se.obj)) != length(hvg)){
+                stop('All the hvg genes are not found in the SummarizedExperiment object.')
+            } else if (length(hvg) > nrow(se.obj)){
+                stop('The length of the "hvg" cannot be larger than the row numbers of the SammarizedExperiment object.')
+            } else if (length(hvg) <= 3){
+                stop('The number of "hvg" must be at least 3')
+            }
+            hvg <- row.names(se.obj) %in% hvgs
+        }
+    } else if (is.null(hvg)){
+        hvg <- rep(TRUE, nrow(se.obj))
     }
 
     # Assess the SummarizedExperiment object #####
@@ -309,7 +328,6 @@ findMnn <- function(
         })
     names(all.norm.data) <- groups
 
-
     # Find MNN between batches ####
     printColoredMessage(
         message = '-- Find MNN across all possible pair of batches, this may take few minuets:',
@@ -493,3 +511,5 @@ findMnn <- function(
             )
     }
 }
+
+
