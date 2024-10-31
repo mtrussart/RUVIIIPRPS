@@ -132,7 +132,7 @@ computePCA <- function(
         if (isTRUE(assess.se.obj)) {
             se.obj <- checkSeObj(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variables = NULL,
                 remove.na = remove.na,
                 verbose = verbose)
@@ -144,7 +144,7 @@ computePCA <- function(
             verbose = verbose)
         all.assays <- applyLog(
             se.obj = se.obj,
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             apply.log = apply.log,
             pseudo.count = pseudo.count,
             assessment = 'computing "PCA"',
@@ -245,7 +245,7 @@ computePCA <- function(
             se.obj <- addMetricToSeObj(
                 se.obj = se.obj,
                 slot = 'Metrics',
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 assessment.type = 'global.level',
                 assessment = 'PCA',
                 method = method,
