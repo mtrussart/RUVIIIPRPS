@@ -25,7 +25,7 @@ createLogAssays <- function(
         new.name = 'Log.',
         apply.round = FALSE,
         verbose = TRUE
-){
+        ){
     printColoredMessage(message = '------------The createLogAssays function starts:',
                         color = 'white',
                         verbose = verbose)
@@ -52,7 +52,8 @@ createLogAssays <- function(
             printColoredMessage(
                 message = paste0('Apply log2 + ', pseudo.count,' (pseudo.count) on the ', x,' data.'),
                 color = 'blue',
-                verbose = verbose)
+                verbose = verbose
+                )
             temp.data <- log2(assay(x = se.obj, i = x) +  pseudo.count)
         } else {
             printColoredMessage(
