@@ -82,6 +82,14 @@
 #' @param output.name Symbol. A symbol indicating the file name for the results in the SummarizedExperiment. If 'NULL',
 #' the function will create "paste0('RUVprps_assessNormalization', length(assays(se.obj)), '_assays.')" as a file name.
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
+#' @param sli.nb.pcs Numeric. A numeric value indicating the number of PCs to be used to compute the ARI. The default is
+#' set to 3. This number cannot be larger than 'compute.nb.pcs'.
+#' @param ari.nb.pcs Numeric. A numeric value indicating the number of PCs to be used to compute the ARI. The default is
+#' set to 3. This number cannot be larger than 'compute.nb.pcs'.
+#' @param vca.nb.pcs Numeric. A numeric value indicating the number of PCs to be used to compute the ARI. The default is
+#' set to 3. This number cannot be larger than 'compute.nb.pcs'.
+#' @param lra.nb.pcs Numeric. A numeric value indicating the number of PCs to be used to compute the ARI. The default is
+#' set to 3. This number cannot be larger than 'compute.nb.pcs'.
 
 #' @return A SummarizedExperiment object containing all the assessments matrix, plot and table or a list that contains all
 #' the results.
@@ -93,9 +101,10 @@
 #' @importFrom gridExtra grid.arrange grid.table
 #' @importFrom stats ks.test IQR fligner.test
 #' @importFrom ggforestplot geom_stripes
-#' @importFrom RColorBrewer brewer.pal
 #' @importFrom graphics plot.new text
+#' @importFrom stats kruskal.test
 #' @importFrom qvalue qvalue
+#' @import RColorBrewer
 #' @export
 
 assessNormalization <- function(
@@ -106,13 +115,17 @@ assessNormalization <- function(
         assessments.to.exclude = NULL,
         fast.pca = TRUE,
         sil.dist.measure = 'euclidian',
+        sli.nb.pcs = 3,
         ari.clustering.method = 'hclust',
         ari.hclust.method = 'complete',
         ari.hclust.dist.measure = 'euclidian',
+        ari.nb.pcs = 3,
         corr.method = 'spearman',
         corr.cutoff = 0.2,
         anova.method = 'aov',
         fvalue.cutoff = 1,
+        vca.nb.pcs = 3,
+        lra.nb.pcs = 3,
         pcorr.method = 'spearman',
         pcorr.cutoff = 0.3,
         bio.weight = 0.6,
@@ -234,7 +247,7 @@ assessNormalization <- function(
         names(general.rle.med.scores) <- levels(assay.names)
 
         ### put all together ####
-        general.rle.med.scores <- as.data.frame(general.rle.med.scores) %>%
+        general.rle.med.scores <- as.data.frame(x = general.rle.med.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             dplyr::mutate(variable = 'RLE') %>%
             dplyr::mutate(test = 'RLE medians') %>%
@@ -282,7 +295,7 @@ assessNormalization <- function(
         names(general.rle.iqr.scores) <- levels(assay.names)
 
         ### put all together ####
-        general.rle.iqr.scores <- as.data.frame(general.rle.iqr.scores) %>%
+        general.rle.iqr.scores <- as.data.frame(x = general.rle.iqr.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             dplyr::mutate(variable = 'RLE') %>%
             dplyr::mutate(test = 'RLE IQRs') %>%
@@ -336,7 +349,7 @@ assessNormalization <- function(
         names(rle.med.var.corr.scores) <- selected.vars
 
         ### put all together ####
-        rle.med.var.corr.scores <- as.data.frame(rle.med.var.corr.scores) %>%
+        rle.med.var.corr.scores <- as.data.frame(x = rle.med.var.corr.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             pivot_longer(-data, names_to = 'variable', values_to = 'measurements') %>%
             dplyr::mutate(test = 'Association with RLE medians') %>%
@@ -389,7 +402,7 @@ assessNormalization <- function(
             })
         names(rle.iqr.var.corr.scores) <- selected.vars
         ### put all together ####
-        rle.iqr.var.corr.scores <- as.data.frame(rle.iqr.var.corr.scores) %>%
+        rle.iqr.var.corr.scores <- as.data.frame(x = rle.iqr.var.corr.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             pivot_longer(-data, names_to = 'variable', values_to = 'measurements') %>%
             dplyr::mutate(test = 'Association with RLE IQRs') %>%
@@ -434,7 +447,7 @@ assessNormalization <- function(
                 rle.med.var.corr.scores <- sapply(
                     levels(assay.names),
                     function(y){
-                        suppressWarnings(fligner.test(
+                        suppressWarnings(kruskal.test(
                             x = se.obj@metadata$Metrics[[y]]$global.level$RLE$gene.median.center$general$data$rle.med,
                             g = colData(se.obj)[[x]])$p.value)
                     })
@@ -442,7 +455,7 @@ assessNormalization <- function(
         names(rle.med.var.association.scores) <- selected.vars
 
         ### put all together ####
-        rle.med.var.association.scores <- as.data.frame(rle.med.var.association.scores) %>%
+        rle.med.var.association.scores <- as.data.frame(x = rle.med.var.association.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             pivot_longer(-data, names_to = 'variable', values_to = 'measurements') %>%
             dplyr::mutate(test = 'Association with RLE medians') %>%
@@ -486,7 +499,7 @@ assessNormalization <- function(
                     levels(assay.names),
                     function(y){
                         suppressWarnings(
-                            fligner.test(
+                            kruskal.test(
                             x = se.obj@metadata$Metrics[[y]]$global.level$RLE$gene.median.center$general$data$rle.iqr,
                             g = colData(se.obj)[[x]])$p.value)
                     })
@@ -494,7 +507,7 @@ assessNormalization <- function(
         names(rle.iqr.var.association.scores) <- selected.vars
 
         ### put all together ####
-        rle.iqr.var.association.scores <- as.data.frame(rle.iqr.var.association.scores) %>%
+        rle.iqr.var.association.scores <- as.data.frame(x = rle.iqr.var.association.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             pivot_longer(-data, names_to = 'variable', values_to = 'measurements') %>%
             dplyr::mutate(test = 'Association with RLE IQRs') %>%
@@ -546,14 +559,14 @@ assessNormalization <- function(
                     levels(assay.names),
                     function(y){
                         mean(
-                            se.obj@metadata$Metrics[[y]]$global.level$VCA$fast.svd[[x]]$vector.correlations
+                            se.obj@metadata$Metrics[[y]]$global.level$VCA$fast.svd[[x]]$vector.correlations[1:vca.nb.pcs]
                         )
                     })
             })
         names(pc.vec.corr.scores) <- selected.vars
 
         ### pcs vector correlation ####
-        pc.vec.corr.scores <- as.data.frame(pc.vec.corr.scores) %>%
+        pc.vec.corr.scores <- as.data.frame(x = pc.vec.corr.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             pivot_longer(-data, names_to = 'variable', values_to = 'measurements') %>%
             dplyr::mutate(test = 'VCA') %>%
@@ -604,13 +617,13 @@ assessNormalization <- function(
                 sapply(
                     levels(assay.names),
                     function(y)
-                        mean(se.obj@metadata$Metrics[[y]]$global.level$LRA$fast.svd[[x]]$r.squared)
+                        mean(se.obj@metadata$Metrics[[y]]$global.level$LRA$fast.svd[[x]]$r.squared[1:lra.nb.pcs])
                     )
             })
         names(pc.lin.reg.scores) <- selected.vars
 
         ### Put all together ####
-        pc.lin.reg.scores <- as.data.frame(pc.lin.reg.scores) %>%
+        pc.lin.reg.scores <- as.data.frame(x = pc.lin.reg.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             pivot_longer(-data, names_to = 'variable', values_to = 'measurements') %>%
             dplyr::mutate(test = 'LRA') %>%
@@ -659,13 +672,13 @@ assessNormalization <- function(
                 sapply(
                     levels(assay.names),
                     function(y)
-                        se.obj@metadata$Metrics[[y]]$global.level$Silhouette$sil.euclidian[[x]]$silhouette.coeff
+                        c(se.obj@metadata$Metrics[[y]]$global.level$Silhouette$sil.euclidian[[x]]$silhouette.coeff + 1)/2
                     )
             })
         names(sil.scores) <- selected.vars
 
         ### Put all together ####
-        sil.scores <- as.data.frame(sil.scores) %>%
+        sil.scores <- as.data.frame(x = sil.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             pivot_longer(-data, names_to = 'variable', values_to = 'measurements') %>%
             dplyr::mutate(test = 'Silhouette') %>%
@@ -709,20 +722,20 @@ assessNormalization <- function(
             message = '* compute the adjusted rand index scores.',
             color = 'blue',
             verbose = verbose
-        )
+            )
         ari.scores <- lapply(
             selected.vars,
             function(x){
                 sapply(
                     levels(assay.names),
                     function(y)
-                        se.obj@metadata$Metrics[[y]]$global.level$ARI$hclust.complete.euclidian[[x]]$ari
+                        c(se.obj@metadata$Metrics[[y]]$global.level$ARI$hclust.complete.euclidian[[x]]$ari+1)/2
                 )
             })
         names(ari.scores) <- selected.vars
 
         ### Put all together ####
-        ari.scores <- as.data.frame(ari.scores) %>%
+        ari.scores <- as.data.frame(x = ari.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             pivot_longer(-data, names_to = 'variable', values_to = 'measurements') %>%
             dplyr::mutate(test = 'ARI') %>%
@@ -773,13 +786,13 @@ assessNormalization <- function(
                     levels(assay.names),
                     function(y){
                         corr.results <- se.obj@metadata$Metrics[[y]]$gene.level$Correlation$spearman[[x]]$correlations.pvalues
-                        sum(corr.results[, 'correlation'] < corr.cutoff)/nrow(se.obj)
+                        sum(corr.results[ ,'correlation'] < corr.cutoff)/nrow(se.obj)
                     })
             })
         names(gene.var.corr.coef.scores) <- selected.vars
 
         ### Put all together ####
-        gene.var.corr.coef.scores <- as.data.frame(gene.var.corr.coef.scores) %>%
+        gene.var.corr.coef.scores <- as.data.frame(x = gene.var.corr.coef.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             pivot_longer(-data, names_to = 'variable', values_to = 'measurements') %>%
             dplyr::mutate(test = 'Gene-level correlation (correlation cutoff)') %>%
@@ -837,7 +850,7 @@ assessNormalization <- function(
 
         #### Put all together ####
         data <- NULL
-        gene.var.corr.pvalue.scores <- as.data.frame(gene.var.corr.pvalue.scores) %>%
+        gene.var.corr.pvalue.scores <- as.data.frame(x = gene.var.corr.pvalue.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             pivot_longer(-data, names_to = 'variable', values_to = 'measurements') %>%
             dplyr::mutate(test = 'Gene-level correlation (p-value distribution)') %>%
@@ -892,7 +905,7 @@ assessNormalization <- function(
         names(gene.var.corr.qvalue.scores) <- selected.vars
 
         #### Put all together ####
-        gene.var.corr.qvalue.scores <- as.data.frame(gene.var.corr.qvalue.scores) %>%
+        gene.var.corr.qvalue.scores <- as.data.frame(x = gene.var.corr.qvalue.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             pivot_longer(-data, names_to = 'variable', values_to = 'measurements') %>%
             dplyr::mutate(test = 'Gene-level correlation (null p-value)') %>%
@@ -948,7 +961,7 @@ assessNormalization <- function(
         names(gene.var.anova.fstat.scores) <- selected.vars
 
         ### put all together ####
-        gene.var.anova.fstat.scores <- as.data.frame(gene.var.anova.fstat.scores) %>%
+        gene.var.anova.fstat.scores <- as.data.frame(x = gene.var.anova.fstat.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             pivot_longer(-data, names_to = 'variable', values_to = 'measurements') %>%
             dplyr::mutate(test = 'Gene-level ANOVA (F-values cutoff)') %>%
@@ -1004,7 +1017,7 @@ assessNormalization <- function(
         names(gene.var.anova.pvalue.scores) <- selected.vars
 
         #### put all together ####
-        gene.var.anova.pvalue.scores <- as.data.frame(gene.var.anova.pvalue.scores) %>%
+        gene.var.anova.pvalue.scores <- as.data.frame(x = gene.var.anova.pvalue.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             pivot_longer(-data, names_to = 'variable', values_to = 'measurements') %>%
             dplyr::mutate(test = 'Gene-level ANOVA (p-value distribution)') %>%
@@ -1052,14 +1065,33 @@ assessNormalization <- function(
                 sapply(
                     levels(assay.names),
                     function(y){
+                        print(y)
                         corr.results <- se.obj@metadata$Metrics[[y]]$gene.level$ANOVA$aov[[x]]$fstatistics.pvalues
-                        suppressWarnings(qvalue::qvalue(p = corr.results[, 'pvalue'])$pi0)
+                        pvalues <- corr.results[, 'pvalue']
+                        pvalues <- pvalues[!is.na(pvalues) & !is.infinite(pvalues)]
+                        result <- tryCatch({
+                            qvalue.results <- qvalue::qvalue(p = pvalues, pi0 = NULL)
+                            list(pi0 = qvalue.results$pi0)
+                        }, warning = function(w) {
+                            message("Warning occurred: ", conditionMessage(w))
+                            NULL
+                        }, error = function(e) {
+                            message("Error occurred: ", conditionMessage(e))
+                            NULL
+                        })
+                        # Check results
+                        if (!is.null(result)) {
+                            return(result$pi0)
+                        } else {
+                            message("Failed to compute q-values. q-values will be 0.")
+                            return(0)
+                        }
                     })
             })
         names(gene.var.anova.qvalue.scores) <- selected.vars
 
         #### put all together ####
-        gene.var.anova.qvalue.scores <- as.data.frame(gene.var.anova.qvalue.scores) %>%
+        gene.var.anova.qvalue.scores <- as.data.frame(x = gene.var.anova.qvalue.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             pivot_longer(-data, names_to = 'variable', values_to = 'measurements') %>%
             dplyr::mutate(test = 'Gene-level ANOVA (null p-value)') %>%
@@ -1115,7 +1147,7 @@ assessNormalization <- function(
         names(ppcorr.corr.scores) <- selected.vars
 
         #### put all together  ####
-        ppcorr.corr.scores <- as.data.frame(ppcorr.corr.scores) %>%
+        ppcorr.corr.scores <- as.data.frame(x = ppcorr.corr.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             pivot_longer(-data, names_to = 'variable', values_to = 'measurements') %>%
             dplyr::mutate(test = 'PPcorr (correlation differences cutoff)') %>%
@@ -1145,7 +1177,7 @@ assessNormalization <- function(
                 lapply(
                     levels(assay.names),
                     function(y){
-                        if(is.null(se.obj@metadata$Metrics[[y]]$gene.level$DGE$Wilcoxon[[x]]$p.values)){
+                        if(is.null(se.obj@metadata$Metrics[[y]]$gene.level$DGE$limma[[x]]$p.values)){
                             stop(paste0('The differentail gene expressin for the ', x, ' variable of the ' , y ,
                                         ' data cannot be found in the SummarizedExperiment object.',
                                         'Please run the "compuetDGE" or "assessVariation" functions.'))
@@ -1165,9 +1197,9 @@ assessNormalization <- function(
                     levels(assay.names),
                     function(y){
                         mean(sapply(
-                            names(se.obj@metadata$Metrics[[y]]$gene.level$DGE$Wilcoxon[[x]]$p.values),
+                            names(se.obj@metadata$Metrics[[y]]$gene.level$DGE$limma[[x]]$p.values),
                             function(z){
-                                corr.results <- se.obj@metadata$Metrics[[y]]$gene.level$DGE$Wilcoxon[[x]]$p.values[[z]]
+                                corr.results <- se.obj@metadata$Metrics[[y]]$gene.level$DGE$limma[[x]]$p.values[[z]]
                                 selected.pvalues <- corr.results[, 'pvalue'][corr.results[, 'pvalue'] > 0.05 ]
                                 suppressWarnings(ks.test(x = selected.pvalues, y = "punif")$statistic[[1]])
                             }))
@@ -1176,7 +1208,7 @@ assessNormalization <- function(
         names(dge.pvalue.scores) <- selected.vars
 
         #### put all together  ####
-        dge.pvalue.scores <- as.data.frame(dge.pvalue.scores) %>%
+        dge.pvalue.scores <- as.data.frame(x = dge.pvalue.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             pivot_longer(-data, names_to = 'variable', values_to = 'measurements') %>%
             dplyr::mutate(test = 'DGE (p-value distribution)') %>%
@@ -1205,7 +1237,7 @@ assessNormalization <- function(
                 lapply(
                     levels(assay.names),
                     function(y){
-                        if(is.null(se.obj@metadata$Metrics[[y]]$gene.level$DGE$Wilcoxon[[x]]$p.values))
+                        if(is.null(se.obj@metadata$Metrics[[y]]$gene.level$DGE$limma[[x]]$p.values))
                             stop(paste0('The DGE for the ',  x, ' variable of the ' , y ,
                                         ' data cannot be found in the SummarizedExperiment object.',
                                         'Please run the "compuetDGE" or "assessVariation" functions.'))
@@ -1224,9 +1256,9 @@ assessNormalization <- function(
                     levels(assay.names),
                     function(y){
                         mean(sapply(
-                            names(se.obj@metadata$Metrics[[y]]$gene.level$DGE$Wilcoxon[[x]]$p.values),
+                            names(se.obj@metadata$Metrics[[y]]$gene.level$DGE$limma[[x]]$p.values),
                             function(z){
-                                pvalue.results <- se.obj@metadata$Metrics[[y]]$gene.level$DGE$Wilcoxon[[x]]$p.values[[z]]
+                                pvalue.results <- se.obj@metadata$Metrics[[y]]$gene.level$DGE$limma[[x]]$p.values[[z]]
                                 suppressWarnings(qvalue::qvalue(p = pvalue.results[, 'pvalue'])$pi0)
                             }))
                     })
@@ -1234,7 +1266,7 @@ assessNormalization <- function(
         names(dge.qvalue.scores) <- selected.vars
 
         #### put all together ####
-        dge.qvalue.scores <- as.data.frame(dge.qvalue.scores) %>%
+        dge.qvalue.scores <- as.data.frame(x = dge.qvalue.scores, check.names = FALSE) %>%
             dplyr::mutate(data = row.names(.)) %>%
             pivot_longer(-data, names_to = 'variable', values_to = 'measurements') %>%
             dplyr::mutate(test = 'DGE (null p-value)') %>%
@@ -1280,7 +1312,7 @@ assessNormalization <- function(
 
     ## add the labels of both biological and unwanted variables ####
     printColoredMessage(
-        message = '- All the biological or unwanted labels to the variables.',
+        message = '- Add the biological or unwanted labels to the variables.',
         color = 'blue',
         verbose = verbose
         )
@@ -1409,7 +1441,7 @@ assessNormalization <- function(
             } else if (!is.null(bio.variables) & !is.null(uv.variables)){
                 index.a <- bio.uv.overall.scores$data == x & bio.uv.overall.scores$group == 'Removal of unwanted variation'
                 index.b <- bio.uv.overall.scores$data == x & bio.uv.overall.scores$group == 'Preservation of biological variation'
-                c(0.4*bio.uv.overall.scores$measurements[index.a] + 0.6*bio.uv.overall.scores$measurements[index.b])
+                c(uv.weight*bio.uv.overall.scores$measurements[index.a] + bio.weight*bio.uv.overall.scores$measurements[index.b])
             }
         })
     names(final.overall.scores) <- assay.names
@@ -1442,14 +1474,19 @@ assessNormalization <- function(
     all.measurements$group[index] <- 'Final performance'
     all.measurements$variable[all.measurements$variable == 'Score'] <- 'Final'
     final.overall.scores <- final.overall.scores[order(final.overall.scores$measurements, decreasing = F) , ]
-    all.measurements$data <- factor(x = all.measurements$data, levels = final.overall.scores$data)
+    all.measurements$data <- factor(
+        x = all.measurements$data,
+        levels = final.overall.scores$data
+        )
     all.measurements$variable <- factor(
         x = all.measurements$variable,
-        levels = unique(all.measurements$variable))
+        levels = unique(all.measurements$variable)
+        )
     all.measurements$group.test.variable <- paste0(
         all.measurements$group,
         all.measurements$test,
-        all.measurements$variable)
+        all.measurements$variable
+        )
     all.measurements <- all.measurements %>%
         group_by(group.test.variable) %>%
         mutate(rank = row_number(-measurements)) %>%
@@ -1476,7 +1513,7 @@ assessNormalization <- function(
                 ))
     )
     num.colors <- length(assays(se.obj))
-    original.palette <- brewer.pal(n = 8, name = 'BrBG')[8:1]
+    original.palette <- RColorBrewer::brewer.pal(n = 8, name = 'BrBG')[8:1]
     interpolated.colors <- grDevices::colorRampPalette(original.palette)(num.colors)
     all.measurements$group[all.measurements$group == 'Final performance'] <- 'Final scores'
     assessment.plot <- ggplot(data = all.measurements, aes(x = test, y = data)) +
@@ -1499,12 +1536,12 @@ assessNormalization <- function(
               strip.text = element_text(size = c(12)),
               panel.border = element_rect(color = "grey90"),
               axis.line.y = element_line(colour = 'white', linewidth = 1),
-              axis.text.x = element_text(size = 8, angle = 65, hjust = 1),
+              axis.text.x = element_text(size = 10, angle = 65, hjust = 1),
               axis.text.y = element_text(size = 12),
               axis.ticks.x = element_blank(),
               axis.ticks.y = element_blank()) +
         geom_stripes(odd = "#22222222", even = "#66666666") +
-        guides(color = guide_legend(override.aes = list(size = 5)))
+        guides(color = guide_legend(override.aes = list(size = 5), ncol = 3), size = guide_legend(ncol = 3))
     if(isTRUE(plot.output)) print(assessment.plot)
 
     # Save results ####
