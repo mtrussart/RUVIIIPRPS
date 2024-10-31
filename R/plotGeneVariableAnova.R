@@ -133,7 +133,7 @@ plotGenesVariableAnova <- function(
                 values_to = 'aov.fvals')
         all.aov.fvals$datasets <- factor(
             x = all.aov.fvals$datasets,
-            levels = assay.names
+            levels = levels(assay.names)
         )
         overall.aov.fvals.boxplots <- ggplot(all.aov.fvals, aes(x = datasets, y = aov.fvals)) +
             geom_boxplot(outlier.colour = 'gray') +
@@ -181,7 +181,7 @@ plotGenesVariableAnova <- function(
     ## specified ylim ####
     breaks <- seq(from = 0, to = 1, by = .1)
     ylim.pvalue <- sapply(
-        assay.names,
+        levels(assay.names),
         function(x) {
             binned <- cut(
                 x = all.aov.fvals.pvalues[[x]][, 1],
@@ -295,7 +295,7 @@ plotGenesVariableAnova <- function(
         se.obj <- addMetricToSeObj(
             se.obj = se.obj,
             slot = 'Metrics',
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             assessment.type = 'gene.level',
             assessment = 'ANOVA',
             method = anova.method,
@@ -306,7 +306,7 @@ plotGenesVariableAnova <- function(
         se.obj <- addMetricToSeObj(
             se.obj = se.obj,
             slot = 'Metrics',
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             assessment.type = 'gene.level',
             assessment = 'ANOVA',
             method = anova.method,
