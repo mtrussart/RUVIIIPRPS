@@ -33,6 +33,7 @@
 #' @importFrom grDevices colorRampPalette
 #' @importFrom tidyr pivot_longer
 #' @importFrom dplyr mutate
+#' @import RColorBrewer
 #' @import ggplot2
 #' @export
 
@@ -85,7 +86,7 @@ plotPCVariableCorrelation <- function(
         data.sets.colors <- RColorBrewer::brewer.pal(8, 'Dark2')[1:length(levels(assay.names))]
         names(data.sets.colors) <- levels(assay.names)
     } else {
-        colfunc <- grDevices::colorRampPalette( RColorBrewer::brewer.pal(8, 'Dark2'))
+        colfunc <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, 'Dark2'))
         data.sets.colors <- colfunc(n = length(levels(assay.names)))
         names(data.sets.colors) <- levels(assay.names)
     }
@@ -95,13 +96,13 @@ plotPCVariableCorrelation <- function(
         message = '-- Obtain the computed vector correlations for each assay(s) from the SummarizedExperiment object:',
         color = 'magenta',
         verbose = verbose
-    )
+        )
     if(isTRUE(fast.pca)){
         method = 'fast.svd'
     } else method = 'svd'
     all.pcs.vect.corr <- getMetricFromSeObj(
         se.obj = se.obj,
-        assay.names = assay.names,
+        assay.names = levels(assay.names),
         slot = 'Metrics',
         assessment.type = 'global.level',
         assessment = 'VCA',
@@ -156,7 +157,8 @@ plotPCVariableCorrelation <- function(
         printColoredMessage(
             message = paste0('-- Put all the vector correlation line-dot plots togather:'),
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         datasets <- pcs <- vec.corr <- NULL
         all.pcs.vect.corr <- as.data.frame(do.call(cbind, all.pcs.vect.corr))
         all.pcs.vect.corr <- all.pcs.vect.corr %>%
@@ -222,7 +224,7 @@ plotPCVariableCorrelation <- function(
         se.obj <- addMetricToSeObj(
             se.obj = se.obj,
             slot = 'Metrics',
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             assessment.type = 'global.level',
             assessment = 'VCA',
             method = method,
