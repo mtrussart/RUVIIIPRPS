@@ -135,7 +135,7 @@ plotRLE <- function(
     all.rle.data <- getMetricFromSeObj(
         se.obj = se.obj,
         slot = 'Metrics',
-        assay.names = assay.names,
+        assay.names = levels(assay.names),
         assessment = 'RLE',
         assessment.type = 'global.level',
         method = 'gene.median.center',
@@ -156,7 +156,8 @@ plotRLE <- function(
         printColoredMessage(
             message = '- ylim is not provided, then specifying the same ylim for all the RLE plots:',
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         ylim.rle.plot <- abs(unlist(lapply(
             levels(assay.names),
             function(x){
@@ -165,7 +166,7 @@ plotRLE <- function(
                     probs = c(0.2, 0.8))
                 c(max(samples.quantiles), min(samples.quantiles))
             })))
-        ylim.rle.plot <- c(-max(ylim.rle.plot), max(ylim.rle.plot))
+        ylim.rle.plot <- c(-max(ylim.rle.plot)[1], max(ylim.rle.plot)[1])
     }
     rle <- sample <- NULL
     all.rle.plots <- lapply(
@@ -297,9 +298,10 @@ plotRLE <- function(
                 p = overall.rle.plot,
                 top = text_grob(
                     label = "Relative log expression plots",
-                    color = "orange",
+                    color = "black",
                     face = "bold",
-                    size = 18),
+                    size = 18
+                    ),
                 bottom = text_grob(
                     label = paste0(
                         'Analysis: ', 'centred gene medians and then boxplots of samples.\n',
@@ -327,7 +329,7 @@ plotRLE <- function(
     if (isTRUE(save.se.obj)) {
         printColoredMessage(
             message = '- Save all the RLE plots to the "metadata" of the SummarizedExperiment object.',
-            color = 'orange',
+            color = 'black',
             verbose = verbose
             )
         ## add RLE plots of individual assays ####
@@ -340,7 +342,7 @@ plotRLE <- function(
         }
         se.obj <- addMetricToSeObj(
             se.obj = se.obj,
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             slot = 'Metrics',
             assessment = 'RLE',
             assessment.type = 'global.level',
@@ -354,7 +356,8 @@ plotRLE <- function(
                 '* The RLE plot of individual assay(s) are saved to the ',
                 '"se.obj@metadata$metric$AssayName$RLE$rle.plot" in the SummarizedExperiment object.'),
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
 
         ## add overall RLE plots of all assays ####
         if(length(assay.names) > 1){
