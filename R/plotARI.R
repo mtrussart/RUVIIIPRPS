@@ -203,7 +203,7 @@ plotARI <- function(
                 }
                 ari <- c()
                 for (i in 1:length(variables))
-                    ari[i] <- se.obj@metadata[['Metrics']][[x]][['global.level']][['ARI']][[ari.method]][[i]]$ari
+                    ari[i] <- se.obj@metadata[['Metrics']][[x]][['global.level']][['ARI']][[ari.method]][[variables[i]]]$ari
                 return(ari)
             })
         names(all.ari) <- levels(assay.names)
@@ -225,7 +225,7 @@ plotARI <- function(
                 row.names(all.aris) <- x
                 colnames(all.aris) <- variables
                 all.aris$datasets <- row.names(all.aris)
-                p.combined <- ggplot(all.aris, aes_string(x = variables[1], y = variables[2])) +
+                p.combined <- ggplot(all.aris, aes_string(x = sym(variables[1]), y = sym(variables[2]))) +
                     geom_point() +
                     ggrepel::geom_text_repel(aes(label = datasets),
                                              hjust = 0,
@@ -258,7 +258,7 @@ plotARI <- function(
             colnames(all.ari) <- variables
             all.ari$datasets <- row.names(all.ari)
             overall.combined.ari.plot <-
-                ggplot(all.ari, aes_string(x = variables[1], y = variables[2])) +
+                ggplot(all.ari, aes_string(x = sym(variables[1]), y = sym(variables[2]))) +
                 geom_point() +
                 ggrepel::geom_text_repel(aes(label = datasets),
                                          hjust = 0,
@@ -306,7 +306,7 @@ plotARI <- function(
             se.obj <- addMetricToSeObj(
                 se.obj = se.obj,
                 slot = 'Metrics',
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 assessment.type = 'global.level',
                 assessment = 'ARI',
                 method = ari.method,
@@ -318,7 +318,7 @@ plotARI <- function(
             se.obj <- addMetricToSeObj(
                 se.obj = se.obj,
                 slot = 'Metrics',
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 assessment.type = 'global.level',
                 assessment = 'ARI',
                 method = ari.method,
