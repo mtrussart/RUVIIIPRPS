@@ -102,12 +102,12 @@
 
 #' @importFrom SummarizedExperiment assay colData
 #' @importFrom singscore rankGenes simpleScore
-#' @importFrom RColorBrewer brewer.pal.info
 #' @importFrom BiocSingular bsparam runSVD
 #' @importFrom GGally ggpairs wrap
 #' @importFrom stats as.formula
 #' @importFrom NbClust NbClust
 #' @importFrom dplyr arrange
+#' @import RColorBrewer
 #' @import ggplot2
 #' @export
 
@@ -165,7 +165,7 @@ identifyUnknownUV <- function(
         stop('The "regress.out.bio.variables" should be either NULL or a vector of variable names.')
     }
     if (!is.null(regress.out.bio.variables)) {
-        if (!regress.out.bio.variables %in% colnames(colData(se.obj)))
+        if (sum(regress.out.bio.variables %in% colnames(colData(se.obj))) != length(regress.out.bio.variables) )
             stop('The "regress.out.bio.variables" are not found in the SummarizedExperiment object.')
     }
     if(is.logical(regress.out.bio.gene.sets)){
@@ -293,7 +293,8 @@ identifyUnknownUV <- function(
     # Data transformation ####
     printColoredMessage(message = '-- Data log transformation:',
         color = 'magenta',
-        verbose = verbose)
+        verbose = verbose
+        )
     expr.data <- applyLog(
         se.obj = se.obj,
         assay.names = assay.name,
@@ -644,7 +645,6 @@ identifyUnknownUV <- function(
             geom_point() +
             xlab('Samples') +
             ylab(paste0('Input data (', approach, ')')) +
-            ggtitle('Possible sources of unknown batches') +
             scale_color_manual(values = colors.selected, name = 'Batches') +
             theme(
                 panel.background = element_blank(),
@@ -679,7 +679,8 @@ identifyUnknownUV <- function(
                     color = batches
                 )) +
                 geom_point() +
-                ggtitle('Possible sources of batches') +
+                xlab('Samples') +
+                ylab(paste0('Input data (', approach, ')')) +
                 scale_color_manual(values = colors.selected, name = 'Batch') +
                 theme(
                     panel.background = element_blank(),
