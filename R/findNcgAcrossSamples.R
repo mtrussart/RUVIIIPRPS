@@ -587,7 +587,7 @@ findNcgAcrossSamples <- function(
                 data.to.use <- expr.data.reg.uv
             } else if(!is.null(regress.out.uv.variables) & is.null(normalization)){
                 data.to.use <- expr.data.reg.uv
-            } else if (!is.null(regress.out.uv.variables) & !is.null(normalization)){
+            } else if (is.null(regress.out.uv.variables) & is.null(normalization)){
                 data.to.use <- expr.data
             }
             printColoredMessage(
@@ -656,7 +656,7 @@ findNcgAcrossSamples <- function(
                 data.to.use <- expr.data.reg.uv
             } else if(!is.null(regress.out.uv.variables) & is.null(normalization)){
                 data.to.use <- expr.data.reg.uv
-            } else if (!is.null(regress.out.uv.variables) & !is.null(normalization)){
+            } else if (is.null(regress.out.uv.variables) & is.null(normalization)){
                 data.to.use <- expr.data
             }
             ### gene-batch anova
