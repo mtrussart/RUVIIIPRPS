@@ -12,13 +12,17 @@ assessNormalization(
   assessments.to.exclude = NULL,
   fast.pca = TRUE,
   sil.dist.measure = "euclidian",
+  sli.nb.pcs = 3,
   ari.clustering.method = "hclust",
   ari.hclust.method = "complete",
   ari.hclust.dist.measure = "euclidian",
+  ari.nb.pcs = 3,
   corr.method = "spearman",
   corr.cutoff = 0.2,
   anova.method = "aov",
   fvalue.cutoff = 1,
+  vca.nb.pcs = 3,
+  lra.nb.pcs = 3,
   pcorr.method = "spearman",
   pcorr.cutoff = 0.3,
   bio.weight = 0.6,
@@ -51,6 +55,9 @@ These metrics can be acquired using the 'getAssessmentMetrics' function. Default
 should be obtained. The options are: 'euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'.
 The default is set to 'euclidean'.}
 
+\item{sli.nb.pcs}{Numeric. A numeric value indicating the number of PCs to be used to compute the ARI. The default is
+set to 3. This number cannot be larger than 'compute.nb.pcs'.}
+
 \item{ari.clustering.method}{Symbol. A symbol indicating which clustering method has been used to compute ARI should
 be used. The options are 'mclust' or 'hclust' methods. The default is set to 'hclust'.}
 
@@ -61,6 +68,9 @@ be used. The options are 'mclust' or 'hclust' methods. The default is set to 'hc
 \item{ari.hclust.dist.measure}{Symbol. A symbol indicating which distant measurement has been used to compute 'hclsut'
 for the ARI analysis. The options are euclidean', 'maximum', 'manhattan', 'canberra', 'binary' or 'minkowski'. The
 default is set to 'euclidean'.}
+
+\item{ari.nb.pcs}{Numeric. A numeric value indicating the number of PCs to be used to compute the ARI. The default is
+set to 3. This number cannot be larger than 'compute.nb.pcs'.}
 
 \item{corr.method}{Symbol. A symbol indicates which correlation methods has been used to compute genes-variable correlation.
 Options are 'spearman' or 'pearson'. The default is 'spearman'.}
@@ -73,6 +83,12 @@ are 'aov' or 'weltch'. The default is set to 'aov'.}
 
 \item{fvalue.cutoff}{Numeric. Specifies the threshold for selecting genes that have a F-statistics lower than this value
 with categorical variables. The default value is set to 1.}
+
+\item{vca.nb.pcs}{Numeric. A numeric value indicating the number of PCs to be used to compute the ARI. The default is
+set to 3. This number cannot be larger than 'compute.nb.pcs'.}
+
+\item{lra.nb.pcs}{Numeric. A numeric value indicating the number of PCs to be used to compute the ARI. The default is
+set to 3. This number cannot be larger than 'compute.nb.pcs'.}
 
 \item{pcorr.method}{A symbol indicating which correlation method has been used for compute genes-gene ordinary and
 partial correlations. Options are 'spearman' or 'pearson'. The default is set to 'spearman'.}

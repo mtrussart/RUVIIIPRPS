@@ -23,6 +23,7 @@ createPrPsForCategoricalUV(
   assess.variables = FALSE,
   cat.cor.coef = c(0.95, 0.95),
   cont.cor.coef = c(0.95, 0.95),
+  point.size = 4,
   plot.prps.map = TRUE,
   save.se.obj = TRUE,
   output.name = NULL,
@@ -95,6 +96,8 @@ between each pair of continuous variables. The first one is between each pair of
 between each pair of 'bio.variables'. If the correlation of a pair of variable is higher than the cut-off, then only
 the variable that has the highest variance will be kept and the other one will be excluded from the remaining analysis.
 By default they are both set to 0.7.}
+
+\item{point.size}{Numeric. The size of points in the PRPS map.}
 
 \item{plot.prps.map}{Logical. Indicates whether to generate the PRPS map plot for individual sources of unwanted variation.
 The default is 'TRUE'.}

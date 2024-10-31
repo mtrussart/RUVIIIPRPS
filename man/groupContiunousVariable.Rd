@@ -10,6 +10,7 @@ groupContiunousVariable(
   nb.clusters = 3,
   clustering.method = "kmeans",
   perfix = "_group",
+  plot.output = TRUE,
   verbose = TRUE
 )
 }
@@ -27,6 +28,8 @@ The default is 3. This implies that each continuous source will be split into 3 
 source of unwanted variables. Options include 'kmeans', 'cut', and 'quantile'. The default is 'kmeans' clustering.}
 
 \item{perfix}{Symbol. A symbol to add to each groups.}
+
+\item{plot.output}{Logical. If is 'TRUE', the funtion plots the variable values colored by the groups.}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }

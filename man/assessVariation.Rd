@@ -22,7 +22,7 @@ assessVariation(
   rle.var.plot.nrow = 2,
   rle.colors = NULL,
   fast.pca = TRUE,
-  compute.nb.pcs = 5,
+  compute.nb.pcs = 10,
   nb.pcs.toplot.pca = 3,
   center = TRUE,
   scale = FALSE,
@@ -40,8 +40,8 @@ assessVariation(
   ari.hclust.method = "complete",
   ari.hclust.dist.measure = "euclidian",
   ari.nb.pcs = 3,
-  vca.nb.pcs = 3,
-  lra.nb.pcs = 3,
+  vca.nb.pcs = 10,
+  lra.nb.pcs = 10,
   corr.method = "spearman",
   a = 0.05,
   rho = 0,
@@ -54,11 +54,12 @@ assessVariation(
   pcorr.genes = NULL,
   pcorr.select.genes = FALSE,
   pcorr.reference.data = NULL,
-  pcorr.corr.cutoff = 0.8,
+  pcorr.corr.cutoff = 0.6,
   pcorr.filter.genes = TRUE,
   pcorr.corr.dif.cutoff = 0.1,
   pcorr.plot.ncol = 2,
   pcorr.plot.nrow = 2,
+  deg.method = "limma",
   deg.plot.ncol = 1,
   deg.plot.nrow = 1,
   gene.set.score.reference.data = NULL,
@@ -243,6 +244,8 @@ before generating the plots or not. The default is set to 'TRUE'.}
 
 \item{pcorr.plot.nrow}{Numeric. Indicates number of rows in the plot grid. When the number of selected assay is more than
 3, the function puts all the RLE boxplots in one grid.}
+
+\item{deg.method}{Symbol. A symbol method that indicate which DE method should be used. The defalut is set to 'limma'.}
 
 \item{deg.plot.ncol}{Numeric. A numeric value indicating the columns of the plot grid in the p-value histograms plots.
 The default is set to 1.}

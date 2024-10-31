@@ -8,6 +8,7 @@ plotDGE(
   se.obj,
   assay.names = "all",
   variable,
+  method = "limma",
   plot.ncol = 1,
   plot.nrow = 2,
   plot.output = TRUE,
@@ -24,6 +25,8 @@ SummarizedExperiment object will be selected.}
 
 \item{variable}{Symbol. Specifies the column name in the SummarizedExperiment object containing a categorical variable
 , such as sample types or batches}
+
+\item{method}{Symbol. A symbol that indicates which DE method should be used.}
 
 \item{plot.ncol}{Numeric. A numeric value indicating the number of columns in the plot grid. This setting applies when
 more than one data is provided. The default is set to 1.}

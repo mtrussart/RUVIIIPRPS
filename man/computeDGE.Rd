@@ -2,11 +2,12 @@
 % Please edit documentation in R/computeDGE.R
 \name{computeDGE}
 \alias{computeDGE}
-\title{Perform differential gene expression analysis using the Wilcoxon test.}
+\title{Perform differential gene expression analysis.}
 \usage{
 computeDGE(
   se.obj,
   assay.names = "all",
+  method = "limma",
   variable,
   apply.log = TRUE,
   pseudo.count = 1,
@@ -24,9 +25,12 @@ computeDGE(
 SummarizedExperiment object to compute the differential gene expression analysis. By default all the assays of the
 SummarizedExperiment object will be selected.}
 
+\item{method}{Symbol. A symbol that indicates which DE method should be used. Options are 'limma' and 'Wilcoxon'. The
+defalut is set to 'limma'.}
+
 \item{variable}{Symbol. A symbol that indicates a column name of the SummarizedExperiment object that contains a
 categorical variable such as batches. If the variable has more than two levels, the function perform DGE between all
-possible pariwise groups.}
+possible pairwise groups.}
 
 \item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data before compuritn DGE. The
 default is 'TRUE'.}
