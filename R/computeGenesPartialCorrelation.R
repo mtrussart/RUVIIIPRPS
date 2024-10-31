@@ -144,10 +144,10 @@ computeGenesPartialCorrelation <- function(
         }
 
         # Assess the SummarizedExperiment object ####
-        if (assess.se.obj) {
+        if (isTRUE(assess.se.obj)) {
             se.obj <- checkSeObj(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variables = variable,
                 remove.na = remove.na,
                 verbose = verbose)
@@ -170,7 +170,8 @@ computeGenesPartialCorrelation <- function(
         printColoredMessage(
             message ='-- Select genes based the current parameters:',
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
 
         if(is.null(genes) & isFALSE(select.genes)){
             printColoredMessage(
@@ -179,7 +180,7 @@ computeGenesPartialCorrelation <- function(
                 verbose = verbose)
             selected.genes <- row.names(se.obj)
         }
-        if(isTRUE(select.genes)){
+        if(isTRUE(select.genes) & is.null(genes)){
             printColoredMessage(
                 message = paste0('- Select genes that are highly correlated with the "', variable, '" variable.'),
                 color = 'orange',
@@ -187,9 +188,12 @@ computeGenesPartialCorrelation <- function(
             )
             if(!is.null(reference.data)){
                 printColoredMessage(
-                    message = paste0('* Find genes that have absolute correlations more than ', corr.coff.cutoff, ' in the "', reference.data, '" data.'),
+                    message = paste0(
+                        '* Find genes that have absolute correlations more than ',
+                        corr.coff.cutoff, ' in the "', reference.data, '" data.'),
                     color = 'blue',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
                 corr.genes.var <- correls(
                     y = se.obj@colData[[variable]],
                     x = t(all.assays[[reference.data]]) ,
@@ -199,15 +203,19 @@ computeGenesPartialCorrelation <- function(
                     stop('Any genes cannot be found based on the current "corr.coff.cutoff".')
                 }
                 printColoredMessage(
-                    message = paste0('- ', length(selected.genes), ' genes are selected for pairwise-partial correlation analysis.' ),
+                    message = paste0(
+                        '- ', length(selected.genes), ' genes are selected for pairwise-partial correlation analysis.' ),
                     color = 'blue',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
             }
             if(is.null(reference.data)){
                 printColoredMessage(
-                    message = paste0('* Find genes that have absolute correlations more than ', corr.coff.cutoff, ' in each datasets.'),
+                    message = paste0(
+                        '* Find genes that have absolute correlations more than ', corr.coff.cutoff, ' in each datasets.'),
                     color = 'blue',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
                 all.corr.genes.var <- lapply(
                     levels(assay.names),
                     function(x){
@@ -222,12 +230,14 @@ computeGenesPartialCorrelation <- function(
                     stop('Any genes cannot be found based on the current "corr.coff.cutoff".')
                 }
                 printColoredMessage(
-                    message = paste0('- ', length(selected.genes), ' genes are selected for pairwise-partial correlation analysis.' ),
+                    message = paste0(
+                        '- ', length(selected.genes), ' genes are selected for pairwise-partial correlation analysis.' ),
                     color = 'blue',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
             }
         }
-        if(!is.null(genes)){
+        if(!is.null(genes) & isFALSE(select.genes)){
             selected.genes <- genes
         }
 
@@ -242,14 +252,16 @@ computeGenesPartialCorrelation <- function(
         printColoredMessage(
             message ='-- Compute all possible pairwise gene-gene correlations:',
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         gene.gene.correlation <- lapply(
             levels(assay.names),
             function(x){
                 printColoredMessage(
                     message = paste0('- Compute all gene-gene correlations for the "', x , '" data.'),
                     color = 'blue',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
                 cor.matrix <- stats::cor(x = t(all.assays[[x]]) , method = method, use = "everything")
                 upper.tri <- upper.tri(cor.matrix)
                 variable.pairs <- which(upper.tri, arr.ind = TRUE)
@@ -259,7 +271,8 @@ computeGenesPartialCorrelation <- function(
                 correlation.df <- data.frame(
                     gene1 = rownames(cor.matrix)[variable.pairs[, 1]],
                     gene2 = rownames(cor.matrix)[variable.pairs[, 2]],
-                    p.cor = correlation.coefficients)
+                    p.cor = correlation.coefficients
+                    )
             })
         names(gene.gene.correlation) <- levels(assay.names)
 
@@ -267,7 +280,8 @@ computeGenesPartialCorrelation <- function(
         printColoredMessage(
             message = paste0('-- Compute correlation between each genes with the "', variable, '" variable:'),
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         gene.variable.correlation <- lapply(
             levels(assay.names),
             function(x){
@@ -289,14 +303,16 @@ computeGenesPartialCorrelation <- function(
         printColoredMessage(
             message = '-- Compute all possible partial pairwise gene-gene correlations:',
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         gene.gene.partial.correlation <- lapply(
             levels(assay.names),
             function(x){
                 printColoredMessage(
                     message = paste0('- Compute the correlation for the "', x,  '" data:'),
                     color = 'blue',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
                 correlation.df <- gene.gene.correlation[[x]]
                 index.1 <- match(correlation.df$gene1 , row.names(gene.variable.correlation[[x]]))
                 index.2 <- match(correlation.df$gene2 , row.names(gene.variable.correlation[[x]]))
@@ -317,12 +333,14 @@ computeGenesPartialCorrelation <- function(
         printColoredMessage(
             message = '-- Save all the correlation coefficients data:',
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         if (isTRUE(save.se.obj)) {
             printColoredMessage(
                 message = '- Save all the correlation data to the "metadata" of the SummarizedExperiment object.',
                 color = 'orange',
-                verbose = verbose)
+                verbose = verbose
+                )
             ### for all assays
             se.obj <- addMetricToSeObj(
                 se.obj = se.obj,
