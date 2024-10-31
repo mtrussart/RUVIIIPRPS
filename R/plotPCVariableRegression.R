@@ -26,6 +26,7 @@
 #'  the associated plot.
 
 #' @importFrom tidyr pivot_longer
+#' @importFrom RColorBrewer brewer.pal
 #' @import ggplot2
 #' @export
 
@@ -65,11 +66,10 @@ plotPCVariableRegression <- function(
         data.sets.colors <- RColorBrewer::brewer.pal(8, 'Dark2')[1:length(levels(assay.names))]
         names(data.sets.colors) <- levels(assay.names)
     } else {
-        colfunc <- grDevices::colorRampPalette( RColorBrewer::brewer.pal(8, 'Dark2'))
+        colfunc <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, 'Dark2'))
         data.sets.colors <- colfunc(n = length(levels(assay.names)))
         names(data.sets.colors) <- levels(assay.names)
     }
-
 
     # Obtain regression r squared ####
     printColoredMessage(
@@ -83,7 +83,7 @@ plotPCVariableRegression <- function(
     all.reg.rseq <- getMetricFromSeObj(
         se.obj = se.obj,
         slot = 'Metrics',
-        assay.names = assay.names,
+        assay.names = levels(assay.names),
         assessment = 'LRA',
         assessment.type = 'global.level',
         method = method,
@@ -199,7 +199,7 @@ plotPCVariableRegression <- function(
         se.obj <- addMetricToSeObj(
             se.obj = se.obj,
             slot = 'Metrics',
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             assessment.type = 'global.level',
             assessment = 'LRA',
             method = method,
