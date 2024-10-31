@@ -124,9 +124,9 @@ checkSeObj <- function(
         if(!sum(variables %in% colnames(colData(se.obj))) == length(variables)){
             not.found.variables <- variables[!variables %in% colnames(colData(se.obj))]
             stop(paste0(
-                'The variable(s)',
+                'The variable(s) ',
                 paste(not.found.variables, collapse = ', '),
-                'cannot be found in the SummarizedExperiment object.'))
+                ' cannot be found in the SummarizedExperiment object.'))
         } else{
             printColoredMessage(
                 message = paste0(
