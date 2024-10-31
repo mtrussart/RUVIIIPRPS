@@ -61,14 +61,23 @@ assessW <- function(
         printColoredMessage(
             message = '-- Compare different W values',
             color = 'magenta',
-            verbose = verbose)
-        data.names <- gsub('\\.', '_', names(se.obj@metadata$RUVIII$W))
-        data.names <- mixedorder(data.names)
+            verbose = verbose
+            )
+        data.names <- names(se.obj@metadata$RUVIII$W)
+        names.order <- mixedorder(data.names)
+        data.names <- data.names[names.order]
         all.w <- lapply(
             data.names,
             function(x) se.obj@metadata$RUVIII[['W']][[x]]
         )
-        names(all.w) <- gsub('\\.', '_', names(se.obj@metadata$RUVIII$W))
+        data.names <- unlist(lapply(
+            data.names,
+            function(x){
+                split.name <- strsplit(x, split = '_')
+                char.len <- length(split.name[[1]])
+                paste(split.name[[1]][char.len-1], split.name[[1]][char.len], sep = ':')
+            }))
+        names(all.w) <- data.names
 
         ## variables class
         all.vars <- c(bio.variables, uv.variables)
@@ -119,6 +128,24 @@ assessW <- function(
         groups <- corr <- data <- assess <- variable <- NULL
         all <- bind_rows(cont.vars.r.squareds, cat.vars.vec.corr) %>%
             round(digits = 3)
+        all.a <- mutate(.data = all, var = row.names(all)) %>%
+            pivot_longer(cols = -var, values_to = 'corr', names_to = 'data') %>%
+            mutate(data = factor(data, levels = gsub(':', '.', names(all.w))) )
+        p.w.1 <- ggplot(data = all.a, aes(x = data, y = corr, color = var)) +
+            geom_point(size = 3) +
+            xlab('W') +
+            ylab('Correlations') +
+            ylim(c(0,1)) +
+            theme(
+                panel.background = element_blank(),
+                axis.line = element_line(colour = 'black', linewidth = 1),
+                axis.title.x = element_text(size = 18),
+                axis.title.y = element_text(size = 18),
+                plot.title = element_text(size = 15),
+                axis.text.x = element_text(size = 12, angle = 25, hjust = 1),
+                axis.text.y = element_text(size = 12)
+                ) +
+            guides(color = guide_legend(title = "Variables"))
         all <- mutate(.data = all, var = row.names(all)) %>%
             pivot_longer(cols = -var, values_to = 'corr', names_to = 'data') %>%
             mutate(groups = 'unwanted') %>%
@@ -127,11 +154,12 @@ assessW <- function(
             group_by(data, groups) %>%
             summarise(corr = mean(corr)) %>%
             summarise(assess = corr[groups == 'wanted']/2 + corr[groups == 'unwanted']/2) %>%
-            mutate(data = factor(data, levels = gsub('\\.', '_', names(se.obj@metadata$RUVIII$W))))
-        p.w <- ggplot(all, aes(x = data, y = assess)) +
+            mutate(data = factor(data, levels = gsub(':', '.', names(all.w))) )
+        p.w.2 <- ggplot(all, aes(x = data, y = assess)) +
             geom_bar(stat = 'identity', fill = 'grey') +
             xlab('W') +
             ylab('Correlations') +
+            ylim(c(0,1)) +
             theme(
                 panel.background = element_blank(),
                 axis.line = element_line(colour = 'black', linewidth = 1),
@@ -139,7 +167,9 @@ assessW <- function(
                 axis.title.y = element_text(size = 18),
                 plot.title = element_text(size = 15),
                 axis.text.x = element_text(size = 12, angle = 25, hjust = 1),
-                axis.text.y = element_text(size = 12))
+                axis.text.y = element_text(size = 12)
+                )
+        p.w <- ggarrange(p.w.1, p.w.2)
         if(isTRUE(plot.output)) print(p.w)
     }
 
@@ -251,5 +281,76 @@ assessW <- function(
         return(p.w = p.w)
     }
 }
+
+
+m <- matrix(rnorm(n = 3000), 50, 60)
+colnames(m) <- paste0('sample1', 1:60)
+colnames(m)[1:2] <- paste0('sampleD', 'sampleD')
+colnames(m)[10:11] <- paste0('sampleA', 'sampleA')
+colnames(m)[40:41] <- paste0('sampleC', 'sampleC')
+colnames(m)[20:21] <- paste0('sampleS', 'sampleS')
+colnames(m)[18:19] <- paste0('sampleP', 'sampleP')
+colnames(m)[30:31] <- paste0('sampleM', 'sampleM')
+
+M <- replicate.matrix(colnames(m))
+
+
+ff <- function (Y, M, ctl, k = NULL, eta = NULL, include.intercept = TRUE,
+          average = FALSE, fullalpha = NULL, return.info = FALSE, inputcheck = TRUE)
+{
+    if (is.data.frame(Y))
+        Y = data.matrix(Y)
+    m = nrow(Y)
+    n = ncol(Y)
+    M = replicate.matrix(M)
+    ctl = tological(ctl, n)
+    if (inputcheck) {
+        if (m > n)
+            warning("m is greater than n!  This is not a problem itself, but may indicate that you need to transpose your data matrix.  Please ensure that rows correspond to observations (e.g. microarrays) and columns correspond to features (e.g. genes).")
+        if (sum(is.na(Y)) > 0)
+            warning("Y contains missing values.  This is not supported.")
+        if (sum(Y == Inf, na.rm = TRUE) + sum(Y == -Inf, na.rm = TRUE) >
+            0)
+            warning("Y contains infinities.  This is not supported.")
+    }
+    Y = RUV1(Y, eta, ctl, include.intercept = include.intercept)
+    if (ncol(M) >= m)
+        newY = Y
+    else if (is.null(k)) {
+        ycyctinv = solve(Y[, ctl] %*% t(Y[, ctl]))
+        newY = (M %*% solve(t(M) %*% ycyctinv %*% M) %*% (t(M) %*%
+                                                              ycyctinv)) %*% Y
+        fullalpha = NULL
+    }
+    else if (k == 0) {
+        newY = Y
+        fullalpha = NULL
+    }
+    else {
+        if (is.null(fullalpha)) {
+            Y0 = residop(Y, M)
+            fullalpha = t(svd(Y0 %*% t(Y0))$u[, 1:min(m - ncol(M),
+                                                      sum(ctl)), drop = FALSE]) %*% Y
+        }
+        alpha = fullalpha[1:min(k, nrow(fullalpha)), , drop = FALSE]
+        ac = alpha[, ctl, drop = FALSE]
+        W = Y[, ctl] %*% t(ac) %*% solve(ac %*% t(ac))
+        newY = Y - W %*% alpha
+    }
+    if (average)
+        newY = ((1/apply(M, 2, sum)) * t(M)) %*% newY
+    if (!return.info)
+        return(newY)
+    else return(list(newY = newY, M = M, W = W, fullalpha = fullalpha))
+}
+library(ruv)
+
+tological <- function (ctl, n)
+{
+    ctl2 = rep(FALSE, n)
+    ctl2[ctl] = TRUE
+    return(ctl2)
+}
+
 
 
