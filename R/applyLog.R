@@ -29,36 +29,42 @@ applyLog <- function(
     if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
+
+    # Apply logs ####
     all.assays.loged <- lapply(
-        assay.names,
+        levels(assay.names),
         function(x){
             # log transformation ####
             if (isTRUE(apply.log) & !is.null(pseudo.count)) {
                 printColoredMessage(
                     message = paste0('- Apply log2 on the "', x, '" + ', pseudo.count, ' (pseudo.count) data.'),
                     color = 'blue',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
                 expr <- log2(assay(x = se.obj, i = x) + pseudo.count)
             } else if (isTRUE(apply.log) & is.null(pseudo.count)){
                 printColoredMessage(
                     message = paste0('- Apply log2 on the "', x, '" data.'),
                     color = 'blue',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
                 expr <- log2(assay(x = se.obj, i = x))
             } else if (isFALSE(apply.log)){
                 printColoredMessage(
                     message = paste0('- The "', x, '" data will be used without log transformation.'),
                     color = 'blue',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
                 printColoredMessage(
                     message = paste0('-- Please note, the data should be in log scale before ', assessment, '.'),
                     color = 'red',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
                 expr <- assay(x = se.obj, i = x)
             }
             return(expr)
         })
-    names(all.assays.loged) <- assay.names
+    names(all.assays.loged) <- levels(assay.names)
     return(all.assays.loged)
 }
 
