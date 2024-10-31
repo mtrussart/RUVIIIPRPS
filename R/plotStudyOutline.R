@@ -29,10 +29,11 @@
 #' object or to output the result as a plot. The default is set to 'TRUE'.
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
-#' @importFrom RColorBrewer brewer.pal.info brewer.pal
+
 #' @importFrom grDevices colorRampPalette
 #' @importFrom ComplexHeatmap Heatmap draw ht_opt
 #' @importFrom dplyr arrange pick
+#' @import RColorBrewer
 #' @import viridis
 #' @export
 
@@ -53,23 +54,72 @@ plotStudyOutline <- function(
         ){
     # Sample information ####
     sample.info <- as.data.frame(colData(x = se.obj)[ , variables, drop = FALSE])
+    colnames(sample.info) <- variables
     if(!is.null(sort.variable))
         sample.info <- sample.info %>%  arrange(dplyr::pick(sort.variable))
 
-    var.class <- sapply(variables, function(x) class(sample.info[ , x]))
+    var.class <- sapply(variables, function(x) class(sample.info[[x]]))
     cat.var <- var.class %in% c('factor', 'character')
     cont.var <- var.class %in% c('integer', 'numeric')
 
-    # Select colors ####
-    ## Categorical
-    palette.colors <- brewer.pal.info
-    palette.colors <- palette.colors[order(palette.colors$category, decreasing = FALSE) , ]
-    names(variables)[cat.var] <- seq(sum(cat.var))
-
-    ## Continuous
+    # # Select colors ####
+    # ## Categorical
+    # palette.colors <- brewer.pal.info
+    # palette.colors <- palette.colors[order(palette.colors$category, decreasing = FALSE) , ]
+    # names(variables)[cat.var] <- seq(sum(cat.var))
+    #
+    # ## Continuous
     viridis.colors <- c('plasma', 'cividis', 'inferno', 'magma', 'mako','rocket', 'turbo', 'viridis')
     viridis.colors <- rep(viridis.colors, c(ceiling(sum(cont.var) /8 )))
     names(variables)[cont.var] <- seq(sum(cont.var))
+    # # Generate heatmaps ####
+    # ht.list <- NULL
+    # for(i in 1:length(variables)){
+    #     selected.variable <- variables[i]
+    #     if(class(sample.info[ , selected.variable]) %in% c('factor', 'character') ){
+    #         num.colors <- length(unique(sample.info[ , selected.variable]))
+    #         colfunc <- grDevices::colorRampPalette(
+    #             RColorBrewer::brewer.pal(
+    #                 n = palette.colors$maxcolors[as.numeric(names(selected.variable))],
+    #                 name = row.names(palette.colors)[as.numeric(names(selected.variable))]
+    #                 )
+    #             )
+    #         color.plates <- colfunc(num.colors)
+    #         color.plates <- color.plates[as.integer(as.factor(sample.info[ , selected.variable]))]
+    #         names(color.plates) <- sample.info[ , selected.variable]
+    #         ht.list <-  ht.list + ComplexHeatmap::Heatmap(
+    #             sample.info[ , selected.variable],
+    #             cluster_rows = FALSE,
+    #             name = selected.variable,
+    #             column_names_rot = column.names.rot,
+    #             col = color.plates,
+    #             heatmap_legend_param = list(title_gp = grid::gpar(fontsize = legend.font.size), by_row = TRUE, ncol = legend.ncol))
+    #     } else if (class(sample.info[ , selected.variable])  %in% c('integer', 'numeric')){
+    #         ht.list <-  ht.list + ComplexHeatmap::Heatmap(
+    #             sample.info[ , selected.variable],
+    #             cluster_rows = FALSE,
+    #             name = selected.variable,
+    #             column_names_rot = column.names.rot,
+    #             col = viridis(n = 10, option = viridis.colors[as.numeric(names(selected.variable))]),
+    #             heatmap_legend_param = list(title_gp = grid::gpar(fontsize = legend.font.size), legend_direction = legend.direction))
+    #     }
+    # }
+    currentCols <-  c(
+        RColorBrewer::brewer.pal(8, "Dark2")[-5],
+        RColorBrewer::brewer.pal(10, "Paired"),
+        RColorBrewer::brewer.pal(12, "Set3"),
+        RColorBrewer::brewer.pal(9, "Blues")[c(8, 3, 7, 4, 6, 9, 5)],
+        RColorBrewer::brewer.pal(9, "Oranges")[c(8, 3, 7, 4, 6, 9, 5)],
+        RColorBrewer::brewer.pal(9, "Greens")[c(8, 3, 7, 4, 6, 9, 5)],
+        RColorBrewer::brewer.pal(9, "Purples")[c(8, 3, 7, 4, 6, 9, 5)],
+        RColorBrewer::brewer.pal(9, "Reds")[c(8, 3, 7, 4, 6, 9, 5)],
+        RColorBrewer::brewer.pal(9, "Greys")[c(8, 3, 7, 4, 6, 9, 5)],
+        RColorBrewer::brewer.pal(9, "BuGn")[c(8, 3, 7, 4, 6, 9, 5)],
+        RColorBrewer::brewer.pal(9, "PuRd")[c(8, 3, 7, 4, 6, 9, 5)],
+        RColorBrewer::brewer.pal(9, "BuPu")[c(8, 3, 7, 4, 6, 9, 5)],
+        RColorBrewer::brewer.pal(9, "YlGn")[c(8, 3, 7, 4, 6, 9, 5)],
+        RColorBrewer::brewer.pal(10, "Paired"))
+    currentCols <- rep(currentCols, 3)
 
     # Generate heatmaps ####
     ht.list <- NULL
@@ -77,11 +127,14 @@ plotStudyOutline <- function(
         selected.variable <- variables[i]
         if(class(sample.info[ , selected.variable]) %in% c('factor', 'character') ){
             num.colors <- length(unique(sample.info[ , selected.variable]))
-            colfunc <- grDevices::colorRampPalette(
-                RColorBrewer::brewer.pal(
-                    n = palette.colors$maxcolors[as.numeric(names(selected.variable))],
-                    name = row.names(palette.colors)[as.numeric(names(selected.variable))]))
-            color.plates <- colfunc(num.colors)
+            # colfunc <- grDevices::colorRampPalette(
+            #     RColorBrewer::brewer.pal(
+            #         n = palette.colors$maxcolors[as.numeric(names(selected.variable))],
+            #         name = row.names(palette.colors)[as.numeric(names(selected.variable))]
+            #     )
+            # )
+            print(i)
+            color.plates <- currentCols[seq(num.colors)]
             color.plates <- color.plates[as.integer(as.factor(sample.info[ , selected.variable]))]
             names(color.plates) <- sample.info[ , selected.variable]
             ht.list <-  ht.list + ComplexHeatmap::Heatmap(
@@ -90,7 +143,12 @@ plotStudyOutline <- function(
                 name = selected.variable,
                 column_names_rot = column.names.rot,
                 col = color.plates,
-                heatmap_legend_param = list(title_gp = grid::gpar(fontsize = legend.font.size), by_row = TRUE, ncol = legend.ncol))
+                heatmap_legend_param = list(
+                    title_gp = grid::gpar(fontsize = legend.font.size),
+                    by_row = TRUE,
+                    ncol = legend.ncol)
+                )
+            currentCols <- currentCols[-seq(num.colors)]
         } else if (class(sample.info[ , selected.variable])  %in% c('integer', 'numeric')){
             ht.list <-  ht.list + ComplexHeatmap::Heatmap(
                 sample.info[ , selected.variable],
@@ -98,9 +156,13 @@ plotStudyOutline <- function(
                 name = selected.variable,
                 column_names_rot = column.names.rot,
                 col = viridis(n = 10, option = viridis.colors[as.numeric(names(selected.variable))]),
-                heatmap_legend_param = list(title_gp = grid::gpar(fontsize = legend.font.size), legend_direction = legend.direction))
+                heatmap_legend_param = list(
+                    title_gp = grid::gpar(fontsize = legend.font.size),
+                    legend_direction = legend.direction)
+                )
         }
     }
+
     if(isTRUE(plot.output))
         ht_opt$message = FALSE
         print(draw(
