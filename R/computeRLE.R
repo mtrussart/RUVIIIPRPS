@@ -136,25 +136,26 @@ computeRLE <- function(
             stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
         }
 
-
         # Data log transformation ####
         printColoredMessage( message ='-- Data log transformation:',
                              color = 'magenta',
                              verbose = verbose)
         all.assays <- applyLog(
             se.obj = se.obj,
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             apply.log = apply.log,
             pseudo.count = pseudo.count,
             assessment = 'RLE',
-            verbose = verbose)
+            verbose = verbose
+            )
         names(all.assays) <- levels(assay.names)
 
         # Compute RLE for each assay ####
         printColoredMessage(
             message = '-- Compute the RLE data for individual assay(s):',
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         all.assays <- lapply(
             levels(assay.names),
             function(x) {
@@ -167,17 +168,20 @@ computeRLE <- function(
                     printColoredMessage(
                         message = '* obtain the RLE data.',
                         color = 'blue',
-                        verbose = verbose)
+                        verbose = verbose
+                        )
                     printColoredMessage(
                         message = '* obtain the RLE medians and interquartile ranges.',
                         color = 'grey',
-                        verbose = verbose)
+                        verbose = verbose
+                        )
                     rle.med <- matrixStats::colMedians(rle.data)
                     rle.iqr <- matrixStats::colIQRs(rle.data)
                     rle <- list(
                         rle.data = rle.data,
                         rle.med = rle.med,
-                        rle.iqr = rle.iqr)
+                        rle.iqr = rle.iqr
+                        )
                 } else if (outputs.to.return == 'rle.data'){
                     printColoredMessage(
                         message = '* obtain the RLE data.',
@@ -188,11 +192,13 @@ computeRLE <- function(
                     printColoredMessage(
                         message = '* obtain the RLE data.',
                         color = 'blue',
-                        verbose = verbose)
+                        verbose = verbose
+                        )
                     printColoredMessage(
                         message = '* obtain the RLE medians.',
                         color = 'blue',
-                        verbose = verbose)
+                        verbose = verbose
+                        )
                     rle.med <- matrixStats::colMedians(rle.data)
                     rle <- list(rle.data = rle.data, rle.med = rle.med)
                 } else if (outputs.to.return == 'rle.iqr'){
@@ -222,6 +228,7 @@ computeRLE <- function(
                 return(rle)
             })
         names(all.assays) <- levels(assay.names)
+
         # Save the results ####
         ## add results to the SummarizedExperiment object ####
         printColoredMessage(
@@ -232,10 +239,11 @@ computeRLE <- function(
             printColoredMessage(
                 message = '- Save all the RLE data to the "metadata" of the SummarizedExperiment object.',
                 color = 'blue',
-                verbose = verbose)
+                verbose = verbose
+                )
             se.obj <- addMetricToSeObj(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 slot = 'Metrics',
                 assessment = 'RLE',
                 assessment.type = 'global.level',
@@ -249,7 +257,7 @@ computeRLE <- function(
                                  'the "se.obj@metadata$metric$AssayName$RLE$rle.data" in SummarizedExperiment object.'),
                 color = 'blue',
                 verbose = verbose
-            )
+                )
             printColoredMessage(
                 message = '------------The computeRLE function finished.',
                 color = 'white',
