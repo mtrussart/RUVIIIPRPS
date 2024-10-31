@@ -78,7 +78,7 @@ plotGenesVariableCorrelation <- function(
     all.corr.coeff.pvalues <- getMetricFromSeObj(
         se.obj = se.obj,
         slot = 'Metrics',
-        assay.names = assay.names,
+        assay.names = levels(assay.names),
         assessment = 'Correlation',
         assessment.type = 'gene.level',
         method = correlation.method,
@@ -141,7 +141,7 @@ plotGenesVariableCorrelation <- function(
                 )
         all.corr.coeff$datasets <- factor(
             x = all.corr.coeff$datasets,
-            levels = assay.names
+            levels = levels(assay.names)
             )
         overall.corr.coeff.plot <- ggplot(all.corr.coeff, aes(x = datasets, y = corr.coff)) +
             geom_boxplot(outlier.color = 'gray') +
@@ -189,7 +189,7 @@ plotGenesVariableCorrelation <- function(
     ## specified ylim ####
     breaks <- seq(from = 0, to = 1, by = .1)
     ylim.pvalue <- sapply(
-        assay.names,
+        levels(assay.names),
         function(x) {
             binned <- cut(
                 x = all.corr.coeff.pvalues[[x]][, 1],
@@ -301,7 +301,7 @@ plotGenesVariableCorrelation <- function(
         se.obj <- addMetricToSeObj(
             se.obj = se.obj,
             slot = 'Metrics',
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             assessment.type = 'gene.level',
             assessment = 'Correlation',
             method = correlation.method,
@@ -312,7 +312,7 @@ plotGenesVariableCorrelation <- function(
         se.obj <- addMetricToSeObj(
             se.obj = se.obj,
             slot = 'Metrics',
-            assay.names = assay.names,
+            assay.names = levels(assay.names),
             assessment.type = 'gene.level',
             assessment = 'Correlation',
             method = correlation.method,
