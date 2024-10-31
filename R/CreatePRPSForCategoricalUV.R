@@ -60,6 +60,7 @@
 #' between each pair of 'bio.variables'. If the correlation of a pair of variable is higher than the cut-off, then only
 #' the variable that has the highest variance will be kept and the other one will be excluded from the remaining analysis.
 #' By default they are both set to 0.7.
+#' @param point.size Numeric. The size of points in the PRPS map.
 #' @param remove.na Symbol. A symbol Indicating whether to remove NA or missing values from either the 'assays', the
 #' 'sample.annotation', both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be
 #' excluded. If sample.annotation' is selected, the samples that contains NA or missing values for any 'bio.variables' and
@@ -78,7 +79,7 @@
 
 #' @importFrom SummarizedExperiment assay
 #' @importFrom Matrix rowMeans
-#' @importFrom dplyr count
+#' @importFrom dplyr count n
 #' @importFrom tidyr %>%
 #' @import ggplot2
 #' @export
@@ -102,11 +103,13 @@ createPrPsForCategoricalUV <- function(
         assess.variables = FALSE,
         cat.cor.coef = c(0.95, 0.95),
         cont.cor.coef = c(0.95, 0.95),
+        point.size = 4,
         plot.prps.map = TRUE,
         save.se.obj = TRUE,
         output.name = NULL,
         prps.group = NULL,
-        verbose = TRUE) {
+        verbose = TRUE
+        ) {
     printColoredMessage(message = '------------The prpsForCategoricalUV function starts:',
                         color = 'white',
                         verbose = verbose)
@@ -428,32 +431,51 @@ createPrPsForCategoricalUV <- function(
     ## plot PRPS map #####
     if (isTRUE(plot.prps.map)) {
         ## PRPS map plot
-        printColoredMessage(message = '-- Plot PRPS map:',
-                            color = 'magenta',
-                            verbose = verbose)
+        printColoredMessage(
+            message = '-- Plot PRPS map:',
+            color = 'magenta',
+            verbose = verbose
+            )
         if(!is.null(other.uv.variables)){
             groups <- all.groups$bio.batch
         } else groups <- homo.bio.groups
         catvar <- use <- n <- NULL
-        info <- as.data.frame(colData(se.obj))
-        info$catvar <- as.factor(paste0(info[, main.uv.variable]))
-        info$groups <- as.factor(groups)
-        df.count <- info %>% dplyr::count(catvar, groups)
-        df.count$use <- 'unselected'
-        df.count$use[df.count$n >= min.sample.for.ps] <- 'Selected'
-        prps.map.plot <- ggplot(df.count, aes(x = catvar, y = groups)) +
-            geom_count(aes(color = use)) +
-            geom_text(aes(label = n,hjust = 0.5,vjust = 0.5)) +
+        sample.info <- as.data.frame(
+            x = colData(se.obj),
+            stringsAsFactors = FALSE
+            )
+        colnames(sample.info) <- names(colData(se.obj))
+        sample.info$catvar <- as.factor(paste0(sample.info[, main.uv.variable]))
+        sample.info$groups <- as.factor(groups)
+        sample.info <- sample.info %>% dplyr::count(catvar, groups)
+        sample.info$new.name <- paste0(sample.info$catvar, sample.info$groups)
+        sample.info.filtered <- sample.info %>%
+            group_by(groups) %>%
+            filter(n >= min.sample.for.ps) %>%
+            filter(n() >= 2)
+        sample.info.filtered$use <- 'Selected'
+        sample.info <- left_join(
+            x = sample.info,
+            y = sample.info.filtered[ , c('new.name', 'use')],
+            by = 'new.name'
+            )
+        sample.info$use[is.na(sample.info$use)] <- 'Unselected'
+        prps.map.plot <- ggplot(sample.info, aes(x = catvar, y = groups)) +
+            geom_point(aes(color = use), size = point.size) +
+            geom_text(aes(label = n , hjust = 0.5, vjust = 0.5)) +
             xlab(main.uv.variable) +
             ylab('Homogeneous groups') +
             theme_bw() +
             theme(
-                axis.line = element_line(colour = 'black', size = .85),
+                legend.text = element_text(size = 14),
+                legend.title = element_text(size = 18),
+                axis.line = element_line(colour = 'black', linewidth = .85),
                 axis.title.x = element_text(size = 16),
                 axis.title.y = element_text(size = 16),
-                axis.text.x = element_text(size = 12, angle = 35, hjust = 1),
+                axis.text.x = element_text(size = 12, angle = 90, hjust = 1),
                 axis.text.y = element_text(size = 12),
-                legend.position = 'none')
+                legend.position = 'right') +
+            guides(color = guide_legend(title = "PS"))
         if(isTRUE(verbose)) print(prps.map.plot)
     }
 
@@ -535,4 +557,5 @@ createPrPsForCategoricalUV <- function(
 
     }
 }
+
 
