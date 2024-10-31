@@ -121,7 +121,7 @@ computeGenesVariableCorrelation <- function(
         if (assess.se.obj) {
             se.obj <- checkSeObj(
                 se.obj = se.obj,
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 variables = variable,
                 remove.na = remove.na,
                 verbose = verbose)
@@ -251,7 +251,7 @@ computeGenesVariableCorrelation <- function(
             se.obj <- addMetricToSeObj(
                 se.obj = se.obj,
                 slot = 'Metrics',
-                assay.names = assay.names,
+                assay.names = levels(assay.names),
                 assessment.type = 'gene.level',
                 assessment = 'Correlation',
                 method = method,
