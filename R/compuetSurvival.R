@@ -190,7 +190,7 @@ computeSurvival <- function(
                                             title = x,
                                             palette = selected.colores[seq(length(unique(survival.data[[x]][['gene']])))]
                                             )
-                            p
+                            return(p)
 
                         })
                 })
