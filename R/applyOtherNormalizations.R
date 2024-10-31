@@ -105,6 +105,7 @@ applyOtherNormalizations <- function(
             verbose = verbose)
         norm.data <- edgeR::normLibSizes(object = assay(x = se.obj, i = assay.name))
         norm.data <- log2(norm.data + pseudo.count)
+        norm.data
     } else if (method == "TMM" & isFALSE(apply.log)) {
         printColoredMessage(
                 message = paste0('Applying the ', method,' method.'),
@@ -116,7 +117,7 @@ applyOtherNormalizations <- function(
 
     }
     ## Median, upper or full quartile Methods ####
-    if (method %in% c("median", "upper", "full") & isTRUE(apply.log)) {
+    if (method %in% c("median", "upper", "full") && isTRUE(apply.log)) {
         printColoredMessage(
             message = paste0('Applying the ', method,' method and then performing log2 transformation.'),
             color = 'blue',
@@ -126,14 +127,13 @@ applyOtherNormalizations <- function(
             which = method)
         norm.data <- log2(norm.data + pseudo.count)
         norm.data
-    } else if (method %in% c("median", "upper", "full") & isFALSE(apply.log)) {
+    } else if (method %in% c("median", "upper", "full") && isFALSE(apply.log)) {
         printColoredMessage(
             message = paste0('Applying the ', method,' method.'),
             color = 'blue',
             verbose = verbose)
         norm.data <- EDASeq::betweenLaneNormalization(
-            x = assay(x = se.obj, i = assay.name),
-            which = method)
+            x = assay(x = se.obj, i = assay.name), which = method)
         norm.data
     }
     ## VST method ####
