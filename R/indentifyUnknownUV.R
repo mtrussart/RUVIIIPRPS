@@ -3,7 +3,7 @@
 #' @author Ramyar Molania
 
 #' @description
-#' This function identifies sources of unwanted variation in RNA-seq data using different approaches.
+#' This function identifies sources of unwanted variation in RNA-seq data using different robust statistical approaches.
 
 #' @details
 #' Identification of sources of unwanted variation is essential to creating PRPS data for RUV-III normalization. There
@@ -11,14 +11,14 @@
 #' sources of unwanted variation.
 #' This function uses three different approaches: 'rle', 'pca' and 'sample.scoring' to find potential sources of unwanted
 #' variation in RNA-seq data when none are known.
-#' - In the 'rle' approach, a clustering method specified by
-#' 'clustering.methods' will be applied on either the RLE medians or IQRs or both separately. In the absence of unwanted
-#' variation,there should be no clearly distinguishable clusters. In the 'pca' approach, first, a principal component analysis on
-#' either a set of negative control genes or all genes will be applied and then a clustering method will be used to cluster the
-#' first principal components to find unknown sources of unwanted variation. In the 'sample.scoring' approach,
-#' first, individual samples will be scored against a set of gene set(s) e.g. housekeeping gene, whose visible variation
-#' indicates the existence of unwanted variation s, then clustering method will be applied on the scoring to find potential
-#' unknown sources of unwanted variation.
+#' - In the 'rle' approach, a clustering method specified by 'clustering.methods' will be applied on either the RLE medians
+#' or IQRs or both separately. In the absence of unwanted variation,there should be no clearly distinguishable clusters.
+#' - In the 'pca' approach, first, a principal component analysis on either a set of negative control genes or all genes
+#' will be applied and then a clustering method will be used to cluster the first principal components to find unknown
+#' sources of unwanted variation.
+#' - In the 'sample.scoring' approach, first, individual samples will be scored against a set of gene set(s) e.g. housekeeping
+#' gene, whose visible variation indicates the existence of unwanted variation s, then clustering method will be applied
+#' on the scoring to find potential unknown sources of unwanted variation.
 
 #' @references
 #' 1. Gandolfo L. C. & Speed, T. P., RLE plots: visualizing unwanted variation in high dimensional data. PLoS ONE, 2018.
@@ -128,7 +128,7 @@ identifyUnknownUV <- function(
         nbClust.method = 'kmeans',
         nbClust.index = 'silhouette',
         nbClust.alphaBeale = 0.1,
-        max.samples.per.batch = .1,
+        max.samples.per.batch = NULL,
         nb.clusters = 3,
         apply.log = TRUE,
         pseudo.count = 1,
@@ -166,7 +166,7 @@ identifyUnknownUV <- function(
     }
     if (!is.null(regress.out.bio.variables)) {
         if (sum(regress.out.bio.variables %in% colnames(colData(se.obj))) != length(regress.out.bio.variables) )
-            stop('The "regress.out.bio.variables" are not found in the SummarizedExperiment object.')
+            stop('Some or all "regress.out.bio.variables" variables are not found in the SummarizedExperiment object.')
     }
     if(is.logical(regress.out.bio.gene.sets)){
         stop('The "regress.out.bio.gene.sets" should be either NULL or a list of genes.')
@@ -187,7 +187,7 @@ identifyUnknownUV <- function(
             names(uv.gene.sets),
             function(x){
                 if(sum(uv.gene.sets[[x]] %in% row.names(se.obj)) < 2)
-                    stop('The "uv.gene.sets" are not found in the SummarizedExperiment object.')
+                    stop('Some or all genes of "uv.gene.sets" are not found in the SummarizedExperiment object.')
             })
     }
     if(is.logical(ncg)){
@@ -195,10 +195,10 @@ identifyUnknownUV <- function(
     }
     if (!is.null(ncg)) {
         if (sum(ncg %in% row.names(se.obj)) == 0)
-            stop('The "ncg" genes are found in the SummarizedExperiment object.')
+            stop('Some or "ncg" genes are found in the SummarizedExperiment object.')
     }
     if (length(clustering.methods) > 1) {
-        stop('A single method should be provided for the clustering.methods.')
+        stop('A single method should be provided for the "clustering.methods".')
     }
     if(clustering.methods == 'nbClust'){
         if(is.null(nbClust.min.nc)){
@@ -219,8 +219,10 @@ identifyUnknownUV <- function(
                                          "silhouette", "duda", "pseudot2", "beale", "ratkowsky", "ball", "ptbiserial", "gap", "frey", "mcclain",
                                          "gamma", "gplus", "tau", "dunn", "hubert", "sdindex", "dindex", "sdbw",
                                          "all", "alllong"')
-        } else if (max.samples.per.batch == 0 | max.samples.per.batch < 0  | max.samples.per.batch >= 1){
-            stop('The value of max.samples.per.batch must be between 0<max.samples.per.batch<1.')
+        } else if(!is.null(max.samples.per.batch)){
+            if (max.samples.per.batch == 0 | max.samples.per.batch < 0  | max.samples.per.batch >= 1){
+                stop('The value of max.samples.per.batch must be between 0<max.samples.per.batch<1.')
+            }
         }
     }
 
@@ -261,23 +263,26 @@ identifyUnknownUV <- function(
             message = paste0('The current estimated unknown batches:'),
             color = 'magenta',
             verbose = verbose
-        )
+            )
         if (!'UnKnownUV' %in%  names(se.obj@metadata)) {
             printColoredMessage(
                 message = paste0('- There is not any estimated unknown batches in the SummarizedExperiment object.'),
                 color = 'blue',
-                verbose = verbose)
+                verbose = verbose
+                )
         } else  if (assay.name %in% names(se.obj@metadata[['UnKnownUV']])) {
             printColoredMessage(
                 message = paste0('- The current estimated unknown batches for the  ', assay.name, ' data is removed.'),
                 color = 'blue',
-                verbose = verbose)
+                verbose = verbose
+                )
             se.obj@metadata[['UnKnownUV']][[assay.name]] <- list()
         } else {
             printColoredMessage(
                 message = paste0('- There is not any estimated unknown batches for the  ', assay.name, ' data.'),
                 color = 'blue',
-                verbose = verbose)
+                verbose = verbose
+                )
         }
     }
     # Check the SummarizedExperiment object ####
@@ -389,7 +394,8 @@ identifyUnknownUV <- function(
     # Select data input for clustering ####
     printColoredMessage( message = '-- Select input data for clustering:',
         color = 'magenta',
-        verbose = verbose)
+        verbose = verbose
+        )
     ## pca all genes ####
     if(approach == 'pca' & is.null(ncg)){
         printColoredMessage(
@@ -440,7 +446,8 @@ identifyUnknownUV <- function(
             printColoredMessage(
                 message = paste0('- Apply RLE on the data.'),
                 color = 'blue',
-                verbose = verbose)
+                verbose = verbose
+                )
             rle.data <- expr.data - rowMedians(expr.data)
             if(clustering.methods == 'nbClust'){
                 input.data.name <- paste0(approach, '.',rle.comp, '|AllGenes|nbClust.', nbClust.method, 'Clustering')
@@ -465,7 +472,7 @@ identifyUnknownUV <- function(
             input.data <- colMedians(rle.data)
         } else if (rle.comp == 'iqr'){
             printColoredMessage(
-                message = '- Use the RLE IQRs as input data.',
+                message = '- Use the RLE IQRs as input data for clustering.',
                 color = 'blue',
                 verbose = verbose
             )
@@ -549,57 +556,78 @@ identifyUnknownUV <- function(
     }
     ## nbClust ####
     if(clustering.methods == 'nbClust'){
-        printColoredMessage(
-            message = '- Apply the nbClust method on the data.',
-            color = 'blue',
-            verbose = verbose)
-        initial.clusters <- NbClust(
-            data = input.data,
-            diss = nbClust.diss,
-            distance = nbClust.distance,
-            min.nc = nbClust.min.nc,
-            max.nc = nbClust.max.nc,
-            method = nbClust.method,
-            index = nbClust.index,
-            alphaBeale = nbClust.alphaBeale
-        )
-        batch.samples <- data.frame(
-            id = colnames(se.obj),
-            batch = initial.clusters$Best.partition)
-        selected.clusters <- findRepeatingPatterns(
-            vec = batch.samples$batch,
-            n.repeat = round(max.samples.per.batch * ncol(se.obj), digits = 0))
-        while (length(selected.clusters) > 0) {
-            more.clusters <- lapply(
-                selected.clusters,
-                function(x) {
-                    index <- batch.samples$batch == x
-                    if (is.matrix(input.data)) {
-                        sub.input.data <- input.data[index , ]
-                    } else
-                        sub.input.data <- input.data[index]
-                    sub.clusters <- NbClust(
-                        data = sub.input.data,
-                        diss = nbClust.diss,
-                        distance = nbClust.distance,
-                        min.nc = nbClust.min.nc,
-                        max.nc = nbClust.max.nc,
-                        method = nbClust.method,
-                        index = nbClust.index,
-                        alphaBeale = nbClust.alphaBeale
-                    )
-                    data.frame(id = batch.samples$id[index],
-                               batch = paste0(x, sub.clusters$Best.partition))
-                })
-            more.clusters <- do.call(rbind, more.clusters)
-            batch.samples$batch[match(more.clusters$id, batch.samples$id)] <-
-                more.clusters$batch
+        if(is.numeric(max.samples.per.batch)){
+            printColoredMessage(
+                message = '- Applying the nbClust method on the summarized data.',
+                color = 'blue',
+                verbose = verbose
+            )
+            initial.clusters <- NbClust(
+                data = input.data,
+                diss = nbClust.diss,
+                distance = nbClust.distance,
+                min.nc = nbClust.min.nc,
+                max.nc = nbClust.max.nc,
+                method = nbClust.method,
+                index = nbClust.index,
+                alphaBeale = nbClust.alphaBeale
+            )
+            batch.samples <- data.frame(
+                id = colnames(se.obj),
+                batch = initial.clusters$Best.partition
+            )
             selected.clusters <- findRepeatingPatterns(
                 vec = batch.samples$batch,
                 n.repeat = round(max.samples.per.batch * ncol(se.obj), digits = 0)
             )
+            while (length(selected.clusters) > 0) {
+                more.clusters <- lapply(
+                    selected.clusters,
+                    function(x) {
+                        index <- batch.samples$batch == x
+                        if (is.matrix(input.data)) {
+                            sub.input.data <- input.data[index , ]
+                        } else
+                            sub.input.data <- input.data[index]
+                        sub.clusters <- NbClust(
+                            data = sub.input.data,
+                            diss = nbClust.diss,
+                            distance = nbClust.distance,
+                            min.nc = nbClust.min.nc,
+                            max.nc = nbClust.max.nc,
+                            method = nbClust.method,
+                            index = nbClust.index,
+                            alphaBeale = nbClust.alphaBeale
+                        )
+                        data.frame(
+                            id = batch.samples$id[index],
+                            batch = paste0(x, sub.clusters$Best.partition)
+                        )
+                    })
+                more.clusters <- do.call(rbind, more.clusters)
+                batch.samples$batch[match(more.clusters$id, batch.samples$id)] <-
+                    more.clusters$batch
+                selected.clusters <- findRepeatingPatterns(
+                    vec = batch.samples$batch,
+                    n.repeat = round(max.samples.per.batch * ncol(se.obj), digits = 0)
+                )
+            }
+            uv.sources <- paste0('Batch', as.numeric(as.factor(batch.samples$batch)))
         }
-        uv.sources <- paste0('Batch', as.numeric(as.factor(batch.samples$batch)))
+        if(is.null(max.samples.per.batch)){
+            initial.clusters <- NbClust(
+                data = input.data,
+                diss = nbClust.diss,
+                distance = nbClust.distance,
+                min.nc = nbClust.min.nc,
+                max.nc = nbClust.max.nc,
+                method = nbClust.method,
+                index = nbClust.index,
+                alphaBeale = nbClust.alphaBeale
+                )
+            uv.sources <- paste0('Batch', initial.clusters$Best.partition)
+        }
+
     }
 
     # Number of possible batches ####
@@ -710,8 +738,7 @@ identifyUnknownUV <- function(
                 switch = 'y',
                 labeller = NULL,
                 diag = list(continuous = wrap("diagAxis", labelSize = 8, diagAxis = 0)),
-                upper = "blank"
-            ) +
+                upper = "blank") +
                 theme(
                     panel.background = element_blank(),
                     legend.key = element_blank(),
@@ -785,5 +812,3 @@ identifyUnknownUV <- function(
             )
     }
 }
-
-
