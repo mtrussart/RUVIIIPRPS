@@ -248,7 +248,7 @@ findNcgsUnSupervised <- function(
     }
 
     # Check the SummarizedExperiment object ####
-    if (assess.se.obj) {
+    if (isTRUE(assess.se.obj)) {
         se.obj <- checkSeObj(
             se.obj = se.obj,
             assay.names = assay.name,
@@ -420,7 +420,7 @@ findNcgsUnSupervised <- function(
             names(corr.genes.uv) <- continuous.uv
         } else corr.genes.uv <- NULL
 
-        ## find genes that are highly affected by possible biological variation ####
+        ## finding genes that are highly affected by possible biological variation ####
         printColoredMessage(
             message = '-- Finding genes that are potentially highly affected by biological variation:',
             color = 'orange',
@@ -531,7 +531,8 @@ findNcgsUnSupervised <- function(
     # Selection of NCG ####
     printColoredMessage(message = '-- Selection a set of genes as NCG:',
                         color = 'magenta',
-                        verbose = verbose)
+                        verbose = verbose
+                        )
     ## product, sum or average of ranks ####
     if (ncg.selection.method %in% c('prod', 'sum', 'average')) {
         all.uv.tests <- c(
@@ -763,7 +764,8 @@ findNcgsUnSupervised <- function(
                 printColoredMessage(
                     message = '- The grid search will be applied on both biological and unwanted factors. ',
                     color = 'blue',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
                 #### increasing order ####
                 if(grid.direction == 'increase'){
                     printColoredMessage(
@@ -861,7 +863,8 @@ findNcgsUnSupervised <- function(
                 printColoredMessage(
                     message = '- The grid search will be applied on biological factor. ',
                     color = 'blue',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
                 ###### increasing order ####
                 if(grid.direction == 'increase'){
                     printColoredMessage(
@@ -884,7 +887,8 @@ findNcgsUnSupervised <- function(
                     printColoredMessage(
                         message = '- The grid search will decrease the number of "top.rank.bio.genes". ',
                         color = 'blue',
-                        verbose = verbose)
+                        verbose = verbose
+                        )
                     lo <- nrow(se.obj) - top.rank.bio.genes.nb
                     pro.bar <- progress_estimated(round(lo/grid.nb, digits = 0) + 2)
                     while(eval(con) & top.rank.bio.genes.nb < nrow(se.obj)){
@@ -915,7 +919,8 @@ findNcgsUnSupervised <- function(
                         top.rank.bio.genes,
                         '% of highly affected genes by the bioloigcal variation.'),
                     color = 'blue',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
             }
             ##### grid group: uv ####
             if (grid.group == 'uv'){
