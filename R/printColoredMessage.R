@@ -7,7 +7,8 @@
 printColoredMessage <- function(
         message,
         color,
-        verbose) {
+        verbose
+        ){
     # ANSI escape sequence for color
     colors <- switch(
         tolower(color),
