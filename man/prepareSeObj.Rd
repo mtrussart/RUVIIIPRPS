@@ -99,9 +99,9 @@ if there are specified.
 This function creates a SummarizedExperiment object from tabular expression data set(s) and sample annotation (if
 available). The function can identify and remove lowly expressed genes if a raw count data is provided, add a range
 of annotations for individual genes e.g. biotype, chromosome names, ... . , estimate tumor purity, and provide several
-sets of housekeeping genes and a immune and stromal gene signature. The housekeeping gene sets could be suitable
-negative control genes for the RUV methods. The immune and stromal gene signature could be used to estimate tumor purity
-variation in cancer RNA-seq data.
+sets of housekeeping genes and a immune and stromal gene signatures. The housekeeping gene sets could be suitable
+negative control genes for identification of sources of unknown unwanted variation and the implementation of the RUV
+methods. The immune and stromal gene signature could be used to estimate tumor purity variation in cancer RNA-seq data.
 }
 \details{
 The SummarizedExperiment object is a data structure used in the R for representing and manipulating high-dimensional

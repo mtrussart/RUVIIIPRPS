@@ -21,7 +21,7 @@ identifyUnknownUV(
   nbClust.method = "kmeans",
   nbClust.index = "silhouette",
   nbClust.alphaBeale = 0.1,
-  max.samples.per.batch = 0.1,
+  max.samples.per.batch = NULL,
   nb.clusters = 3,
   apply.log = TRUE,
   pseudo.count = 1,
@@ -144,7 +144,7 @@ colors representing the identified groups. The default value is 'TRUE}
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
 \description{
-This function identifies sources of unwanted variation in RNA-seq data using different approaches.
+This function identifies sources of unwanted variation in RNA-seq data using different robust statistical approaches.
 }
 \details{
 Identification of sources of unwanted variation is essential to creating PRPS data for RUV-III normalization. There
@@ -153,14 +153,14 @@ sources of unwanted variation.
 This function uses three different approaches: 'rle', 'pca' and 'sample.scoring' to find potential sources of unwanted
 variation in RNA-seq data when none are known.
 \itemize{
-\item In the 'rle' approach, a clustering method specified by
-'clustering.methods' will be applied on either the RLE medians or IQRs or both separately. In the absence of unwanted
-variation,there should be no clearly distinguishable clusters. In the 'pca' approach, first, a principal component analysis on
-either a set of negative control genes or all genes will be applied and then a clustering method will be used to cluster the
-first principal components to find unknown sources of unwanted variation. In the 'sample.scoring' approach,
-first, individual samples will be scored against a set of gene set(s) e.g. housekeeping gene, whose visible variation
-indicates the existence of unwanted variation s, then clustering method will be applied on the scoring to find potential
-unknown sources of unwanted variation.
+\item In the 'rle' approach, a clustering method specified by 'clustering.methods' will be applied on either the RLE medians
+or IQRs or both separately. In the absence of unwanted variation,there should be no clearly distinguishable clusters.
+\item In the 'pca' approach, first, a principal component analysis on either a set of negative control genes or all genes
+will be applied and then a clustering method will be used to cluster the first principal components to find unknown
+sources of unwanted variation.
+\item In the 'sample.scoring' approach, first, individual samples will be scored against a set of gene set(s) e.g. housekeeping
+gene, whose visible variation indicates the existence of unwanted variation s, then clustering method will be applied
+on the scoring to find potential unknown sources of unwanted variation.
 }
 }
 \references{
