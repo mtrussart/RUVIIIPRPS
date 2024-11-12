@@ -383,3 +383,18 @@ computeGenesPartialCorrelation <- function(
     }
 }
 
+
+RamyarPcorr <- function(x, y, z){
+    rxy <- cor.test(x , y)[[4]]
+    rxz <- cor.test(x , z)[[4]]
+    ryz <- cor.test(y , z)[[4]]
+    rxyz.a <- rxy - c(rxz *ryz)
+    rxyz.b <- c(1-rxz^2)*c(1-ryz^2)
+    ppcor <- rxyz.a/sqr(rxyz.b)
+    return(ppcor)
+}
+
+
+
+
+
