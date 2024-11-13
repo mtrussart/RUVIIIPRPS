@@ -40,7 +40,7 @@
 
 addNCGs <- function(
         se.obj,
-        ncg,
+        ncg ,
         assay.name = NULL,
         assess.ncg = FALSE,
         variables.to.assess.ncg = NULL,
