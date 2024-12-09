@@ -28,7 +28,7 @@
 #' if a continuous variable is provided. Options include 'kmeans', 'cut', and 'quantile'. The default is set to 'kmeans'.
 #' @param nb.clusters Numeric. A numeric value indicating how many clusters should be found if the 'uv.variable' is a
 #' continuous variable. The default is 3.
-#' @param k.nn Numeric. A numeric number that indicates the maximum number of nearest neighbors to compute. The default
+#' @param nb.knn Numeric. A numeric number that indicates the maximum number of nearest neighbors to compute. The default
 #' is set 3.
 #' @param hvg Vector. A vector of the names of the highly variable genes. These genes will be used to select the input
 #' data. The default is NULL.
@@ -71,7 +71,7 @@ findKnn <- function(
         svd.bsparam = bsparam(),
         clustering.method = 'kmeans',
         nb.clusters = 3,
-        k.nn = 3,
+         nb.knn = 3,
         hvg = NULL,
         normalization = 'CPM',
         regress.out.variables = NULL,
@@ -100,8 +100,8 @@ findKnn <- function(
         stop('The "data.input" must be one of the "expr" or "pcs".')
     } else if (data.input == 'pcs' & is.null(nb.pcs)) {
         stop('The valuse of "nb.pcs" must be sepcified when the data.input = pcs.')
-    } else if (k.nn == 0) {
-        stop('The k.nn cannot be 0.')
+    } else if ( nb.knn == 0) {
+        stop('The  nb.knn cannot be 0.')
     } else if (!uv.variable %in% colnames(colData(se.obj))) {
         stop('The "uv.variable" variable cannot be found in the SummarizedExperiment object.')
     }
@@ -174,18 +174,18 @@ findKnn <- function(
         )
     sub.group.sample.size <- findRepeatingPatterns(
         vec = se.obj[[uv.variable]],
-        n.repeat = k.nn + 1
+        n.repeat =  nb.knn + 1
         )
     if (length(sub.group.sample.size) == 0){
         stop(paste0(
             'All subgroups of the unwanted variable have less than ',
-            k.nn + 1,
+             nb.knn + 1,
             ' samples. KNN cannot be found.'))
     } else if (length(sub.group.sample.size) != length(unique(se.obj[[uv.variable]])) ){
         printColoredMessage(
             message = paste0(
                 'All or some subgroups of the unwanted variable have less than ',
-                k.nn + 1,
+                 nb.knn + 1,
                 ' samples. Then KNN for those sub-groups cannot be created.'),
             color = 'red',
             verbose = verbose
@@ -194,7 +194,7 @@ findKnn <- function(
         printColoredMessage(
             message = paste0(
                 '- All the sub-groups of the unwanted variable have at least ',
-                k.nn + 1,
+                 nb.knn + 1,
                 ' samples.'),
             color = 'blue',
             verbose = verbose
@@ -333,7 +333,7 @@ findKnn <- function(
         }
     }
 
-    # Select input data for knn analysis ####
+    # Selecting input data for knn analysis ####
     printColoredMessage(
         message = '-- Selecting the data input for knn analysis',
         color = 'magenta',
@@ -415,7 +415,7 @@ findKnn <- function(
             '- For individual samples within the selected sub-group(s) of the variable "',
             uv.variable,
             '", k = ',
-            k.nn,
+             nb.knn,
             ' nearest neighbours will be found.'),
         color = 'orange',
         verbose = verbose
@@ -441,16 +441,16 @@ findKnn <- function(
             knn.samples <- RANN::nn2(
                 data = norm.data,
                 query = norm.data,
-                k = c(k.nn + 1),
+                k = c( nb.knn + 1),
                 treetype = 'bd'
                 )
             knn.index <- as.data.frame(knn.samples$nn.idx)
-            colnames(knn.index) <- paste0('dataset.index', c(1:c(k.nn + 1)))
+            colnames(knn.index) <- paste0('dataset.index', c(1:c( nb.knn + 1)))
             selected.samples <- se.obj[[uv.variable]] == sub.group.sample.size[x]
             ovral.cell.no <- sapply(
                 1:ncol(knn.index),
                 function(x) all.samples.index[selected.samples][knn.index[ , x]])
-            colnames(ovral.cell.no) <- paste0('overal.index', 1:c(k.nn + 1))
+            colnames(ovral.cell.no) <- paste0('overal.index', 1:c( nb.knn + 1))
             knn.index <- as.data.frame(cbind(ovral.cell.no , knn.index))
             # distance between all knn ####
             ## find knn ####
@@ -464,11 +464,11 @@ findKnn <- function(
             )
             knn.dis <- round(as.data.frame(knn.samples$nn.dists), digits = 3)
             knn.dis <- knn.dis[,-1, drop = FALSE]
-            colnames(knn.dis) <- paste0('distance1_', 2:c(k.nn + 1))
+            colnames(knn.dis) <- paste0('distance1_', 2:c( nb.knn + 1))
             knn.index.dist <- cbind(knn.index, knn.dis)
-            if (isTRUE(k.nn > 1)) {
-                all.comb <- combn(x = paste0('dataset.index', 2:c(k.nn + 1)), m = 2)
-                all.comb.names <- combn(x = 2:c(k.nn + 1), m = 2)
+            if (isTRUE(nb.knn > 1)) {
+                all.comb <- combn(x = paste0('dataset.index', 2:c(nb.knn + 1)), m = 2)
+                all.comb.names <- combn(x = 2:c(nb.knn + 1), m = 2)
                 for (z in 1:ncol(all.comb)) {
                     pair.dist <- unlist(lapply(
                         1:nrow(knn.index.dist),
