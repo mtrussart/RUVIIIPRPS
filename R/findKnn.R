@@ -22,31 +22,31 @@
 #' @param scale Logical. Indicates whether to scale the data or not before applying SVD.  If scale is TRUE, then scaling
 #' is done by dividing the (centered) columns of the assays by their standard deviations if center is TRUE, and the root
 #' mean square otherwise. The default is FALSE
-#' @param svd.bsparam Symbol. A BiocParallelParam object specifying how parallelization should be performed. The default is bsparam().
-#' We refer to the 'runSVD' function from the BiocSingular R package.
+#' @param svd.bsparam Symbol. A BiocParallelParam object specifying how parallelization should be performed. The default
+#' is bsparam(). We refer to the 'runSVD' function from the BiocSingular R package.
 #' @param clustering.method Symbol. A symbol indicating the choice of clustering method for grouping the 'uv.variable'
 #' if a continuous variable is provided. Options include 'kmeans', 'cut', and 'quantile'. The default is set to 'kmeans'.
 #' @param nb.clusters Numeric. A numeric value indicating how many clusters should be found if the 'uv.variable' is a
 #' continuous variable. The default is 3.
-#' @param k.nn Numeric. The maximum number of nearest neighbors to compute. The default is set 3.
+#' @param k.nn Numeric. A numeric number that indicates the maximum number of nearest neighbors to compute. The default
+#' is set 3.
 #' @param hvg Vector. A vector of the names of the highly variable genes. These genes will be used to select the input
 #' data. The default is NULL.
-#' @param normalization Symbol. Indicates which normalization methods should be applied before finding the knn. The default
-#' is 'cpm'. If is set to NULL, no normalization will be applied.
-#' @param regress.out.variables Symbol. Indicates the columns names that contain biological variables in the
-#' SummarizedExperiment object. These variables will be regressed out from the data before finding genes that are highly
-#' affected by unwanted variation variable. The default is NULL, indicates the regression will not be applied.
-#' @param apply.log Logical. Indicates whether to apply a log-transformation to the data or not. The default is TRUE.
-#' Please, note, any RNA-seq data (assays) must be in log scale before computing RLE.
-#' @param pseudo.count Numeric. A value as a pseudo count to be added to all measurements of the assay(s) before applying
-#' log transformation to avoid -Inf for measurements that are equal to 0. The default is 1.
-#' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment object or not. See the checkSeObj
-#' function for more details.
+#' @param normalization Symbol. A symbol that indicates which normalization method should be applied  on the dara before
+#' finding the knn. The default is 'cpm'. If is set to NULL, no normalization will be applied.
+#' @param regress.out.variables Symbol. A symbol or symbols that indicates the column name(s) in the sample annotation in
+#' the SummarizedExperiment. These variables will be regressed out from the data before
+#' finding KNN. The default is set to NULL, indicates the regression will not be applied.
+#' @param apply.log Logical. Indicates whether to apply a log-transformation to the data or not. The default is set to 'TRUE'.
+#' @param pseudo.count Numeric. A positive numeric value as a pseudo count to be added to all measurements of the specified
+#' assay before applying log transformation to avoid -Inf for measurements that are equal to 0. The default is set to 1.
+#' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment object or not. The default is set
+#' to set to 'TRUE'. See the checkSeObj() function for more details.
 #' @param remove.na Symbol. To remove NA or missing values from the assays or not. The options are 'assays' and 'none'.
 #' The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
 #' the checkSeObj function for more details.
-#' @param save.se.obj Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object
-#'  or to output the result as list. By default it is set to TRUE.
+#' @param save.se.obj Logical. Indicates whether to save the KNN results in the metadata of the SummarizedExperiment object
+#'  or to output the result as list. By default it is set to 'TRUE'.
 #' @param output.name Symbol. A symbol specifying the name of output file. If is 'NULL', the function will select a name
 #' based on "paste0(uv.variable, '|' , assay.name)".
 #' @param prps.group Symbol. A symbol specifying the name of the PRPS group. If is 'NULL', the function will select a name
@@ -58,6 +58,7 @@
 #' @importFrom stats dist
 #' @importFrom RANN nn2
 #' @export
+
 
 findKnn <- function(
         se.obj,
@@ -86,7 +87,7 @@ findKnn <- function(
     printColoredMessage(message = '------------The findKnn function starts:',
                         color = 'white',
                         verbose = verbose)
-    # Check inputs #####
+    # Checking the inputs #####
     if (is.list(assay.name)) {
         stop('The "assay.name" cannot be a list.')
     } else if (length(assay.name) > 1) {
@@ -109,7 +110,7 @@ findKnn <- function(
             stop('All the hvg genes are not found in the SummarizedExperiment object.')
     }
 
-    # Assess SummarizedExperiment object ####
+    # Assessing SummarizedExperiment object ####
     if (isTRUE(assess.se.obj)) {
         se.obj <- checkSeObj(
             se.obj = se.obj,
@@ -120,20 +121,24 @@ findKnn <- function(
         )
     }
 
-    # Define and save variables ####
+    # Defining and saving the unwanted variable ####
     all.samples.index <- c(1:ncol(se.obj))
     colnames.seobj <- colnames(se.obj)
-    colnames(se.obj) <- paste0(colnames.seobj, '_', all.samples.index)
+    colnames(se.obj) <- paste0(
+        colnames.seobj,
+        '_',
+        all.samples.index
+        )
 
-    # Assess and group the unwanted variable ####
+    # Assessing and grouping the unwanted variable ####
     printColoredMessage(
-        message = '- Assess and group the unwanted variable:',
+        message = '- Assessing and grouping the unwanted variable:',
         color = 'magenta',
         verbose = verbose
         )
     initial.variable <- se.obj[[uv.variable]]
     if(is.numeric(initial.variable)){
-        se.obj[[uv.variable]] <- groupContiunousVariable(
+        se.obj[[uv.variable]] <- groupContinuousVariable(
             se.obj = se.obj,
             variable = uv.variable,
             nb.clusters = nb.clusters,
@@ -149,8 +154,11 @@ findKnn <- function(
         } else if (length.variable > 1){
             printColoredMessage(
                 message = paste0(
-                    '- The "', uv.variable, '" is a categorical variable with ',
-                    length(unique(se.obj[[uv.variable]])), ' levels.'),
+                    '- The "',
+                    uv.variable,
+                    '" is a categorical variable with ',
+                    length(unique(se.obj[[uv.variable]])),
+                    ' levels.'),
                 color = 'blue',
                 verbose = verbose
             )
@@ -158,9 +166,9 @@ findKnn <- function(
         }
     }
 
-    # Check sample sizes of each sub group ####
+    # Checking sample sizes of each sub group ####
     printColoredMessage(
-        message = '-- Check the sample size of each subgroup of the unwanted variable:',
+        message = '-- Checking the sample size of each subgroup of the unwanted variable:',
         color = 'magenta',
         verbose = verbose
         )
@@ -168,15 +176,26 @@ findKnn <- function(
         vec = se.obj[[uv.variable]],
         n.repeat = k.nn + 1
         )
-    if (length(sub.group.sample.size) != length(unique(se.obj[[uv.variable]])) ){
+    if (length(sub.group.sample.size) == 0){
+        stop(paste0(
+            'All subgroups of the unwanted variable have less than ',
+            k.nn + 1,
+            ' samples. KNN cannot be found.'))
+    } else if (length(sub.group.sample.size) != length(unique(se.obj[[uv.variable]])) ){
         printColoredMessage(
-            message = paste0('All or some subgroups of all the unwanted variable have less than ', k.nn + 1, ' samples. '),
+            message = paste0(
+                'All or some subgroups of the unwanted variable have less than ',
+                k.nn + 1,
+                ' samples. Then KNN for those sub-groups cannot be created.'),
             color = 'red',
             verbose = verbose
         )
     } else {
         printColoredMessage(
-            message = paste0('- All the subgroups of the unwanted variable have at least, ', k.nn + 1, ' samples'),
+            message = paste0(
+                '- All the sub-groups of the unwanted variable have at least ',
+                k.nn + 1,
+                ' samples.'),
             color = 'blue',
             verbose = verbose
         )
@@ -184,152 +203,150 @@ findKnn <- function(
 
     # Data normalization and transformation and regression ####
     printColoredMessage(
-        message = '-- Data normalization, transformation and regression:',
-        color = 'magenta',
-        verbose = verbose
-    )
-    groups <- levels(se.obj[[uv.variable]])
-    all.norm.data <- lapply(
-        groups,
-        function(x) {
-            selected.samples <- colData(se.obj)[[uv.variable]] == x
-            ## normalization ####
-            if (!is.null(normalization) & is.null(regress.out.variables)) {
-                printColoredMessage(
-                    message = paste0('- apply ', normalization, ' on the samples from the "', x, '" group.'),
-                    color = 'blue',
-                    verbose = verbose
-                )
-                norm.data <- applyOtherNormalizations(
-                    se.obj = se.obj[, selected.samples],
-                    assay.name = assay.name,
-                    method = normalization,
-                    apply.log = apply.log,
-                    pseudo.count = pseudo.count,
-                    assess.se.obj = FALSE,
-                    save.se.obj = FALSE,
-                    remove.na = 'none',
-                    verbose = FALSE
-                    )
-            }
-            ## normalization and regression ####
-            if (!is.null(normalization) & !is.null(regress.out.variables)) {
-                printColoredMessage(
-                    message = paste0(
-                        '- apply ', normalization, ' on the samples from "', x,
-                        '" group and then regressing out ', paste0(regress.out.variables, collapse = '&'),
-                        ' from the data.'),
-                    color = 'blue',
-                    verbose = verbose
-                    )
-                ### normalization ####
-                norm.data <- applyOtherNormalizations(
-                    se.obj = se.obj[, selected.samples],
-                    assay.name = assay.name,
-                    method = normalization,
-                    apply.log = apply.log,
-                    pseudo.count = pseudo.count,
-                    assess.se.obj = FALSE,
-                    save.se.obj = FALSE,
-                    remove.na = 'none',
-                    verbose = FALSE
-                    )
-                ## regression ####
-                sample.info <- as.data.frame(colData(se.obj[, selected.samples]))
-                norm.data <- t(norm.data)
-                lm.formua <- paste('sample.info', regress.out.variables, sep = '$')
-                norm.data <- lm(as.formula(paste(
-                    'norm.data',
-                    paste0(lm.formua, collapse = '+') ,
-                    sep = '~'
-                )))
-                norm.data <- t(norm.data$residuals)
-                colnames(norm.data) <- colnames(norm.data)
-                row.names(norm.data) <- row.names(norm.data)
-
-            }
-            ## regression ####
-            if (is.null(normalization) & !is.null(regress.out.variables)){
-                if(isTRUE(apply.log)){
-                    printColoredMessage(
-                        message = paste0(
-                            '- apply log and then regress out ', paste0(regress.out.variables, collapse = '&'),
-                            ' on the ',x, '" group from the data.'),
-                        color = 'blue',
-                        verbose = verbose
-                    )
-                    if(!is.null(pseudo.count)){
-                        norm.data <- log2(assay(se.obj[, selected.samples], assay.name) + pseudo.count)
-                    } else {
-                        norm.data <- log2(assay(se.obj[, selected.samples], i = assay.name))
-                    }
-
-                } else if (isFALSE(apply.log)){
-                    printColoredMessage(
-                        message = paste0(
-                            '- regress out ', paste0(regress.out.variables, collapse = '&'), x,
-                            '" group from the data.'),
-                        color = 'blue',
-                        verbose = verbose
-                    )
-                    norm.data <- assay(se.obj[, selected.samples], assay)
-                }
-                ### regression ####
-                sample.info <- as.data.frame(colData(se.obj[, selected.samples]))
-                norm.data <- t(norm.data)
-                lm.formua <- paste('sample.info', regress.out.variables, sep = '$')
-                norm.data <- lm(as.formula(paste(
-                    'norm.data',
-                    paste0(lm.formua, collapse = '+') ,
-                    sep = '~'
-                )))
-                norm.data <- t(norm.data$residuals)
-                colnames(norm.data) <- colnames(norm.data)
-                row.names(norm.data) <- row.names(norm.data)
-            }
-            ## log transformation ####
-            if (is.null(normalization) & is.null(regress.out.variables)) {
-                if(isTRUE(apply.log)){
-                    printColoredMessage(
-                        message = paste0(
-                            '- apply the log2 within the samples from "', x, '" group data.'),
-                        color = 'blue',
-                        verbose = verbose
-                    )
-                    if(!is.null(pseudo.count)){
-                        norm.data <- log2(assay(se.obj[, selected.samples], assay.name) + pseudo.count)
-                    } else {
-                        norm.data <- log2(assay(se.obj[, selected.samples], i = assay.name))
-                    }
-
-                } else if (isFALSE(apply.log)){
-                    printColoredMessage(
-                        message = paste0(
-                            '- no library size normalization and transformation is applied on samples from ', x, '" group data.'),
-                        color = 'blue',
-                        verbose = verbose
-                    )
-                    norm.data <- assay(se.obj[, selected.samples], assay)
-                }
-            }
-            return(norm.data)
-        })
-    names(all.norm.data) <- groups
-
-    # Select input data for knn analysis ####
-    printColoredMessage(
-        message = '-- Select data input for knn analysis',
+        message = '-- Applying data normalization, transformation and regression:',
         color = 'magenta',
         verbose = verbose
         )
-    all.norm.data <- lapply(
-        groups,
+    if (!is.null(normalization) & is.null(regress.out.variables)) {
+        printColoredMessage(
+            message = paste0(
+                '- applying the ',
+                normalization,
+                ' normalization on the data.'),
+            color = 'blue',
+            verbose = verbose
+        )
+        all.norm.data <- applyOtherNormalizations(
+            se.obj = se.obj,
+            assay.name = assay.name,
+            method = normalization,
+            apply.log = apply.log,
+            pseudo.count = pseudo.count,
+            assess.se.obj = FALSE,
+            save.se.obj = FALSE,
+            remove.na = 'none',
+            verbose = FALSE
+        )
+    }
+    ## normalization and regression ####
+    if (!is.null(normalization) & !is.null(regress.out.variables)) {
+        printColoredMessage(
+            message = paste0(
+                '- applying the ',
+                normalization,
+                ' normalization and then regressing out ',
+                paste0(regress.out.variables, collapse = '&'),
+                ' variable(s) from the data.'),
+            color = 'blue',
+            verbose = verbose
+        )
+        ### normalization ####
+        all.norm.data <- applyOtherNormalizations(
+            se.obj = se.obj,
+            assay.name = assay.name,
+            method = normalization,
+            apply.log = apply.log,
+            pseudo.count = pseudo.count,
+            assess.se.obj = FALSE,
+            save.se.obj = FALSE,
+            remove.na = 'none',
+            verbose = FALSE
+        )
+        ## regression ####
+        sample.info <- as.data.frame(colData(se.obj))
+        norm.data <- t(all.norm.data)
+        lm.formua <- paste('sample.info', regress.out.variables, sep = '$')
+        norm.data <- lm(as.formula(paste(
+            'norm.data',
+            paste0(lm.formua, collapse = '+') ,
+            sep = '~'
+        )))
+        all.norm.data <- t(all.norm.data$residuals)
+        colnames(all.norm.data) <- colnames(all.norm.data)
+        row.names(all.norm.data) <- row.names(all.norm.data)
+
+    }
+    ## regression ####
+    if (is.null(normalization) & !is.null(regress.out.variables)){
+        if(isTRUE(apply.log)){
+            printColoredMessage(
+                message = paste0(
+                    '- applying log2 and then regressing out the',
+                    paste0(regress.out.variables, collapse = '&'),
+                    ' variables from the data.'),
+                color = 'blue',
+                verbose = verbose
+            )
+            if(!is.null(pseudo.count)){
+                all.norm.data <- log2(assay(x = se.obj, i = assay.name) + pseudo.count)
+            } else {
+                all.norm.data <- log2(assay(x = se.obj, i = assay.name))
+            }
+
+        } else if (isFALSE(apply.log)){
+            printColoredMessage(
+                message = paste0(
+                    '- regressing out the ',
+                    paste0(regress.out.variables, collapse = '&'),
+                    ' variable(s) from the data.'),
+                color = 'blue',
+                verbose = verbose
+            )
+            all.norm.data <- assay(x = se.obj, i = assay)
+        }
+        ### regression ####
+        sample.info <- as.data.frame(colData(se.obj))
+        all.norm.data <- t(all.norm.data)
+        lm.formua <- paste('sample.info', regress.out.variables, sep = '$')
+        all.norm.data <- lm(as.formula(paste(
+            'all.norm.data',
+            paste0(lm.formua, collapse = '+') ,
+            sep = '~'
+        )))
+        all.norm.data <- t(all.norm.data$residuals)
+        colnames(all.norm.data) <- colnames(all.norm.data)
+        row.names(all.norm.data) <- row.names(all.norm.data)
+    }
+    ## log transformation ####
+    if (is.null(normalization) & is.null(regress.out.variables)) {
+        if(isTRUE(apply.log)){
+            printColoredMessage(
+                message = paste0(
+                    '- applying the log2 on the daya.'),
+                color = 'blue',
+                verbose = verbose
+            )
+            if(!is.null(pseudo.count)){
+                all.norm.data <- log2(assay(x = se.obj, i = assay.name) + pseudo.count)
+            } else {
+                all.norm.data <- log2(assay(x = se.obj, i = assay.name))
+            }
+
+        } else if (isFALSE(apply.log)){
+            printColoredMessage(
+                message = paste0(
+                    '- no library size normalization and transformation is applied on the data.'),
+                color = 'blue',
+                verbose = verbose
+            )
+            all.norm.data <- assay(x = se.obj, i = assay)
+        }
+    }
+
+    # Select input data for knn analysis ####
+    printColoredMessage(
+        message = '-- Selecting the data input for knn analysis',
+        color = 'magenta',
+        verbose = verbose
+        )
+    all.data.input <- lapply(
+        sub.group.sample.size,
         function(x){
-            norm.data <- all.norm.data[[x]]
+            norm.data <- all.norm.data[ , se.obj[[uv.variable]] == x]
             ## data input: expression matrix with hvg #####
             if (data.input == 'expr' & !is.null(hvg)) {
                 printColoredMessage(
-                    message = '- select the gene expression matrix of the highly variable genes as the data input.',
+                    message = '- selecting the gene expression matrix with the highly variable genes as the data input.',
                     color = 'blue',
                     verbose = verbose
                     )
@@ -338,7 +355,12 @@ findKnn <- function(
             ## data input: expression matrix with all genes #####
             if (data.input == 'expr' & is.null(hvg)) {
                 printColoredMessage(
-                    message = '- select the gene expression matrix as the data input.',
+                    message = paste0(
+                        '- selecting the gene expression matrix with all genes as the data input for',
+                        'the sub-group: ',
+                        x,
+                        '.'
+                        ),
                     color = 'blue',
                     verbose = verbose
                     )
@@ -348,8 +370,8 @@ findKnn <- function(
             if (data.input == 'pcs' & !is.null(hvg)) {
                 printColoredMessage(
                     message = paste0(
-                        '- perform PCA on the gene expression matrix using highly',
-                        'variable genes and select PCs as the data input.'),
+                        '- performing PCA on the gene expression matrix using highly',
+                        ' variable genes and using PCs as the data input.'),
                     color = 'blue',
                     verbose = verbose
                     )
@@ -365,7 +387,7 @@ findKnn <- function(
             ## data input: PCA all genes #####
             if (data.input == 'pcs' & is.null(hvg)) {
                 printColoredMessage(
-                    message = '- perform PCA on the gene expression matrix and select PCs as the data input.',
+                    message = '- performing PCA on the gene expression matrix and select PCs as the data input.',
                     color = 'blue',
                     verbose = verbose
                     )
@@ -380,59 +402,63 @@ findKnn <- function(
             }
             return(norm.data)
         })
-    names(all.norm.data) <- groups
+    names(all.data.input) <- sub.group.sample.size
 
     # Finding k nearest neighbors ####
     printColoredMessage(
-        message = '-- Find k nearest neighbors within each subgroup of the uv variable:',
+        message = '-- Finding k nearest neighbors within each sub-group of the unwanted variable:',
         color = 'magenta',
         verbose = verbose
         )
     printColoredMessage(
         message = paste0(
-            '- For individual samples within each subgroup of the variable "', uv.variable, '", k = ',
-            k.nn, ' nearest neighbours will be found.'),
+            '- For individual samples within the selected sub-group(s) of the variable "',
+            uv.variable,
+            '", k = ',
+            k.nn,
+            ' nearest neighbours will be found.'),
         color = 'orange',
         verbose = verbose
         )
-    total <- length(unique(colData(se.obj)[[uv.variable]]))
     pb <- utils::txtProgressBar(
         min = 0,
-        max = total,
+        max = length(sub.group.sample.size),
         style = 3
         )
     all.knn <- lapply(
-        1:total,
+        1:length(sub.group.sample.size),
         function(x) {
-            norm.data <- all.norm.data[[groups[x]]]
+            norm.data <- all.data.input[[sub.group.sample.size[x]]]
             ## find knn ####
             printColoredMessage(
-                message = paste0('* Find k nearest neighbors within the "', groups[x], '" subgroup.'),
+                message = paste0(
+                    '* Finding k nearest neighbors within the "',
+                    sub.group.sample.size[x],
+                    '" sub-group.'),
                 color = 'blue',
                 verbose = verbose
                 )
             knn.samples <- RANN::nn2(
                 data = norm.data,
+                query = norm.data,
                 k = c(k.nn + 1),
                 treetype = 'bd'
                 )
             knn.index <- as.data.frame(knn.samples$nn.idx)
             colnames(knn.index) <- paste0('dataset.index', c(1:c(k.nn + 1)))
-            selected.samples <- se.obj[[uv.variable]] == groups[x]
-            ovral.cell.no <- as.data.frame(apply(
-                knn.index,
-                2,
-                function(z) all.samples.index[selected.samples][z])
-                )
+            selected.samples <- se.obj[[uv.variable]] == sub.group.sample.size[x]
+            ovral.cell.no <- sapply(
+                1:ncol(knn.index),
+                function(x) all.samples.index[selected.samples][knn.index[ , x]])
             colnames(ovral.cell.no) <- paste0('overal.index', 1:c(k.nn + 1))
             knn.index <- as.data.frame(cbind(ovral.cell.no , knn.index))
-            row.names(norm.data)[31]
             # distance between all knn ####
             ## find knn ####
             printColoredMessage(
                 message = paste0(
-                    '* Calculate all pairwise distance between the k nearest neighbors within the "',
-                    groups[x], '" subgroup.'),
+                    '* Calculating all pairwise distances between the k nearest neighbors within the "',
+                    sub.group.sample.size[x],
+                    '" subgroup.'),
                 color = 'blue',
                 verbose = verbose
             )
@@ -440,9 +466,9 @@ findKnn <- function(
             knn.dis <- knn.dis[,-1, drop = FALSE]
             colnames(knn.dis) <- paste0('distance1_', 2:c(k.nn + 1))
             knn.index.dist <- cbind(knn.index, knn.dis)
-            if (k.nn > 1) {
+            if (isTRUE(k.nn > 1)) {
                 all.comb <- combn(x = paste0('dataset.index', 2:c(k.nn + 1)), m = 2)
-                all.comb.names <-combn(x = 2:c(k.nn + 1), m = 2)
+                all.comb.names <- combn(x = 2:c(k.nn + 1), m = 2)
                 for (z in 1:ncol(all.comb)) {
                     pair.dist <- unlist(lapply(
                         1:nrow(knn.index.dist),
@@ -463,13 +489,14 @@ findKnn <- function(
                     knn.index.dist[[name]] <- pair.dist
                 }
             }
-            knn.index.dist$aver.dist <- rowMeans(knn.index.dist[, grep('distance', colnames(knn.index.dist)), drop = FALSE])
+            cols.index <- grep('distance', colnames(knn.index.dist))
+            knn.index.dist$aver.dist <- rowMeans(knn.index.dist[, cols.index, drop = FALSE])
             set.seed(4589)
             knn.index.dist$rank.aver.dist <- rank(
                 x = knn.index.dist$aver.dist,
                 ties.method = 'random'
                 )
-            knn.index.dist$group <- groups[x]
+            knn.index.dist$group <- sub.group.sample.size[x]
             setTxtProgressBar(pb, x)
             message(' ')
             return(knn.index.dist)
@@ -477,7 +504,7 @@ findKnn <- function(
     all.knn <- do.call(rbind, all.knn)
     se.obj[[uv.variable]] <- initial.variable
 
-    # Save the results ####
+    # Saving the results ####
     ## select prps name ####
     if(is.null(prps.group)){
         prps.group <- paste0('prps|knnMnn|', uv.variable)
@@ -489,7 +516,7 @@ findKnn <- function(
     ## save the results in the SummarizedExperiment object ####
     message(' ')
     printColoredMessage(
-        message = '-- Save the results:',
+        message = '-- Saving the results:',
         color = 'magenta',
         verbose = verbose
         )
