@@ -1,4 +1,4 @@
-#' Create supervised pseudo-replicates of pseudo samples (PRPS).
+#' Create pseudo-replicates of pseudo samples (PRPS) in supervised manner.
 
 #' @author Ramyar Molania
 
@@ -8,7 +8,7 @@
 #' @details
 #' We will create distinct group of pseudo-replicates for each source of unwanted variation defined in the 'uv.variables'
 #' argument. For example to correct for batch effect if defined in the 'uv.variables' argument, several group of
-#' pseudo-samples will be created by averaging the samples of the same biological subtype defined in 'bio.variables' in
+#' pseudo-samples will be created by averaging the samples of the same biological groups defined in 'bio.variables' in
 #' each batch. Then those pseudo-samples will be defined as pseudo-replicates which constitutes a PRPS set. For example
 #' to correct for library size if defined in the 'uv.variables' argument, several group of pseudo-samples will be created
 #' by averaging the top and bottom-ranked samples by library size of the same biological subtype in each batch. Then those
@@ -79,7 +79,7 @@
 #' @param  prps.group TTT
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
-#' @return A SummarizedExperiment object that contains all the PRPS data and PPRS map plot in the metadata or a list
+#' @return A SummarizedExperiment object that contains all the PRPS data and PPRS map plots in the metadata or a list
 #' that contains all the results.
 
 #' @importFrom SummarizedExperiment assay colData
@@ -93,11 +93,11 @@ createPrPsSupervised <- function(
         bio.variables,
         uv.variables,
         apply.other.uv.variables = TRUE,
+        other.uv.clustering.method = 'kmeans',
+        nb.other.uv.clusters = 2,
         min.sample.for.ps = 3,
         bio.clustering.method = 'kmeans',
         nb.bio.clusters = 2,
-        other.uv.clustering.method = 'kmeans',
-        nb.other.uv.clusters = 2,
         check.prps.connectedness = TRUE,
         apply.log = TRUE,
         pseudo.count = 1,
@@ -114,10 +114,13 @@ createPrPsSupervised <- function(
         ){
     printColoredMessage(message = '------------The createPrPsSupervised function starts:',
                         color = 'white',
-                        verbose = verbose)
+                        verbose = verbose
+                        )
     # define categorical and continuous variables ####
-    uv.class <- sapply(uv.variables,
-                       function(x) class(colData(se.obj)[[x]]))
+    uv.class <- sapply(
+        uv.variables,
+        function(x) class(colData(se.obj)[[x]])
+        )
     categorical.uv <- names(uv.class[which(uv.class %in% c('character', 'factor'))])
     continuous.uv <- uv.variables[!uv.variables %in% categorical.uv]
 
@@ -193,7 +196,8 @@ createPrPsSupervised <- function(
     if (length(continuous.uv) > 0) {
         printColoredMessage(message = '-- Create PRPS for all continuous sources of unwanted variation:',
                             color = 'magenta',
-                            verbose = verbose)
+                            verbose = verbose
+                            )
         if (!save.se.obj) {
             continuous.uv.prps <- lapply(
                 continuous.uv,

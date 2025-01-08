@@ -57,7 +57,7 @@
 assessNCGs <- function(
         se.obj ,
         assay.name,
-        variables ,
+        variables,
         bio.variables = NULL,
         uv.variables = NULL,
         ncg.type,

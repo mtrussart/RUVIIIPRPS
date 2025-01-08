@@ -30,7 +30,7 @@
 #' @param max.ps.samples Numeric value indicating the maximum number of samples to be averaged for creating a pseudo-sample.
 #' The default is 'inf'. Please note that averaging a high number of samples may lead to inaccurate PRPS estimates.
 #' @param max.prps.sets Numeric. The maximum number of PRPS sets across batches. The default in 10.
-#' @param normalization.method Symbol. Indicate which normalization methods should be used before finding the anchors.
+#' @param  normalization Symbol. Indicate which normalization methods should be used before finding the anchors.
 #' The options are "LogNormalize" or "SCT". The default is "LogNormalize".
 #' @param sct.clip.range Numeric. Numeric of length two specifying the min and max values the Pearson residual will be
 #' clipped to. The default is 'NULL'. We refer to the FindIntegrationAnchors R function for more details.
@@ -83,7 +83,7 @@ createPrPsByAnchors <- function(
         min.ps.samples = 3,
         max.ps.samples = 5 ,
         max.prps.sets = 10,
-        normalization.method = "LogNormalize",
+        normalization = "LogNormalize",
         sct.clip.range = NULL,
         reduction = "cca",
         l2.norm = TRUE,
@@ -105,7 +105,7 @@ createPrPsByAnchors <- function(
     printColoredMessage(message = '------------The createPrPsByAnchors function starts:',
                         color = 'white',
                         verbose = verbose)
-    # Check input #####
+    # Checking input #####
     if (is.list(assay.name)) {
         stop('The "assay.name" must be the name of an assay in the SummarizedExperiment object.')
     } else if (length(assay.name) > 1) {
@@ -118,15 +118,15 @@ createPrPsByAnchors <- function(
         stop('The "uv.variable" cannot be found in the SummarizedExperiment object')
     } else if (k.anchor == 0) {
         stop('The k.anchor cannot be 0.')
-    } else if (!normalization.method %in% c("LogNormalize", "SCT")) {
-        stop('The "normalization.method" must be one of the "LogNormalize" or "SCT".')
+    } else if (! normalization %in% c("LogNormalize", "SCT")) {
+        stop('The " normalization" must be one of the "LogNormalize" or "SCT".')
     } else if (!reduction %in% c("cca", "rpca", 'rlsi')) {
         stop('The "reduction" should be one of the "cca", "rpca" or "rlsi"')
     } else if (sum(hvg %in% row.names(se.obj)) != length(hvg)) {
         stop('All the "hvg" genes are not found in the SummarizedExperiment object.')
     }
 
-    # Assess the SummarizedExperiment ####
+    # Assessing the SummarizedExperiment ####
     if (isTRUE(assess.se.obj)) {
         se.obj <- checkSeObj(
             se.obj = se.obj,
@@ -137,15 +137,15 @@ createPrPsByAnchors <- function(
             )
     }
 
-    # Assess and group the unwanted variable ####
+    # Assessing and grouping the unwanted variable ####
     printColoredMessage(
-        message = '- Assess and group the unwanted variable:',
+        message = '- Assessing and grouping the unwanted variable:',
         color = 'magenta',
         verbose = verbose
-        )
+    )
     initial.variable <- se.obj[[uv.variable]]
-    if(is.numeric(initial.variable)){
-        se.obj[[uv.variable]] <- groupContiunousVariable(
+    if (is.numeric(initial.variable)){
+        se.obj[[uv.variable]] <- groupContinuousVariable(
             se.obj = se.obj,
             variable = uv.variable,
             nb.clusters = nb.clusters,
@@ -154,46 +154,81 @@ createPrPsByAnchors <- function(
             verbose = verbose
         )
     }
-    if(!is.numeric(initial.variable)){
+    if (!is.numeric(initial.variable)){
         length.variable <- length(unique(initial.variable))
-        if( length.variable == 1){
-            stop('To create MNN, the "uv.variable" must have at least two groups/levels.')
+        if (length.variable == 1){
+            stop('To create PRPS, the "uv.variable" must have at least two groups/levels.')
         } else if (length.variable > 1){
             printColoredMessage(
                 message = paste0(
-                    '- The "', uv.variable, '" is a categorical variable with ',
-                    length(unique(se.obj[[uv.variable]])), ' levels.'),
+                    '- The "',
+                    uv.variable,
+                    '" is a categorical variable with ',
+                    length(unique(se.obj[[uv.variable]])),
+                    ' levels.'),
                 color = 'blue',
                 verbose = verbose
             )
             se.obj[[uv.variable]] <- factor(x = se.obj[[uv.variable]])
         }
     }
+    # Checking sample sizes of each sub group ####
+    sub.group.sample.size <- findRepeatingPatterns(
+        vec = se.obj[[uv.variable]],
+        n.repeat = min.samples.to.average
+    )
+    if (length(sub.group.sample.size) == 0){
+        stop(paste0(
+            'All subgroups of the unwanted variable have less than ',
+            min.samples.to.average ,
+            ' samples. KNN cannot be found.'))
+    } else if (length(sub.group.sample.size) != length(unique(se.obj[[uv.variable]])) ){
+        printColoredMessage(
+            message = paste0(
+                'All or some subgroups of the unwanted variable have less than ',
+                min.samples.to.average ,
+                ' samples. Then KNN for those sub-groups cannot be created.'),
+            color = 'red',
+            verbose = verbose
+        )
+    } else {
+        printColoredMessage(
+            message = paste0(
+                '- All the sub-groups of the unwanted variable have at least ',
+                min.samples.to.average ,
+                ' samples.'),
+            color = 'blue',
+            verbose = verbose
+        )
+    }
 
-    # Find anchors ####
+    # Finding anchors across pairs of batches ####
     printColoredMessage(
-        message = '-- Find the anchors between all the pairs of batches:',
+        message = '-- Finding anchors between all the pairs of the subgr:',
         color = 'magenta',
         verbose = verbose
         )
-    ## split the data into groups ####
+    ## split the data into groups and create SeuratObjects  ####
     printColoredMessage(
         message = paste0(
-            '* split the SummarizedExperiment object into ', length(levels(se.obj[[uv.variable]])),
-            ' groups and select highly variable genes.'),
+            '* spliting the SummarizedExperiment object into ',
+            length(sub.group.sample.size),
+            ' groups and then select highly variable genes.'),
         color = 'blue',
         verbose = verbose
         )
-    groups <- levels(se.obj[[uv.variable]])
     all.seurat.objects <- lapply(
-        groups,
+        sub.group.sample.size,
         function(x) {
             samples.index <- se.obj[[uv.variable]] == x
             seurat.obj <- SeuratObject::CreateSeuratObject(
                 counts = assay(x = se.obj[, samples.index], i = assay.name),
                 project = x
                 )
-            seurat.obj <- Seurat::NormalizeData(object = seurat.obj)
+            seurat.obj <- Seurat::NormalizeData(
+                object = seurat.obj,
+                normalization.method = normalization
+                )
             if (!is.null(hvg)){
                 Seurat::VariableFeatures(seurat.obj) <- hvg
             } else {
@@ -201,12 +236,12 @@ createPrPsByAnchors <- function(
             }
             return(seurat.obj)
         })
-    names(all.seurat.objects) <- groups
+    names(all.seurat.objects) <- sub.group.sample.size
     all.samples.index <- c(1:ncol(se.obj))
 
     ## find anchors  ####
     printColoredMessage(
-        message = '* find the anchors.',
+        message = '* finding the anchors.',
         color = 'blue',
         verbose = verbose
         )
@@ -215,7 +250,7 @@ createPrPsByAnchors <- function(
         anchor.features = anchor.features,
         reference = NULL,
         scale = scale,
-        normalization.method = normalization.method,
+        normalization =  normalization,
         sct.clip.range = sct.clip.range,
         reduction = reduction,
         l2.norm = l2.norm,
@@ -233,12 +268,14 @@ createPrPsByAnchors <- function(
     all.anchors <- all.anchors@anchors
     all.anchors$score <- round(x = all.anchors$score, digits = 3)
     colnames(all.anchors)[1:2] <- c('sample1', 'sample2')
-    all.anchors$dataset1.name <- groups[all.anchors$dataset1]
-    all.anchors$dataset2.name <- groups[all.anchors$dataset2]
+    all.anchors$dataset1.name <- sub.group.sample.size[all.anchors$dataset1]
+    all.anchors$dataset2.name <- sub.group.sample.size[all.anchors$dataset2]
     printColoredMessage(
         message = paste0(
-            nrow(all.anchors)/2, ' sample pairs (anchors) are found across all the subgroups of the "',
-            uv.variable, '" variable.'),
+            nrow(all.anchors)/2,
+            ' sample pairs (anchors) are found across all the sub-groups of the "',
+            uv.variable,
+            '" variable.'),
         color = 'blue',
         verbose = verbose
         )
@@ -250,40 +287,40 @@ createPrPsByAnchors <- function(
         verbose = verbose
         )
     sanity.check <- lapply(
-        1:length(groups),
+        1:length(sub.group.sample.size),
         function(x) {
             max.index <- max(all.anchors$sample1[all.anchors$dataset1 == x])
-            sample.size <- sum(se.obj[[uv.variable]] == groups[x])
+            sample.size <- sum(se.obj[[uv.variable]] == sub.group.sample.size[x])
             if (max.index > sample.size) {
                 stop('There are someting wrong with the order of anchros.')
             }
             max.index <- max(all.anchors$sample2[all.anchors$dataset2 == x])
-            sample.size <- sum(se.obj[[uv.variable]] == groups[x])
+            sample.size <- sum(se.obj[[uv.variable]] == sub.group.sample.size[x])
             if (max.index > sample.size) {
                 stop('There are someting wrong with the order of anchros.')
             }
         })
 
-    ## add overall sample index  ####
+    ## adding overall sample index  ####
     printColoredMessage(
-        message = '- Add overall sample number to the anchors.',
+        message = '- Adding overall sample number to the anchors.',
         color = 'blue',
         verbose = verbose
         )
-    for (x in 1:length(groups)) {
+    for (x in 1:length(sub.group.sample.size)) {
         index.a <- all.anchors$sample1[all.anchors$dataset1 == x]
         all.anchors$sample.index1[all.anchors$dataset1 == x] <-
-            all.samples.index[se.obj[[uv.variable]] == groups[x]][index.a]
+            all.samples.index[se.obj[[uv.variable]] == sub.group.sample.size[x]][index.a]
         index.b <- all.anchors$sample2[all.anchors$dataset2 == x]
         all.anchors$sample.index2[all.anchors$dataset2 == x] <-
-            all.samples.index[se.obj[[uv.variable]] == groups[x]][index.b]
+            all.samples.index[se.obj[[uv.variable]] == sub.group.sample.size[x]][index.b]
     }
     rm(all.seurat.objects)
     gc()
 
     # Find possible sets of PRPS ####
     printColoredMessage(
-        message = '- Find all possible sets of PRPS using the anchors:',
+        message = '- Finding all possible sets of PRPS using the anchors:',
         color = 'magenta',
         verbose = verbose
         )
@@ -339,7 +376,7 @@ createPrPsByAnchors <- function(
     ## filter ps set
     keep.anchor.sets <- sapply(
         names(all.prps.sets),
-        function(x) sum(all.prps.sets[[x]]$length.sets >= min.ps.samples) >= 2)
+        function(x) sum(all.prps.sets[[x]]$length.sets >= min.samples.to.average) >= 2)
 
     all.prps.sets <- all.prps.sets[keep.anchor.sets]
     printColoredMessage(

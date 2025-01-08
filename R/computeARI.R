@@ -78,7 +78,7 @@ computeARI <- function(
         stop('The "variable" must be a categorical varible.')
     }
     if (is.null(nb.pcs)) {
-        stop('The number of PCs (nb.pcs) must be specified')
+        stop('The number of PCs (nb.pcs) must be specified.')
     }
     if(length(clustering.method) > 1){
         stop('The "clustering.method" must be only one of the "mclust" or "hclust".')
@@ -156,13 +156,15 @@ computeARI <- function(
         levels(assay.names),
         function(x) {
             printColoredMessage(
-                message = paste0('- Compute the ARI for the "', x, '" data:'),
+                message = paste0('- Computing the ARI for the "', x, '" data:'),
                 color = 'orange',
-                verbose = verbose)
+                verbose = verbose
+                )
             printColoredMessage(
-                message = paste0('* obtain the first ', nb.pcs, ' computed PCs.'),
+                message = paste0('* obtaining the first ', nb.pcs, ' computed PCs.'),
                 color = 'blue',
-                verbose = verbose)
+                verbose = verbose
+                )
             pca.data <- all.pca.data[[x]]$u
             if(ncol(pca.data) < nb.pcs){
                 printColoredMessage(
@@ -189,14 +191,14 @@ computeARI <- function(
                     G = length(unique(se.obj@colData[[variable]]))
                     )
                 printColoredMessage(
-                    message = '* calculate the adjusted rand index.',
+                    message = '* calculating the adjusted rand index.',
                     color = 'blue',
                     verbose = verbose
                     )
                 ari <- adjustedRandIndex(mod$classification, se.obj@colData[, variable])
             } else {
                 printColoredMessage(
-                    message = '* cluster the PCs using the hclust function.',
+                    message = '* clustering the PCs using the hclust function.',
                     color = 'blue',
                     verbose = verbose
                     )
@@ -205,7 +207,7 @@ computeARI <- function(
                     k = length(unique(se.obj@colData[, variable]))
                     )
                 printColoredMessage(
-                    message = '* calculate the adjusted rand index.',
+                    message = '* calculating the adjusted rand index.',
                     color = 'blue',
                     verbose = verbose
                     )
@@ -217,7 +219,7 @@ computeARI <- function(
 
     # save the results ####
     printColoredMessage(
-        message = '-- Save all the ARI:',
+        message = '-- Saving all the ARI:',
         color = 'magenta',
         verbose = verbose)
     ## add results to the SummarizedExperiment object ####

@@ -6,6 +6,7 @@
 \usage{
 prepareSeObj(
   data = NULL,
+  sample.annotation = NULL,
   raw.count.assay.name = NULL,
   remove.lowly.expressed.genes = FALSE,
   count.cutoff = 10,
@@ -14,7 +15,6 @@ prepareSeObj(
   calculate.library.size = FALSE,
   estimate.tumor.purity = NULL,
   assay.name.to.estimate.purity = NULL,
-  sample.annotation = NULL,
   create.sample.annotation = FALSE,
   gene.annotation = NULL,
   create.gene.annotation = FALSE,
@@ -31,6 +31,9 @@ prepareSeObj(
 \item{data}{List. A list containing assay(s) or expression data. For individual datasets, genes should be arranged
 in rows and samples in columns. If multiple datasets are provided, ensure that the row names of the assays are in the
 same order.}
+
+\item{sample.annotation}{A data frame containing information for individual samples in the assay(s). The order of row
+names of the sample annotation should match with the columns names of the assay(s).}
 
 \item{raw.count.assay.name}{Symbol. The name of raw counts RNA-seq data within the list of assay(s) or expression data.
 Raw counts data must be included if 'remove.lowly.expressed.genes' or "calculate.library.size" is set to 'TRUE'.}
@@ -60,9 +63,6 @@ will be applied. The default is 'NULL'.}
 
 \item{assay.name.to.estimate.purity}{Symbol.The name of an assay data within the list of assay(s) or expression data to
 be used to estimate tumor purity.}
-
-\item{sample.annotation}{A data frame containing information for individual samples in the assay(s). The order of row
-names of the sample annotation should match with the columns names of the assay(s).}
 
 \item{create.sample.annotation}{Logical. If 'TRUE', a sample annotation will be generated, initially contains the
 column names of the assay(s). Additional variables such as library size will be included in the sample annotation.}

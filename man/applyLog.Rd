@@ -2,12 +2,11 @@
 % Please edit documentation in R/applyLog.R
 \name{applyLog}
 \alias{applyLog}
-\title{Apply log2 on assay(s) + pseudo.count.}
+\title{Apply log2 on assay(s) + pseudo.count in SummarizedExperiment object.}
 \usage{
 applyLog(
   se.obj,
   assay.names = "all",
-  apply.log = TRUE,
   pseudo.count = 1,
   assessment,
   verbose = TRUE
@@ -17,10 +16,8 @@ applyLog(
 \item{se.obj}{A SummarizedExperiment object.}
 
 \item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
-SummarizedExperiment object. The default is set to "all, which indicates all the assays of the SummarizedExperiment
-object will be selected.}
-
-\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data or not. The default is 'TRUE'.}
+SummarizedExperiment object. Thses assays will be log2 + pseudo.count transformed. The default is set to "all, which
+indicates all the assays of the SummarizedExperiment object will be selected.}
 
 \item{pseudo.count}{Numeric. A value as a pseudo count to be added to all measurements of the assay(s) before applying
 log transformation to avoid -Inf for measurements that are equal to 0. The default is 1.}
@@ -28,12 +25,14 @@ log transformation to avoid -Inf for measurements that are equal to 0. The defau
 \item{assessment}{Symbol. Indicates the downstream analyses impacted by not applying log transformation to the data.}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
+
+\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data or not. The default is 'TRUE'.}
 }
 \value{
 logged data
 }
 \description{
-Apply log2 on assay(s) + pseudo.count.
+Apply log2 on assay(s) + pseudo.count in SummarizedExperiment object.
 }
 \author{
 Ramyar Molania

@@ -67,10 +67,8 @@
 #' @param prps.group Symbol. A symbol specifying the name of the output file. If is 'NULL', the function will select a name
 #' based on "paste0('prps_mnn_', uv.variable)".
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
-
 #' @return The SummarizedExperiment object that contain all the PPRS data, knn, mnn and plot results in the metadata, or
 #' a list of the results.
-
 
 #' @importFrom utils setTxtProgressBar txtProgressBar
 #' @importFrom BiocNeighbors findMutualNN KmknnParam
@@ -84,9 +82,9 @@ createPrPsByKnnMnn <- function(
         se.obj,
         assay.name,
         uv.variable,
-        data.input = 'expr',
         filter.prps.sets = TRUE,
         max.prps.sets = 10,
+        data.input = 'expr',
         nb.pcs = 2,
         center = TRUE,
         scale = FALSE,
@@ -110,7 +108,7 @@ createPrPsByKnnMnn <- function(
         prps.group = NULL,
         verbose = TRUE
         ) {
-    printColoredMessage(message = '------------The createPrPsByMnn function starts:',
+    printColoredMessage(message = '------------The createPrPsByKnnMnn function starts:',
                         color = 'white',
                         verbose = verbose)
 
@@ -124,15 +122,15 @@ createPrPsByKnnMnn <- function(
             verbose = verbose
         )
     }
-    # Assess and group the unwanted variable ####
+    # Assessing and grouping the unwanted variable ####
     printColoredMessage(
-        message = '- Assess and group the unwanted variable:',
+        message = '- Assessing and grouping the unwanted variable:',
         color = 'magenta',
         verbose = verbose
-    )
+        )
     initial.variable <- se.obj[[uv.variable]]
-    if(is.numeric(initial.variable)){
-        se.obj[[uv.variable]] <- groupContiunousVariable(
+    if (is.numeric(initial.variable)){
+        se.obj[[uv.variable]] <- groupContinuousVariable(
             se.obj = se.obj,
             variable = uv.variable,
             nb.clusters = nb.clusters,
@@ -141,41 +139,103 @@ createPrPsByKnnMnn <- function(
             verbose = verbose
         )
     }
-    if(!is.numeric(initial.variable)){
+    if (!is.numeric(initial.variable)){
         length.variable <- length(unique(initial.variable))
-        if( length.variable == 1){
-            stop('To create MNN, the "uv.variable" must have at least two groups/levels.')
+        if (length.variable == 1){
+            stop('To create PRPS, the "uv.variable" must have at least two groups/levels.')
         } else if (length.variable > 1){
             printColoredMessage(
                 message = paste0(
-                    '- The "', uv.variable, '" is a categorical variable with ',
-                    length(unique(se.obj[[uv.variable]])), ' levels.'),
+                    '- The "',
+                    uv.variable,
+                    '" is a categorical variable with ',
+                    length(unique(se.obj[[uv.variable]])),
+                    ' levels.'),
                 color = 'blue',
                 verbose = verbose
             )
             se.obj[[uv.variable]] <- factor(x = se.obj[[uv.variable]])
         }
     }
-    ## Sanity check ####
-    lenght.subgroups <- findRepeatingPatterns(
+
+    # Checking sample sizes of each sub group ####
+    ## KNN ####
+    sub.group.sample.size.knn <- findRepeatingPatterns(
         vec = se.obj[[uv.variable]],
-        n.repeat = k.nn
+        n.repeat = nb.knn + 1
         )
-    if (length(lenght.subgroups) != length(unique(se.obj[[uv.variable]])) ){
+    if (length(sub.group.sample.size.knn) == 0){
         stop(paste0(
-            'Some sub-groups of the variable "', uv.variable, '" have less than ', k.nn,
-            ' (k.nn) samples. Then, knn cannot be found.'))
+            'All subgroups of the unwanted variable have less than ',
+            nb.knn + 1,
+            ' samples. KNN cannot be found.'))
+    } else if (length(sub.group.sample.size.knn) != length(unique(se.obj[[uv.variable]])) ){
+        printColoredMessage(
+            message = paste0(
+                'All or some subgroups of the unwanted variable have less than ',
+                nb.knn + 1,
+                ' samples. Then KNN for those sub-groups cannot be created.'),
+            color = 'red',
+            verbose = verbose
+        )
     } else {
         printColoredMessage(
-            message = paste0('- All the subgroup of the unwanted variable have at least, ', k.nn, ' samples'),
+            message = paste0(
+                '- All the sub-groups of the unwanted variable have at least ',
+                nb.knn + 1,
+                ' samples.'),
+            color = 'blue',
+            verbose = verbose
+        )
+    }
+    ## MNN ####
+    sub.group.sample.size.mnn <- findRepeatingPatterns(
+        vec = se.obj[[uv.variable]],
+        n.repeat = nb.mnn + 1
+    )
+    if (length(sub.group.sample.size.mnn) == 0){
+        stop(paste0(
+            'All subgroups of the unwanted variable have less than ',
+            nb.mnn + 1,
+            ' samples. MNN cannot be found.'))
+    } else if (length(sub.group.sample.size.mnn) != length(unique(se.obj[[uv.variable]])) ){
+        printColoredMessage(
+            message = paste0(
+                'All or some subgroups of the unwanted variable have less than ',
+                nb.mnn + 1,
+                ' samples. '),
+            color = 'red',
+            verbose = verbose
+        )
+    } else {
+        printColoredMessage(
+            message = paste0(
+                '- All the subgroups of the unwanted variable have at least, ',
+                nb.mnn + 1,
+                ' samples.'),
             color = 'blue',
             verbose = verbose
         )
     }
 
+    # Finding common sub-groups ####
+    common.sub.groups <- intersect(
+        sub.group.sample.size.knn,
+        sub.group.sample.size.mnn
+        )
+    if(length(common.sub.groups) == 0){
+        stop('There is not')
+    } else if (length(common.sub.groups) == 1){
+        stop('')
+    } else if (length(common.sub.groups) > 1){
+        printColoredMessage()
+    }
+    uv.variable
+
+    se.obj <- se.obj[ , se.obj[[uv.variable]] %in% common.sub.groups]
     # Finding k nearest neighbor ####
     printColoredMessage(
-        message = '-- Apply the findKnn function:',
+        message = '-- Finding k nearest neighbor, applying the findKnn function:',
         color = 'magenta',
         verbose = verbose
         )
@@ -190,7 +250,7 @@ createPrPsByKnnMnn <- function(
         svd.bsparam = svd.bsparam,
         clustering.method = clustering.method,
         nb.clusters = nb.clusters,
-        k.nn = k.nn,
+        nb.knn = nb.knn,
         hvg = hvg,
         normalization = normalization,
         regress.out.variables = regress.out.variables,
@@ -216,17 +276,17 @@ createPrPsByKnnMnn <- function(
 
     # Find mutual nearest neighbor ####
     printColoredMessage(
-        message = '-- Apply the findMnn function:',
+        message = '-- Finding mutual nearest neighbors by applying the findMnn function:',
         color = 'magenta',
         verbose = verbose
-        )
+    )
     se.obj <- findMnn(
         se.obj = se.obj,
         assay.name = assay.name,
         uv.variable = uv.variable,
         clustering.method = clustering.method,
         nb.clusters = nb.clusters,
-        mnn = mnn,
+        nb.mnn = nb.mnn,
         hvg = hvg,
         normalization = normalization,
         apply.cosine.norm = apply.cosine.norm,
@@ -253,20 +313,20 @@ createPrPsByKnnMnn <- function(
         se.obj@metadata$PRPS$un.supervised[[prps.group.mnn]]$KnnMnn$mnn[[output.name.mnn]] <- NULL
     }
 
-    # Find PRPS sets ####
+    # Finding similar sample sets ####
     printColoredMessage(
-        message = '-- Find all possible PRPS sets across batches:',
+        message = '-- Finding all possible similar samples across batches:',
         color = 'magenta',
         verbose = verbose
         )
     ## find the knn for each mnn set ####
     printColoredMessage(
-        message = '- Find PRPS sets using the KNN and MNN data:',
+        message = '- Finding similar samples using the KNN and MNN data:',
         color = 'orange',
         verbose = verbose
     )
     printColoredMessage(
-        message = '* match the MNN sets with the corresponding KNN sets:',
+        message = '* matching the MNN sets with the corresponding KNN sets:',
         color = 'blue',
         verbose = verbose
     )
@@ -275,7 +335,7 @@ createPrPsByKnnMnn <- function(
         1:nrow(all.mnn),
         function(x) {
             # ps set 1
-            ps.set.1 <- all.knn[, c(1:c(k.nn + 1))] == all.mnn$sample.no.1[x]
+            ps.set.1 <- all.knn[ , c(1:c(nb.knn + 1))] == all.mnn$sample.no.1[x]
             ps.set.1 <- all.knn[rowSums(ps.set.1) > 0 , ]
             ps.set.1$mnn.sets <- paste0(sort(c(all.mnn[x , 3], all.mnn[x , 4])), collapse = '_')
             ps.set.1$mnn.sets.data <- paste0(sort(c(all.mnn[x , 1], all.mnn[x , 2])), collapse = '_')
@@ -283,7 +343,7 @@ createPrPsByKnnMnn <- function(
                 ps.set.1 <- ps.set.1[ps.set.1$rank.aver.dist == min(ps.set.1$rank.aver.dist) , ]
             }
             # ps set 2
-            ps.set.2 <- all.knn[, c(1:c(k.nn + 1))] == all.mnn$sample.no.2[x]
+            ps.set.2 <- all.knn[, c(1:c(nb.knn + 1))] == all.mnn$sample.no.2[x]
             ps.set.2 <- all.knn[rowSums(ps.set.2) > 0 , ]
             ps.set.2$mnn.sets <- paste0(sort(c(all.mnn[x , 3], all.mnn[x , 4])), collapse = '_')
             ps.set.2$mnn.sets.data <- paste0(sort(c(all.mnn[x , 1], all.mnn[x , 2])), collapse = '_')
@@ -393,28 +453,38 @@ createPrPsByKnnMnn <- function(
         )
     if (isTRUE(apply.log) & !is.null(pseudo.count)) {
         printColoredMessage(
-            message = paste0('- Applying log2 on the "', assay.name, '" + ', pseudo.count, ' (pseudo.count)  data.'),
+            message = paste0(
+                '- Applying log2 on the "',
+                assay.name, '" + ',
+                pseudo.count,
+                ' (pseudo.count)  data.'),
             color = 'blue',
             verbose = verbose
         )
         expr.data <- log2(assay(x = se.obj, i = assay.name) + pseudo.count)
     } else if (isTRUE(apply.log) & is.null(pseudo.count)) {
         printColoredMessage(
-            message = paste0('Applying log2 on the "', assay.name, '" data.'),
+            message = paste0(
+                'Applying log2 on the "',
+                assay.name,
+                '" data.'),
             color = 'blue',
             verbose = verbose
         )
         expr.data <- log2(assay(x = se.obj, i = assay.name))
     } else if (isFALSE(apply.log)) {
         printColoredMessage(
-            message = paste0('The "', assay.name, '" data will be used without any log transformation.' ),
+            message = paste0(
+                'The "',
+                assay.name,
+                '" data will be used without any log transformation.' ),
             color = 'blue',
             verbose = verbose
         )
         expr.data <- assay(x = se.obj, i = assay.name)
     }
     printColoredMessage(
-        message = '- Aeverage samples to create pseudo samples:',
+        message = '- Aeveraging samples to create pseudo samples:',
         color = 'blue',
         verbose = verbose
         )
@@ -444,7 +514,7 @@ createPrPsByKnnMnn <- function(
     if (is.null(prps.group)) {
         prps.group <- paste0('prps|knnMnn|', uv.variable)
     }
-    printColoredMessage(message = '-- Save the PRPS data',
+    printColoredMessage(message = '-- Saving the PRPS data',
                         color = 'magenta',
                         verbose = verbose)
     ## save the PRPS data in the SummarizedExperiment object ####
@@ -471,14 +541,14 @@ createPrPsByKnnMnn <- function(
         }
         se.obj@metadata[['PRPS']][['un.supervised']][[prps.group]][['prps.data']][[output.name]] <- prps.data
 
-        printColoredMessage(message = '------------The createPrPsByMnn function finished.',
+        printColoredMessage(message = '------------The createPrPsByKnnMnn function finished.',
                             color = 'white',
                             verbose = verbose)
         return(se.obj)
     }
     ## output the PRPS data as matrix ####
     if (isFALSE(save.se.obj)) {
-        printColoredMessage(message = '------------The createPrPsByMnn function finished.',
+        printColoredMessage(message = '------------The createPrPsByKnnMnn function finished.',
                             color = 'white',
                             verbose = verbose)
         return(prps.data = prps.data)

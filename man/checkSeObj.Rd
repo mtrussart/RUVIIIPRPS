@@ -15,15 +15,19 @@ checkSeObj(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or vector of symbols to specify the name(s) of the assay(s) in the
-SummarizedExperiment object. The default is "all," indicating that all assays in the SummarizedExperiment object will
+\item{assay.names}{Character or character vector. The name(s) of the assay(s) in the
+SummarizedExperiment object, specified as a character string or a vector of character strings.
+The default is "all," indicating that all assays in the SummarizedExperiment object will
 be assessed.}
 
-\item{variables}{Symbol. A symbol or a vector of symbols specifying the name(s) of the column(s) in the sample
-annotation of the SummarizedExperiment object. By default, it is set to 'all', then all the columns will be examined.
-We recommend specifying those column(s) that are of interest to your analysis.}
+\item{variables}{Character or character vector. The name(s) of the column(s) in the sample annotation of the
+SummarizedExperiment object, specified as a character string or a vector of character strings. By default, it is set
+to 'all', in which case all columns will be examined. We recommend specifying only those column(s) that are of interest
+to your analysis.}
 
-\item{remove.na}{Symbol. A Symbol that specifies whether to eliminate missing values from either 'assays', 'sample.annotation',}
+\item{remove.na}{Character. A string that specifies whether to eliminate missing values from 'assays', 'sample.annotation',
+'both', or 'none'. When 'assays' is chosen, genes containing missing values will be omitted. If 'sample.annotation'
+is selected, samples with NA or missing values for each 'variables' will be excluded. The default is set to 'both'.}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
@@ -33,7 +37,7 @@ A SummarizedExperiment object.
 \description{
 This function assesses the structure of a SummarizedExperiment object and removes any missing values from both
 assay(s) and sample annotation. When multiple assays are provided, if they are missing in only one of the assays,
-the corresponding rows in other assays will be remove as well. Please note that, the current RUV-III-PRPS method does
+the corresponding rows in other assays will be remove as well. Please note that, the current RUV-III method does
 not support missing values in the assay(s).
 }
 \author{

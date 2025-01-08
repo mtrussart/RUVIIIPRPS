@@ -18,7 +18,7 @@ createPrPsByAnchors(
   min.ps.samples = 3,
   max.ps.samples = 5,
   max.prps.sets = 10,
-  normalization.method = "LogNormalize",
+  normalization = "LogNormalize",
   sct.clip.range = NULL,
   reduction = "cca",
   l2.norm = TRUE,
@@ -76,7 +76,7 @@ The default is 'inf'. Please note that averaging a high number of samples may le
 
 \item{max.prps.sets}{Numeric. The maximum number of PRPS sets across batches. The default in 10.}
 
-\item{normalization.method}{Symbol. Indicate which normalization methods should be used before finding the anchors.
+\item{normalization}{Symbol. Indicate which normalization methods should be used before finding the anchors.
 The options are "LogNormalize" or "SCT". The default is "LogNormalize".}
 
 \item{sct.clip.range}{Numeric. Numeric of length two specifying the min and max values the Pearson residual will be

@@ -8,11 +8,16 @@ findMnn(
   se.obj,
   assay.name,
   uv.variable,
-  mnn = 1,
+  nb.mnn = 1,
   clustering.method = "kmeans",
   nb.clusters = 3,
+  data.input = "expr",
+  nb.pcs = 2,
+  center = TRUE,
+  scale = FALSE,
+  svd.bsparam = bsparam(),
   normalization = "CPM",
-  apply.cosine.norm = FALSE,
+  apply.cosine.norm = TRUE,
   regress.out.variables = NULL,
   hvg = NULL,
   apply.log = TRUE,
@@ -37,9 +42,6 @@ should be the one that will be used as input for RUV-III normalization.}
 \item{uv.variable}{Symbol. A symbol indicating the name of the column in the SummarizedExperiment object. The
 'uv.variable' can be either categorical and continuous. If 'uv.variable' is a continuous variable, this will be
 divided into 'nb.clusters' groups using the 'clustering.method' method.}
-
-\item{mnn}{Numeric. A numeric value specifying the maximum number of mutual nearest neighbors to compute. The default
-is set 1.}
 
 \item{clustering.method}{Symbol. A symbol that indicates the choice of clustering method for grouping the 'uv.variable'
 if a continuous variable is provided. Options include 'kmeans', 'cut', and 'quantile'. The default is set to 'kmeans'.}
@@ -93,6 +95,9 @@ based on "paste0('prps|mnn|', uv.variable)".}
 or to output the result as list. By default it is set to TRUE.}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
+
+\item{mnn}{Numeric. A numeric value specifying the maximum number of mutual nearest neighbors to compute. The default
+is set 1.}
 }
 \description{
 This function finds mutual nearest neighbors between all pairs of batches in RNA-seq data. The mutual nearest neighbors

@@ -1,4 +1,4 @@
-#' Assess the association between variables.
+#' Assesses the association between variables in a SummarizedExperiment object.
 
 #' @author Ramyar Molania
 
@@ -23,31 +23,31 @@
 #' that has the highest variance will be kept and the other one will be excluded from the remaining analysis.
 
 #' @param se.obj A SummarizedExperiment object.
-#' @param bio.variables Symbol. A symbol or a vector of symbols specifying the column names of biological variables in
+#' @param bio.variables Character or character vector. Specifies the column names of biological variables in
 #' the sample annotation of the SummarizedExperiment object. These 'bio.variables' can be either categorical or continuous
 #' variables.
-#' @param uv.variables Symbol. A symbol or a vector of symbols specifying the column names of unwanted variables in
+#' @param uv.variables Character or character vector. Specifies the column names of unwanted variables in
 #' the sample annotation of the SummarizedExperiment object. These 'uv.variables' can be either categorical or continuous
 #' variables.
-#' @param cat.cor.coef Vector. A vector of two numerical values. Indicates the cut-off of the correlation coefficient
-#' between each pair of categorical variables. The first one is between each pair of 'uv.variables' and the second one
-#' is between each pair of 'bio.variables'. The correlation is computed by the function ContCoef from the DescTools
-#' package. If the correlation of a pair of variable is higher than the cut-off, then only the variable that has the
-#' highest number of factor will be kept and the other one will be excluded from the remaining analysis. By default they
-#' are both set to 0.9.
-#' @param cont.cor.coef Vector of two numerical values. Indicates the cut-off of the Spearman correlation coefficient
-#' between each pair of continuous variables. The first one is between each pair of 'uv.variables' and the second one is
-#' between each pair of 'bio.variables'. If the correlation of a pair of variable is higher than the cut-off, then only
-#' the variable that has the highest variance will be kept and the other one will be excluded from the remaining analysis.
-#' By default they are both set to 0.9.
-#' @param assess.se.obj Logical. Whether to assess the SummarizedExperiment object or not. If 'TRUE', the function
-#' checkSeobj will be applied.
-#' @param remove.na Symbol. Indicates whether to remove missing values from the 'bio.variables' and 'uv.variables'. The
-#' options are 'sample.annotation' or 'none'. The default is 'sample.annotation', indicating the missing values from the
-#' variables will be removed.
-#' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
+#' @param cat.cor.coef Numeric vector. A vector of two numerical values indicating the cut-off for the correlation coefficient
+#' between each pair of categorical variables. The first value applies to each pair of 'uv.variables' and the second value
+#' applies to each pair of 'bio.variables'. The correlation is computed using the 'ContCoef' function from the DescTools
+#' R package. If the correlation of a pair of variables exceeds the cut-off, the variable with the highest number of factors
+#' will be kept, and the other will be excluded from the remaining analysis. By default, both values are set to 0.9.
+#' @param cont.cor.coef Numeric vector. A vector of two numerical values indicating the cut-off for the Spearman correlation
+#' coefficient between each pair of continuous variables. The first value applies to each pair of 'uv.variables' and the
+#' second value applies to each pair of 'bio.variables'. If the correlation of a pair of variables exceeds the cut-off,
+#' the variable with the highest variance will be kept, and the other will be excluded from the remaining analysis. By
+#' default, both values are set to 0.9.
+#' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment object. If 'TRUE', the function
+#' 'checkSeObj' will be applied.
+#' @param remove.na Character. Indicates whether to remove missing values from the 'bio.variables' and 'uv.variables'. The
+#' options are 'sample.annotation' or 'none'. The default is 'sample.annotation', meaning the missing values from the
+#' variables will be removed before calculating the associations.
+#' @param verbose Logical. If 'TRUE', shows messages for different steps of the function.
 
-#' @return A list that contains the SummarizedExperiment object and the selected 'uv.variables' and 'bio.variables'.
+
+#' @return A list that contains the SummarizedExperiment object and the selected biological and unwanted variables.
 
 #' @importFrom SummarizedExperiment assay colData
 #' @importFrom DescTools ContCoef
@@ -100,11 +100,11 @@ assessVariablesAssociation <- function(
             verbose = verbose)
     }
     # unwanted variables ####
-    printColoredMessage(message = '--Assess the unwanted variation variables:',
+    printColoredMessage(message = '-- Assessing the unwanted variation variables:',
                         color = 'magenta',
                         verbose = verbose)
     if (length(uv.variables) > 0) {
-        ## find classes of unwanted variation variables ####
+        ## finding classes of unwanted variation variables ####
         uv.var.class <- unlist(lapply(
             uv.variables,
             function(x) class(colData(se.obj)[[x]])))
@@ -138,9 +138,10 @@ assessVariablesAssociation <- function(
         }
         # variation in unwanted variables ####
         printColoredMessage(
-            message = '-Checke the levels and variance of categorical and continuous unwanted variation variables, respectively:',
+            message = '-Checking the levels and variance of categorical and continuous unwanted variation variables, respectively:',
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         check.uv.vars <- lapply(
             uv.variables,
             function(x) {
@@ -178,7 +179,7 @@ assessVariablesAssociation <- function(
                 }
             })
         # assess the correlation between categorical UV ####
-        printColoredMessage(message = '--Assess the correlation between categoricals variables:',
+        printColoredMessage(message = '-- Assessing the correlation between categoricals variables:',
                             color = 'magenta',
                             verbose = verbose)
         if (length(categorical.uv) > 1) {
@@ -246,7 +247,7 @@ assessVariablesAssociation <- function(
         }
         # assess the correlation between continuous UV ####
         if (length(continuous.uv) > 1) {
-            printColoredMessage(message = '--Assess the correlation between categoricals variables:',
+            printColoredMessage(message = '-- Assessing the correlation between categoricals variables:',
                                 color = 'magenta',
                                 verbose = verbose)
             all.pairs <- utils::combn(x = continuous.uv , m = 2)
@@ -360,7 +361,7 @@ assessVariablesAssociation <- function(
                 verbose = verbose)
         }
         ## variation in biological variables ####
-        printColoredMessage(message = '--Check the levels and variance of categorical and continuous biological variables, respectively:',
+        printColoredMessage(message = '-- Checking the levels and variance of categorical and continuous biological variables, respectively:',
                             color = 'magenta',
                             verbose = verbose)
         check.bio.vars <- lapply(
@@ -476,7 +477,7 @@ assessVariablesAssociation <- function(
 
         # assess the correlation between continuous sources of biological variation ####
         if (length(continuous.bio) > 1) {
-            printColoredMessage(message = '--Assess the correlation between continuous variables:',
+            printColoredMessage(message = '-- Assessing the correlation between continuous variables:',
                                 color = 'magenta',
                                 verbose = verbose)
             all.pairs <- utils::combn(x = continuous.bio , m = 2)

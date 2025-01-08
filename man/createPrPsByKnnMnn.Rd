@@ -8,9 +8,9 @@ createPrPsByKnnMnn(
   se.obj,
   assay.name,
   uv.variable,
-  data.input = "expr",
   filter.prps.sets = TRUE,
   max.prps.sets = 10,
+  data.input = "expr",
   nb.pcs = 2,
   center = TRUE,
   scale = FALSE,
@@ -46,16 +46,16 @@ used for the RUV-III normalization.}
 The 'uv.variable' can be either categorical and continuous. If 'uv.variable' is a continuous variable, this will be
 divided into 'nb.clusters' groups using the 'clustering.method'.}
 
-\item{data.input}{Symbol. Indicates which data should be used an input for finding the k nearest neighbors data. Options
-include: 'expr' and 'pcs'. If 'pcs' is selected, the first PCs of the data will be used as input. If 'expr' is selected,
-the data will be selected as input.}
-
 \item{filter.prps.sets}{Logical. If 'TRUE', the number of PRPS sets across each pair of batches will be filtered if they are
 higher than the 'max.prps.sets' value. The default is 'TRUE'. The high number of PRPS sets will just increase the
 computational time for the RUV-III normalization.}
 
 \item{max.prps.sets}{Numeric. A numeric value specifying the maximum number for PRPS set across each pair of batches.
 The default is set to 20.}
+
+\item{data.input}{Symbol. Indicates which data should be used an input for finding the k nearest neighbors data. Options
+include: 'expr' and 'pcs'. If 'pcs' is selected, the first PCs of the data will be used as input. If 'expr' is selected,
+the data will be selected as input.}
 
 \item{nb.pcs}{Numeric. A numeric value indicating the number PCs should be used as data input for finding the k nearest
 neighbors. The nb.pcs' must be set when the "data.input = PCs". The default is 2.}

@@ -15,7 +15,7 @@ findKnn(
   svd.bsparam = bsparam(),
   clustering.method = "kmeans",
   nb.clusters = 3,
-  k.nn = 3,
+  nb.knn = 3,
   hvg = NULL,
   normalization = "CPM",
   regress.out.variables = NULL,
@@ -53,8 +53,8 @@ subtracting the column means of the assay from their corresponding columns. The 
 is done by dividing the (centered) columns of the assays by their standard deviations if center is TRUE, and the root
 mean square otherwise. The default is FALSE}
 
-\item{svd.bsparam}{Symbol. A BiocParallelParam object specifying how parallelization should be performed. The default is bsparam().
-We refer to the 'runSVD' function from the BiocSingular R package.}
+\item{svd.bsparam}{Symbol. A BiocParallelParam object specifying how parallelization should be performed. The default
+is bsparam(). We refer to the 'runSVD' function from the BiocSingular R package.}
 
 \item{clustering.method}{Symbol. A symbol indicating the choice of clustering method for grouping the 'uv.variable'
 if a continuous variable is provided. Options include 'kmeans', 'cut', and 'quantile'. The default is set to 'kmeans'.}
@@ -62,26 +62,26 @@ if a continuous variable is provided. Options include 'kmeans', 'cut', and 'quan
 \item{nb.clusters}{Numeric. A numeric value indicating how many clusters should be found if the 'uv.variable' is a
 continuous variable. The default is 3.}
 
-\item{k.nn}{Numeric. The maximum number of nearest neighbors to compute. The default is set 3.}
+\item{nb.knn}{Numeric. A numeric number that indicates the maximum number of nearest neighbors to compute. The default
+is set 3.}
 
 \item{hvg}{Vector. A vector of the names of the highly variable genes. These genes will be used to select the input
 data. The default is NULL.}
 
-\item{normalization}{Symbol. Indicates which normalization methods should be applied before finding the knn. The default
-is 'cpm'. If is set to NULL, no normalization will be applied.}
+\item{normalization}{Symbol. A symbol that indicates which normalization method should be applied  on the dara before
+finding the knn. The default is 'cpm'. If is set to NULL, no normalization will be applied.}
 
-\item{regress.out.variables}{Symbol. Indicates the columns names that contain biological variables in the
-SummarizedExperiment object. These variables will be regressed out from the data before finding genes that are highly
-affected by unwanted variation variable. The default is NULL, indicates the regression will not be applied.}
+\item{regress.out.variables}{Symbol. A symbol or symbols that indicates the column name(s) in the sample annotation in
+the SummarizedExperiment. These variables will be regressed out from the data before
+finding KNN. The default is set to NULL, indicates the regression will not be applied.}
 
-\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data or not. The default is TRUE.
-Please, note, any RNA-seq data (assays) must be in log scale before computing RLE.}
+\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data or not. The default is set to 'TRUE'.}
 
-\item{pseudo.count}{Numeric. A value as a pseudo count to be added to all measurements of the assay(s) before applying
-log transformation to avoid -Inf for measurements that are equal to 0. The default is 1.}
+\item{pseudo.count}{Numeric. A positive numeric value as a pseudo count to be added to all measurements of the specified
+assay before applying log transformation to avoid -Inf for measurements that are equal to 0. The default is set to 1.}
 
-\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment object or not. See the checkSeObj
-function for more details.}
+\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment object or not. The default is set
+to set to 'TRUE'. See the checkSeObj() function for more details.}
 
 \item{remove.na}{Symbol. To remove NA or missing values from the assays or not. The options are 'assays' and 'none'.
 The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
@@ -93,8 +93,8 @@ based on "paste0(uv.variable, '|' , assay.name)".}
 \item{prps.group}{Symbol. A symbol specifying the name of the PRPS group. If is 'NULL', the function will select a name
 based on "paste0('prps|mnn|', uv.variable)".}
 
-\item{save.se.obj}{Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object
-or to output the result as list. By default it is set to TRUE.}
+\item{save.se.obj}{Logical. Indicates whether to save the KNN results in the metadata of the SummarizedExperiment object
+or to output the result as list. By default it is set to 'TRUE'.}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }

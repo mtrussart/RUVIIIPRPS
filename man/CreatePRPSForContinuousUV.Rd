@@ -14,55 +14,58 @@ createPrPsForContinuousUV(
   bio.clustering.method = "kmeans",
   nb.bio.clusters = 2,
   other.uv.clustering.method = "kmeans",
-  nb.other.uv.clusters = 3,
+  nb.other.uv.clusters = 2,
   apply.log = TRUE,
   pseudo.count = 1,
   assess.se.obj = TRUE,
   assess.variables = FALSE,
-  cat.cor.coef = c(0.7, 0.7),
-  cont.cor.coef = c(0.7, 0.7),
+  cat.cor.coef = c(0.9, 0.9),
+  cont.cor.coef = c(0.9, 0.9),
   remove.na = "both",
-  save.se.obj = TRUE,
   plot.prps.map = TRUE,
   output.name = NULL,
   prps.group = NULL,
+  save.se.obj = TRUE,
   verbose = TRUE
 )
 }
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.name}{Symbol. A symbol specifying the assay name within the SummarizedExperiment object. The selected
-assay should be the one that will be used for RUV-III-PRPS normalization.}
+\item{assay.name}{Symbol. A symbol specifying an assay (data) name within the SummarizedExperiment object. The selected
+assay should be the one that will be used for RUV-III normalization.}
 
 \item{bio.variables}{Symbol. A symbol or symbols representing the label of biological variable(s), such as cancer
-subtypes, tumour purity, ... within the SummarizedExperiment object. This can comprise a vector containing either
-categorical, continuous, or a combination of both variables.}
+subtypes, tumor purity, ... within the sample annotation (colData) of the SummarizedExperiment object. This can comprise
+a vector containing of either categorical, continuous, or a combination of both variables.}
 
-\item{main.uv.variable}{Symbols. A symbol representing the label of a continuous unwanted variable, such as batch effects,
-, ... within the SummarizedExperiment object.}
+\item{main.uv.variable}{Symbol. A symbol representing the label of a continuous unwanted variable, such as library
+size, ... within the sample annotation (colData) of the SummarizedExperiment object. Sets of PRPS will be created for
+removing the impact of this variable from the data.}
 
-\item{other.uv.variables}{Symbol. A symbol or symbols representing the label of unwanted variable(s), such as batch effects,
-library size, ... within the SummarizedExperiment object. This can comprise a vector containing either categorical,
-continuous, or a combination of both variables. These variable(s) will be considered when generating PRPS sets fo the
-main.uv.variable. The default is set to 'NULL'.}
+\item{other.uv.variables}{Symbol. A symbol or symbols representing the label of unwanted variable(s), such as batch
+effects, ... within the sample annotation (colData) of the SummarizedExperiment object. This can comprise a vector
+containing either categorical, continuous, or a combination of both variables. These variable(s) will be considered
+when generating PRPS data fo the "main.uv.variable". The default is set to 'NULL'. Refere to the details of the function
+for more information.}
 
-\item{min.sample.for.ps}{Numeric. Indicates the minimum number of biologically homogeneous samples to be averaged
-to create one pseudo-sample. The default it is set to 3.}
+\item{min.sample.for.ps}{Numeric. A numeric value that indicates the minimum number of biologically homogeneous samples
+to be averaged to create one pseudo-sample (PS). The default it is set to 3.}
 
-\item{bio.clustering.method}{Symbol. A symbol indicating the clustering method used to group each continuous biological
-variable. The option include 'kmeans', cut' and 'quantile'. The default is to 'kmeans'. We refer to the
-createHomogeneousBioGroups() function for more details.}
+\item{bio.clustering.method}{Symbol. A symbol indicating which clustering method should be used to group each continuous
+biological variable, if they are specified. The options include 'kmeans', cut' and 'quantile'. The default is to 'kmeans'.
+We refer to the createHomogeneousBioGroups() function for more details.}
 
 \item{nb.bio.clusters}{Numeric. A numeric value to specify the number of clusters/groups for each continuous biological
-variable. The default it set to 3.}
+variable. The default it set to 2. Then individual continuous biological variable will be divided into 2 groups using
+the "bio.clustering.method" .}
 
-\item{other.uv.clustering.method}{Symbol. A symbol indicating the clustering method used to group each continuous unwanted
-variable. The option include 'kmeans', cut' and 'quantile'. The default is to 'kmeans'. We refer to the
-createHomogeneousUVGroups() function for more details.}
+\item{other.uv.clustering.method}{Symbol. A symbol specifying which clustering method should be used to group each
+continuous unwanted variable specified in the "other.uv.variables". The options include 'kmeans', cut' and 'quantile'.
+The default is to 'kmeans'. We refer to the createHomogeneousUVGroups() function for more details.}
 
-\item{nb.other.uv.clusters}{Numeric. A numeric value to specify the number of clusters/groups for each continuous biological
-variable. The default it set to 3.}
+\item{nb.other.uv.clusters}{Numeric. A numeric value to specify the number of clusters/groups for each continuous
+unwanted variable specified in the "other.uv.variables". The default it set to 2.}
 
 \item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data. The default is set to 'TRUE'.}
 
@@ -92,16 +95,17 @@ By default they are both set to 0.7.}
 excluded. If sample.annotation' is selected, the samples that contains NA or missing values for any 'bio.variables' and
 'uv.variables' will be excluded. The default is set to both'.}
 
-\item{save.se.obj}{Logical. Indicates whether to save the results in the metadata of the SummarizedExperiment object
-or to output the result as list. The default by is set to 'TRUE'.}
-
 \item{plot.prps.map}{Logical. Indicates whether to generate the PRPS map plot for individual sources of unwanted variation.
 The default is 'TRUE'.}
 
-\item{output.name}{Symbol. A symbol to specify the name of all PRPS sets that will be created for all specified source(s)
-of unwanted variation. The default is set to 'NULL'. The, the function creates a name based on paste0('prps_', uv.variable).}
+\item{output.name}{Symbol. A symbol to specify the name of all PRPS sets that will be created for all specified
+source (s) of unwanted variation. The default is set to 'NULL'. Then, the function creates a name based on
+paste0('prps_', uv.variable).}
 
-\item{prps.group}{TTTT}
+\item{prps.group}{Symbol.}
+
+\item{save.se.obj}{Logical. Indicates whether to save the results in the metadata of the SummarizedExperiment object
+or to output the result as list. The default by is set to 'TRUE'.}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }

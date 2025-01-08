@@ -108,7 +108,8 @@ computeSurvival <- function(
     selected.colores <-  c(
         c("#E7B800", "#2E9FDF", 'red4'),
         RColorBrewer::brewer.pal(8, "Dark2")[-5],
-        RColorBrewer::brewer.pal(10, "Paired"))
+        RColorBrewer::brewer.pal(10, "Paired")
+        )
 
     # Gene level survival analysis ####
     if(!is.null(genes)){
@@ -179,16 +180,17 @@ computeSurvival <- function(
                         genes,
                         function(x){
                             fit.surv <- survival::survfit(formula = survival::Surv(time , status) ~ gene, data = survival.data[[x]])
-                            p <- ggsurvplot(fit.surv,
-                                            pval = TRUE,
-                                            conf.int = FALSE,
-                                            risk.table = FALSE,
-                                            risk.table.col = "strata",
-                                            linetype = 1,
-                                            legend = "bottom",
-                                            title = x,
-                                            palette = selected.colores[seq(length(unique(survival.data[[x]][['gene']])))]
-                                            )
+                            p <- ggsurvplot(
+                                fit.surv,
+                                pval = TRUE,
+                                conf.int = FALSE,
+                                risk.table = FALSE,
+                                risk.table.col = "strata",
+                                linetype = 1,
+                                legend = "bottom",
+                                title = x,
+                                palette = selected.colores[seq(length(unique(survival.data[[x]][['gene']])))]
+                                )
                             return(p)
 
                         })
@@ -308,7 +310,7 @@ computeSurvival <- function(
                     method = 'Kaplan.Meier',
                     file.name = 'data',
                     variables = 'plots',
-                    results.data = all.genes.p.values
+                    results.data = all.genes.survial.plots
                 )
             }
 

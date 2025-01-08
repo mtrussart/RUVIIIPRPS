@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotARI.R
 \name{plotARI}
 \alias{plotARI}
-\title{Generats barplot the adjusted rand index (ARI).}
+\title{Generate barplot the adjusted rand index (ARI).}
 \usage{
 plotARI(
   se.obj,
@@ -23,21 +23,24 @@ SummarizedExperiment object to generate barplot or scatter plots of the computed
 the assays of the SummarizedExperiment object will be selected.}
 
 \item{variables}{Symbol. Indicates one or two column names in the SummarizedExperiment object that contains categorical
-variables such as sample subtypes or batches.}
+variables such as sample subtypes or batches. If two column names are provided, the function plots the two adjusted
+rand index against each other for all the specified assays.}
 
-\item{ari.method}{Symbol.Indicates what computed ARI methods should be used for plotting. The "ari.method" must be
-specified based on the "computeARI" function. The default is "hclust.complete.euclidian", which is the default of the
-the "computeARI" function. We refer to the "computeARI" function for more detail}
+\item{ari.method}{Symbol. A symbol that indicates what computed ARI method should be used for plotting. The "ari.method"
+must be specified based on the "computeARI" function. The default is "hclust.complete.euclidian", which is the default
+of the the "computeARI" function. We refer to the "computeARI" function for more detail.}
 
-\item{plot.type}{Symbol.Indicates how to plot the adjusted rand index. The options are "single.plot" and "combined.plot".
-If a variable is provided, then the "plot.type" must be set to "single.plot", so, the function generates a barplot of the
-adjusted rand index. If two variables are provided and "plot.type" is set to "combined.plot", then the function generates
-a scatter plot of the adjusted rand index of each variable against each other.}
+\item{plot.type}{Symbol. A symbol that specifies how to plot the adjusted rand index. The options are "single.plot" and
+"combined.plot". If a variable is provided in the "variables" argument, then the "plot.type" must be set to "single.plot",
+so, the function generates a barplot of the adjusted rand index. If two variables are provided and "plot.type" is set to
+"combined.plot", then the function generates a scatter plot of the adjusted rand index of each variable against each other.
+The default is set to 'single.plot'.}
 
-\item{plot.output}{Logical. If TRUE, the individual barplots or scatter plots will be printed while functions is running.}
+\item{plot.output}{Logical. If 'TRUE', the individual barplots or scatter plots will be printed while functions is running.
+The default is set to 'TRUE'.}
 
 \item{save.se.obj}{Logical. Indicates whether to save the plots in the metadata of the SummarizedExperiment  object
-or to output the result as list. By default it is set to TRUE.}
+or to output the result as list. The default is set to 'TRUE'.}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
@@ -46,8 +49,9 @@ A SummarizedExperiment object or a list that containing all the plots of the com
 variable.
 }
 \description{
-This functions generates barplots of adjusted rand index for individual assays. If two variables are provided, the
-function create scatter plots of the adjusted rand index of each variable for individual assays.
+This functions generates barplots of adjusted rand index for individual assays in the SummarizedExperiment object. If
+two variables are provided, the function creates scatter plots of the adjusted rand index of each variable for
+individual assays.
 }
 \references{
 Molania R., ..., Speed, T. P., Removing unwanted variation from large-scale RNA sequencing data with PRPS,

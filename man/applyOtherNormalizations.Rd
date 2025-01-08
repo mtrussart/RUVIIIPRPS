@@ -33,28 +33,31 @@ should be in raw count format.}
 The default is set to 'CPM'.
 }}
 
-\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data or not after the normalization
-is performed. The default is 'TRUE'.}
+\item{apply.log}{Logical. A symbole that indicates whether to apply a log-transformation to the data or not after the
+normalization is performed. The default is 'TRUE'.}
 
-\item{pseudo.count}{Numeric. A numeric value as a pseudo count to be added to all measurements of the assay(s) after applying
-the normalization to avoid -Inf for measurements that are equal to 0. The default is 1.}
+\item{pseudo.count}{Numeric. A numeric value as a pseudo count to be added to all measurements of the assay(s) after
+applying the normalization to avoid -Inf for measurements that are equal to 0. The default is set to 1.}
 
-\item{remove.na}{Logical. Indicates whether to remove NA or missing values from the assay or not.}
+\item{remove.na}{Symbol. A symbol that indicates whether to remove NA or missing values from the assay or not. Refer
+to the 'checkSeObj' function for more details. The defualt is set to assays.}
 
-\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment class object.
-By default it is set to TRUE.}
+\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment class object. The default it is set to
+TRUE.}
 
-\item{save.se.obj}{Logical. Indicates whether to save the result as new assay to the SummarizedExperiment
-object or to output the result. The default it is set to TRUE.}
+\item{save.se.obj}{Logical. Indicates whether to save the normalized data as new assay(s) to the SummarizedExperiment
+object. The default it is set to 'TRUE'. If set to 'FALSE', the normalized data(s) will be outputted as a matrix.}
 
 \item{verbose}{Logical. Indicates whether to show or reduce the level of output or messages displayed
 during the execution of the functions, by default it is set to TRUE.}
 }
 \value{
-a SummarizedExperiment object containing an assay with the selected normalisation method
+A SummarizedExperiment object containing an assay normalized by the selected normalization method or just
+return a normalized gene expression matrix.
 }
 \description{
-This functions provides different normalization methods including CPM, TMM, upper, full, median, VST for RNA-seq
+This functions provides different normalization methods including CPM, TMM, upper-quartile, non linear full quantile
+normalization, median, and VST for RNA-seq
 data.
 }
 \author{

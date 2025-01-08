@@ -7,12 +7,19 @@
 createPrPsByMnn(
   se.obj,
   assay.name,
-  uv.variable,
+  main.uv.variable,
+  other.uv.variables = NULL,
   filter.prps.sets = TRUE,
   max.prps.sets = 3,
   clustering.method = "kmeans",
   nb.clusters = 3,
-  mnn = 3,
+  nb.other.uv.clusters = 2,
+  other.uv.clustering.method = "kmeans",
+  cont.cor.coef = c(0.9, 0.9),
+  cat.cor.coef = c(0.9, 0.9),
+  min.sample.for.ps = 3,
+  min.mnn = 3,
+  min.batch.number = "all",
   hvg = NULL,
   normalization = "CPM",
   apply.cosine.norm = FALSE,
@@ -36,10 +43,6 @@ createPrPsByMnn(
 be used to first find k nearest neighbors and them mutual nearest neighbors data. This data must the one that will be
 used for the RUV-III normalization.}
 
-\item{uv.variable}{Symbol. Indicates the name of a column in the sample annotation of the SummarizedExperiment object.
-The 'uv.variable' can be either categorical and continuous. If 'uv.variable' is a continuous variable, this will be
-divided into 'nb.clusters' groups using the 'clustering.method'.}
-
 \item{filter.prps.sets}{Logical. If 'TRUE', the number of PRPS sets across each pair of batches will be filtered if they are
 higher than the 'max.prps.sets' value. The default is 'TRUE'. The high number of PRPS sets will just increase the
 computational time for the RUV-III normalization.}
@@ -52,8 +55,6 @@ if a continuous variable is provided. Options include 'kmeans', 'cut', and 'quan
 
 \item{nb.clusters}{Numeric. A numeric value indicating how many clusters should be found if the 'uv.variable' is a
 continuous variable. The default is 3.}
-
-\item{mnn}{Numeric. The maximum number of nearest neighbors to compute. The default is set 3.}
 
 \item{hvg}{Vector. A vector of the names of the highly variable genes. These genes will be used to find the anchors
 samples across the batches. The default is NULL.}
@@ -96,6 +97,12 @@ based on "paste0(uv.variable, '|', 'anchor', '|', assay.name))".}
 based on "paste0('prps_mnn_', uv.variable)".}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
+
+\item{uv.variable}{Symbol. Indicates the name of a column in the sample annotation of the SummarizedExperiment object.
+The 'uv.variable' can be either categorical and continuous. If 'uv.variable' is a continuous variable, this will be
+divided into 'nb.clusters' groups using the 'clustering.method'.}
+
+\item{mnn}{Numeric. The maximum number of nearest neighbors to compute. The default is set 3.}
 }
 \value{
 The SummarizedExperiment object that contain all the PPRS data, knn, mnn and plot results in the metadata, or

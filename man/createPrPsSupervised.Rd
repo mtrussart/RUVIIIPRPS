@@ -2,7 +2,7 @@
 % Please edit documentation in R/createPrPsSupervised.R
 \name{createPrPsSupervised}
 \alias{createPrPsSupervised}
-\title{Create supervised pseudo-replicates of pseudo samples (PRPS).}
+\title{Create pseudo-replicates of pseudo samples (PRPS) in supervised manner.}
 \usage{
 createPrPsSupervised(
   se.obj,
@@ -10,11 +10,11 @@ createPrPsSupervised(
   bio.variables,
   uv.variables,
   apply.other.uv.variables = TRUE,
+  other.uv.clustering.method = "kmeans",
+  nb.other.uv.clusters = 2,
   min.sample.for.ps = 3,
   bio.clustering.method = "kmeans",
   nb.bio.clusters = 2,
-  other.uv.clustering.method = "kmeans",
-  nb.other.uv.clusters = 2,
   check.prps.connectedness = TRUE,
   apply.log = TRUE,
   pseudo.count = 1,
@@ -47,6 +47,13 @@ continuous, or a combination of both variables.}
 \item{apply.other.uv.variables}{Logical. Determines whether to include other specified unwanted variables when generating
 PRPS sets for individual ones. The default is set to 'TRUE'.}
 
+\item{other.uv.clustering.method}{Symbol. A symbol indicating the clustering method used to group each continuous unwanted
+variable. The option include 'kmeans', cut' and 'quantile'. The default is to 'kmeans'. We refer to the
+createHomogeneousUVGroups() function for more details.}
+
+\item{nb.other.uv.clusters}{Numeric. A numeric value to specify the number of clusters/groups for each continuous biological
+variable. The default it set to 3.}
+
 \item{min.sample.for.ps}{Numeric. Indicates the minimum number of biologically homogeneous samples to be averaged
 to create one pseudo-sample. The default it is set to 3.}
 
@@ -55,13 +62,6 @@ variable. The option include 'kmeans', cut' and 'quantile'. The default is to 'k
 createHomogeneousBioGroups() function for more details.}
 
 \item{nb.bio.clusters}{Numeric. A numeric value to specify the number of clusters/groups for each continuous biological
-variable. The default it set to 3.}
-
-\item{other.uv.clustering.method}{Symbol. A symbol indicating the clustering method used to group each continuous unwanted
-variable. The option include 'kmeans', cut' and 'quantile'. The default is to 'kmeans'. We refer to the
-createHomogeneousUVGroups() function for more details.}
-
-\item{nb.other.uv.clusters}{Numeric. A numeric value to specify the number of clusters/groups for each continuous biological
 variable. The default it set to 3.}
 
 \item{check.prps.connectedness}{Logical. Indicates whether to assess the connectedness between the PRPS sets or not.
@@ -109,7 +109,7 @@ of unwanted variation. The default is set to 'NULL'. The, the function creates a
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
 \value{
-A SummarizedExperiment object that contains all the PRPS data and PPRS map plot in the metadata or a list
+A SummarizedExperiment object that contains all the PRPS data and PPRS map plots in the metadata or a list
 that contains all the results.
 }
 \description{
@@ -118,7 +118,7 @@ This function creates different PRPS sets when all sources of unwanted and biolo
 \details{
 We will create distinct group of pseudo-replicates for each source of unwanted variation defined in the 'uv.variables'
 argument. For example to correct for batch effect if defined in the 'uv.variables' argument, several group of
-pseudo-samples will be created by averaging the samples of the same biological subtype defined in 'bio.variables' in
+pseudo-samples will be created by averaging the samples of the same biological groups defined in 'bio.variables' in
 each batch. Then those pseudo-samples will be defined as pseudo-replicates which constitutes a PRPS set. For example
 to correct for library size if defined in the 'uv.variables' argument, several group of pseudo-samples will be created
 by averaging the top and bottom-ranked samples by library size of the same biological subtype in each batch. Then those
