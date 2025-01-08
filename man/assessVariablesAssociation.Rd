@@ -2,7 +2,7 @@
 % Please edit documentation in R/assessVariablesAssociation.R
 \name{assessVariablesAssociation}
 \alias{assessVariablesAssociation}
-\title{Assess the association between variables.}
+\title{Assesses the association between variables in a SummarizedExperiment object.}
 \usage{
 assessVariablesAssociation(
   se.obj,
@@ -18,38 +18,37 @@ assessVariablesAssociation(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{bio.variables}{Symbol. A symbol or a vector of symbols specifying the column names of biological variables in
+\item{bio.variables}{Character or character vector. Specifies the column names of biological variables in
 the sample annotation of the SummarizedExperiment object. These 'bio.variables' can be either categorical or continuous
 variables.}
 
-\item{uv.variables}{Symbol. A symbol or a vector of symbols specifying the column names of unwanted variables in
+\item{uv.variables}{Character or character vector. Specifies the column names of unwanted variables in
 the sample annotation of the SummarizedExperiment object. These 'uv.variables' can be either categorical or continuous
 variables.}
 
-\item{cat.cor.coef}{Vector. A vector of two numerical values. Indicates the cut-off of the correlation coefficient
-between each pair of categorical variables. The first one is between each pair of 'uv.variables' and the second one
-is between each pair of 'bio.variables'. The correlation is computed by the function ContCoef from the DescTools
-package. If the correlation of a pair of variable is higher than the cut-off, then only the variable that has the
-highest number of factor will be kept and the other one will be excluded from the remaining analysis. By default they
-are both set to 0.9.}
+\item{cat.cor.coef}{Numeric vector. A vector of two numerical values indicating the cut-off for the correlation coefficient
+between each pair of categorical variables. The first value applies to each pair of 'uv.variables' and the second value
+applies to each pair of 'bio.variables'. The correlation is computed using the 'ContCoef' function from the DescTools
+R package. If the correlation of a pair of variables exceeds the cut-off, the variable with the highest number of factors
+will be kept, and the other will be excluded from the remaining analysis. By default, both values are set to 0.9.}
 
-\item{cont.cor.coef}{Vector of two numerical values. Indicates the cut-off of the Spearman correlation coefficient
-between each pair of continuous variables. The first one is between each pair of 'uv.variables' and the second one is
-between each pair of 'bio.variables'. If the correlation of a pair of variable is higher than the cut-off, then only
-the variable that has the highest variance will be kept and the other one will be excluded from the remaining analysis.
-By default they are both set to 0.9.}
+\item{cont.cor.coef}{Numeric vector. A vector of two numerical values indicating the cut-off for the Spearman correlation
+coefficient between each pair of continuous variables. The first value applies to each pair of 'uv.variables' and the
+second value applies to each pair of 'bio.variables'. If the correlation of a pair of variables exceeds the cut-off,
+the variable with the highest variance will be kept, and the other will be excluded from the remaining analysis. By
+default, both values are set to 0.9.}
 
-\item{assess.se.obj}{Logical. Whether to assess the SummarizedExperiment object or not. If 'TRUE', the function
-checkSeobj will be applied.}
+\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment object. If 'TRUE', the function
+'checkSeObj' will be applied.}
 
-\item{remove.na}{Symbol. Indicates whether to remove missing values from the 'bio.variables' and 'uv.variables'. The
-options are 'sample.annotation' or 'none'. The default is 'sample.annotation', indicating the missing values from the
-variables will be removed.}
+\item{remove.na}{Character. Indicates whether to remove missing values from the 'bio.variables' and 'uv.variables'. The
+options are 'sample.annotation' or 'none'. The default is 'sample.annotation', meaning the missing values from the
+variables will be removed before calculating the associations.}
 
-\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
+\item{verbose}{Logical. If 'TRUE', shows messages for different steps of the function.}
 }
 \value{
-A list that contains the SummarizedExperiment object and the selected 'uv.variables' and 'bio.variables'.
+A list that contains the SummarizedExperiment object and the selected biological and unwanted variables.
 }
 \description{
 The function assesses the association between all selected biological and unwanted variation variables separately.
