@@ -2,16 +2,13 @@
 % Please edit documentation in R/createHomogeneousUVGroups.R
 \name{createHomogeneousUVGroups}
 \alias{createHomogeneousUVGroups}
-\title{Create all possible homogeneous groups with respect to unwanted variables.}
+\title{Create all possible homogeneous groups with respect to unwanted variables.--Finalized}
 \usage{
 createHomogeneousUVGroups(
   se.obj,
   uv.variables,
   clustering.method = "kmeans",
   nb.clusters = 3,
-  assess.variables = TRUE,
-  cat.cor.coef = c(0.9, 0.9),
-  cont.cor.coef = c(0.9, 0.9),
   assess.se.obj = TRUE,
   remove.na = "sample.annotation",
   save.se.obj = TRUE,
@@ -19,66 +16,44 @@ createHomogeneousUVGroups(
 )
 }
 \arguments{
-\item{se.obj}{A SummarizedExperiment object.}
+\item{se.obj}{A 'SummarizedExperiment' object.}
 
-\item{uv.variables}{Symbol. A symbol or a vector of symbols specifying the column names of unwanted variables in
-the sample annotation of the SummarizedExperiment object. These 'uv.variables' can be either categorical or continuous
-variables.}
+\item{uv.variables}{Character. A character string or a vector of character strings specifying the column names of unwanted
+variables in the sample annotation of the 'SummarizedExperiment  object. These 'uv.variables' can be either categorical
+or continuous variables.}
 
-\item{clustering.method}{Symbol. A symbol specifying the clustering method to be applied for grouping each continuous
-source of unwanted variables. Options include 'kmeans', 'cut', and 'quantile'. The default is 'kmeans' clustering.}
+\item{clustering.method}{Character. A character string specifying the clustering method to be applied for grouping each
+continuous biological variable. Options include 'kmeans', 'cut', and 'quantile'. The default is set to 'kmeans' clustering.}
 
 \item{nb.clusters}{Numeric. A value indicating the number of groups for continuous sources of unwanted variation.
-The default is 3. This implies that each continuous source will be split into 3 groups using the specified
-'clustering.method' method.}
+The default is 3. This implies that each continuous variable will be split into 3 groups using the specified
+'clustering.method'.}
 
-\item{assess.variables}{Logical. Indicates whether to assess correlations between the unwanted variables. If 'TRUE',
-the function 'assessVariablesCorrelation' will be applied. For more details refer to the 'assessVariablesCorrelation'
-function.The default is 'TRUE'.}
+\item{assess.se.obj}{Logical. Whether to assess the 'SummarizedExperiment' object or not. If 'TRUE', the function
+'checkSeObj' will be applied. The default is set to ' TRUE' .}
 
-\item{cat.cor.coef}{Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
-between each pair of categorical variables. The first value applies to correlations between each pair of 'uv.variables',
-and the second value applies to correlations between each pair of 'bio.variables'. Correlation is computed using the
-ContCoef function from the DescTools R package. If the correlation between a pair of variables exceeds the cut-off,
-only the variable with the highest number of factors will be retained, and the other will be excluded from further
-analysis. By default, both values are set to 0.9.}
-
-\item{cont.cor.coef}{Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
-between each pair of continuous variables. The first value applies to correlations between each pair of continuous
-'uv.variables', and the second value applies to correlations between each pair of continuous 'bio.variables'.
-Correlation is computed using the ContCoef function from the DescTools R package. If the correlation between a pair of
-variables exceeds the cut-off, only the variable with the highest variance will be retained, and the other will be
-excluded from further analysis. By default, both values are set to 0.9.}
-
-\item{assess.se.obj}{Logical. Whether to assess the SummarizedExperiment object or not. If 'TRUE', the function
-'checkSeobj' will be applied. The default is 'TRUE'.}
-
-\item{remove.na}{Symbol. Indicates whether to remove missing values from the 'uv.variables'. The options are
-'sample.annotation' or 'none'. The default is 'sample.annotation', indicating the missing values from the variables
+\item{remove.na}{Character. Indicates whether to remove missing values from the specified variables. The options are
+'sample.annotation' or 'none'. The default is set to 'sample.annotation', meaning that missing values in the variables
 will be removed.}
 
-\item{save.se.obj}{Logical. Indicates whether to save the results to the metadata of the SummarizedExperiment object
-or not. If 'TRUE', all the possible homogeneous groups will be saved into "metadata$HGgroups$UVgroups", otherwise
-the results will outputted as a vector. The default is 'TRUE'.}
+\item{save.se.obj}{Logical. Indicates whether to save the results to the metadata of the ' SummarizedExperiment'  object
+or not. If ' TRUE' , all the possible homogeneous groups will be saved into 'se.obj->metadata->HomogeneousGroups->
+BiologicalVariables ; otherwise, the results will be returned as a vector. The default is set to ' TRUE' .}
 
-\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
+\item{verbose}{Logical. If ' TRUE' , displays messages for different steps of the function.}
 }
 \value{
-A SummarizedExperiment object containing the all possible homogeneous groups in the "metadata$HGgroups$UVgroups"
-or a vector of the possible homogeneous groups.
+Either a ' SummarizedExperiment' object containing all possible homogeneous groups in 'metadata->HomogeneousGroups
+->UnwantedVariables' or a vector of all possible homogeneous sample groups.
 }
 \description{
-This function generates all possible homogeneous sample groups based on the specified unwanted variables.
+This function generates all possible homogeneous sample groups based on the specified unwanted variation variables.
 }
 \details{
-The function generates all possible homogeneous sample groups based on the specified unwanted variables. If continuous
+The function generates all possible homogeneous sample groups based on the specified biological variables. If continuous
 variables are provided, the function splits each into a number of clusters determined by ’nb.clusters’, using the
 clustering method specified in ’clustering.method’. Ultimately, all combinations of all clusters are created and
 each such combination is regarded as a homogeneous sample group concerning biological variables.
-For example, if library size and time e.g. years from 2010-2014, are provided as sources of unwanted variation,
-the createHomogeneousUVGroups() will divide the library size into n groups and then the homogeneous sample
-groups respect to these variables will be combinations of one of 5 years * n groups based on library size. These
-combinations are the sample groups which will be regarded as homogeneous for the known unwanted variation.
 }
 \author{
 Ramyar Molania

@@ -49,146 +49,130 @@ findBioGenes(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.name}{Symbol. A symbol that indicates the name of the assay in the SummarizedExperiment object.}
+\item{assay.name}{Character. A symbol indicating the name of the assay in the SummarizedExperiment object.}
 
-\item{approach}{Symbol. A symbol that indicates which biological gene selection methods should be used. The options
-are 'AnovaCorr.PerBatchPerBio', 'AnovaCorr.AcrossAllSamples', 'TwoWayAnova' and 'mad.unsupervised'. The default is set
-to 'TwoWayAnova'. Refer to the function details for more information.}
+\item{approach}{Character. A symbol specifying the biological gene selection method to be used. Options include:
+'AnovaCorr.PerBatchPerBio', 'AnovaCorr.AcrossAllSamples', 'TwoWayAnova', and 'mad.unsupervised'. The default is 'TwoWayAnova'.
+Refer to the function details for more information.}
 
-\item{nb.bio.genes}{Numeric. A numeric value indicates how many genes should be selected as biological genes. The value
-represents the proportion of the total genes in the SummarizedExperiment object. The default is set to 0.1.}
+\item{nb.bio.genes}{Numeric. A numeric value representing the proportion of the total genes to be selected as biological genes.
+The default is 0.1.}
 
-\item{bio.variables}{Symbol. A symbol or a vector of symbols indicating the column names that contain known biological
+\item{bio.variables}{Character. A symbol or a vector of symbols indicating the column names that contain known biological
 variable(s) in the SummarizedExperiment object. These biological variables can be categorical or continuous. Continuous
-variables will be divided into 'nb.bio.clusters' groups based on a clustering method selected in the 'bio.clustering.method'
+variables will be divided into 'nb.bio.clusters' groups based on the clustering method specified in the 'bio.clustering.method'
 argument.}
 
-\item{uv.variables}{Symbols. A symbol or a vector of symbols indicating the column names that contain unwanted variable(s)
-in the SummarizedExperiment object. These unwanted variables can be categorical or continuous. Continuous variables
-will be divided into nb.uv.clusters' groups based on a clustering method selected in the 'uv.clustering.method' argument.}
+\item{uv.variables}{Character. A symbol or a vector of symbols indicating the column names that contain unwanted variable(s)
+in the SummarizedExperiment object. These variables can be categorical or continuous. Continuous variables will be divided into
+'nb.uv.clusters' groups based on the clustering method specified in the 'uv.clustering.method' argument.}
 
-\item{bio.clustering.method}{Symbol. A symbol that indicates which clustering methods should be used to group continuous
-sources of biological variation.  The default is set to kmeans' clustering. Refer to the 'createHomogeneousBioGroups'
-function for more details.}
+\item{bio.clustering.method}{Character. A symbol specifying the clustering method to be used for grouping continuous sources
+of biological variation. The default is 'kmeans'. Refer to the 'createHomogeneousBioGroups' function for more details.}
 
-\item{nb.bio.clusters}{Numeric. A numeric value that indicates the number of clusters for each continuous sources of
-biological variation. The default is set to 3. This means individual continuous sources of biological variation will
-be divided into two groups based on the 'bio.clustering.method' method.}
+\item{nb.bio.clusters}{Numeric. A numeric value indicating the number of clusters for each continuous source of biological
+variation. The default is 3, meaning each continuous biological variable will be divided into 3 groups.}
 
-\item{uv.groups}{Symbol. A symbol or a vector of symbols indicating the column names that contain known unwanted
-variable(s) in the SummarizedExperiment object. These biological variables can be categorical or continuous. Continuous
-variables will be divided into 'nb.bio.clusters' groups based on a clustering method selected in the 'bio.clustering.method'
-argument.}
+\item{uv.groups}{Character. A symbol or a vector of symbols indicating the column names that contain known unwanted
+variable(s) in the SummarizedExperiment object. These variables can be categorical or continuous. Continuous variables will be
+divided into 'nb.bio.clusters' groups based on the clustering method specified in the 'bio.clustering.method' argument.}
 
-\item{uv.clustering.method}{Symbol. A symbol that indicates which clustering methods should be used to group continuous
-sources of unwanted variation. The default is set to kmeans' cluster. Refer to the 'createHomogeneousUvGroups' function
-for more details.}
+\item{uv.clustering.method}{Character. A symbol specifying the clustering method to be used for grouping continuous sources
+of unwanted variation. The default is 'kmeans'. Refer to the 'createHomogeneousUvGroups' function for more details.}
 
-\item{nb.uv.clusters}{Numeric. Indicates the number of clusters for each continuous sources of unwanted variation.
-The by default it is set to 2. This means individual continuous sources of biological variation will be divided into two
-groups.}
+\item{nb.uv.clusters}{Numeric. A numeric value indicating the number of clusters for each continuous source of unwanted
+variation. The default is 2, meaning each continuous source of unwanted variation will be divided into 2 groups.}
 
 \item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data before performing any statistical
-analysis. The default it is set to 'TRUE'.}
+analysis. The default is 'TRUE'.}
 
-\item{pseudo.count}{Numeric. A value as a pseudo count to be added to all measurements before log transformation. The
+\item{pseudo.count}{Numeric. A value to be added as a pseudo count to all measurements before log transformation. The
 default is 1.}
 
-\item{normalization}{Symbol. Indicates which normalization method should be applied to the data before finding genes
-that are affected by biological variation. The default is set to 'CPM'. If is 'NULL', no normalization will be applied.
+\item{normalization}{Character. Specifies which normalization method should be applied to the data before finding genes
+affected by biological variation. The default is 'CPM'. If set to 'NULL', no normalization will be applied.
 Refer to the 'applyOtherNormalizations' function for more details.}
 
-\item{grid.nb}{XXX}
+\item{grid.nb}{Numeric. A numeric value (description needed).}
 
-\item{regress.out.uv.variables}{Symbols. Indicates the columns names that contain unwanted variation variables in the
-SummarizedExperiment object. These variables will be regressed out from the data before finding genes that are highly
-affected by biological variation. The default is NULL, indicates the regression will not be applied.}
+\item{regress.out.uv.variables}{Character. A symbol or a vector of symbols indicating the columns that contain unwanted
+variation variables in the SummarizedExperiment object. These variables will be regressed out from the data before identifying
+genes highly affected by biological variation. The default is NULL, meaning regression will not be applied.}
 
-\item{assess.bio.genes}{Logical. Indicates whether to assess the performance of selected NCG or not. This analysis involves
-principal component analysis on only the selected NCG and then explore the R^2 or vector correlation between the 'nb.pcs'
-first principal components and with the specified variables.}
+\item{assess.bio.genes}{Logical. Indicates whether to assess the performance of selected NCGs (biological genes). This
+analysis involves principal component analysis (PCA) on the selected NCGs, followed by exploring the R² or vector correlation
+between the first 'nb.pcs' principal components and the specified variables.}
 
-\item{variables.to.assess.bio.genes}{Symbols. Indicates the column names of the SummarizedExperiment object that contain
-variables whose association with the selected genes as NCG needs to be evaluated. The default is 'NULL'. This means all
-the variables specified in the 'bio.variables' and 'uv.variables' will be assessed.}
+\item{variables.to.assess.bio.genes}{Character. A symbol or a vector of symbols indicating the column names of the
+SummarizedExperiment object that contain variables whose association with the selected NCGs needs to be evaluated.
+The default is NULL, meaning all variables in 'bio.variables' and 'uv.variables' will be assessed.}
 
-\item{nb.pcs}{Numeric. Indicateing the number of the first principal components on selected NCG to be used to assess
-the performance of NCGs. The default is 5.}
+\item{nb.pcs}{Numeric. Indicates the number of principal components (PCs) to be used to assess the performance of the selected
+NCGs. The default is 5.}
 
-\item{center}{Logical. Indicates whether to center the data before applying principal component analysis or not.
-Refer to the 'computePCA' function for more details. The default is set to 'TRUE'.}
+\item{center}{Logical. Indicates whether to center the data before applying principal component analysis (PCA). The default is 'TRUE'.
+Refer to the 'computePCA' function for more details.}
 
-\item{scale}{Logical. Indicates whether to scale the data before applying principal component analysis.
-Refer to the 'computePCA' function for more details. The default is 'FALSE'.}
+\item{scale}{Logical. Indicates whether to scale the data before applying PCA. The default is 'FALSE'.
+Refer to the 'computePCA' function for more details.}
 
-\item{anova.method}{Indicates which anova method should be used to compute association between gene-level}
+\item{anova.method}{Character. Specifies the ANOVA method to be used to compute the association between gene-level
+expression and other variables.}
 
-\item{min.sample.for.aov}{Numeric. Indicates the minimum number of samples to be present in each group before applying
-the ANOVA. The default is 3.}
+\item{min.sample.for.aov}{Numeric. Specifies the minimum number of samples required in each group before applying ANOVA.
+The default is 3.}
 
-\item{corr.method}{Symbol. Indicates which correlation method should be used to compute association between gene-level
+\item{corr.method}{Character. Specifies the correlation method to be used to compute the association between gene-level
 expression and a continuous variable. The default is 'spearman'.}
 
-\item{a}{The significance level used for the confidence intervals in the correlation, by default it is set to 0.05.}
+\item{a}{Numeric. The significance level for confidence intervals in the correlation. The default is 0.05.}
 
-\item{rho}{The value of the hypothesised correlation to be used in the hypothesis testing, by default it is set to 0.}
+\item{rho}{Numeric. The hypothesized correlation value to be used in hypothesis testing. The default is 0.}
 
-\item{min.sample.for.correlation}{Numeric. Indicates the minimum number of samples to be considered in each group before
-applying the correlation analysis. The default is 10.}
+\item{min.sample.for.correlation}{Numeric. Specifies the minimum number of samples required in each group before applying
+the correlation analysis. The default is 10.}
 
-\item{min.sample.for.mad}{Numeric. Indicates the minimum number of samples to perform Median Absolute Deviation on
-each gene within homogeneous sample groups, considering unwanted variables. The default is 3.}
+\item{min.sample.for.mad}{Numeric. Specifies the minimum number of samples required to perform the Median Absolute
+Deviation (MAD) calculation on each gene within homogeneous sample groups. The default is 3.}
 
-\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment object or not. If 'TRUE', the function
-'checkSeObj' will be applied. The default is set to 'TRUE'.}
+\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment object. If 'TRUE', the 'checkSeObj' function
+will be applied. The default is 'TRUE'.}
 
 \item{assess.variables}{Logical. Indicates whether to assess the correlation between biological and unwanted variation
-variables separately when creating homogeneous sample groups. Refer to the function 'assessVariablesAssociation' for
-more details. The default is set to 'FLASE'}
+variables separately when creating homogeneous sample groups. The default is 'FALSE'. Refer to the function 'assessVariablesAssociation'
+for more details.}
 
-\item{cat.cor.coef}{Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
-between each pair of categorical variables. The first value applies to correlations between each pair of 'uv.variables',
-and the second value applies to correlations between each pair of 'bio.variables'. Correlation is computed using the
-ContCoef function from the DescTools R package. If the correlation between a pair of variables exceeds the cut-off,
-only the variable with the highest number of factors will be retained, and the other will be excluded from further
-analysis. By default, both values are set to 0.9.}
+\item{cat.cor.coef}{Numeric vector. Specifies the cut-off correlation coefficient between pairs of categorical variables.
+The first value applies to correlations between 'uv.variables', and the second to correlations between 'bio.variables'.
+Correlation is computed using the ContCoef function from the DescTools R package. If the correlation exceeds the cut-off,
+only the variable with the highest number of factors will be retained. By default, both values are set to 0.9.}
 
-\item{cont.cor.coef}{Vector. Containing two numerical values that specifies the cut-off for the correlation coefficient
-between each pair of continuous variables. The first value applies to correlations between each pair of continuous
-'uv.variables', and the second value applies to correlations between each pair of continuous 'bio.variables'.
-Correlation is computed using the ContCoef function from the DescTools R package. If the correlation between a pair of
-variables exceeds the cut-off, only the variable with the highest variance will be retained, and the other will be
-excluded from further analysis. By default, both values are set to 0.9.}
+\item{cont.cor.coef}{Numeric vector. Specifies the cut-off correlation coefficient between pairs of continuous variables.
+The first value applies to correlations between 'uv.variables', and the second to correlations between 'bio.variables'.
+Correlation is computed using the ContCoef function from the DescTools R package. If the correlation exceeds the cut-off,
+only the variable with the highest variance will be retained. By default, both values are set to 0.9.}
 
-\item{remove.na}{Symbol. Indicates whether to remove NA or missing values from either the 'assays', 'sample.annotation',
-'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If
-'sample.annotation' is selected, the samples that contains NA or missing values for any 'bio.variables' and
-'uv.variables' will be excluded. The default is set to 'none'.}
+\item{remove.na}{Character. Specifies whether to remove NA or missing values from 'assays', 'sample.annotation', 'both', or 'none'.
+If 'assays' is selected, genes with missing values will be excluded. If 'sample.annotation' is selected, samples with missing
+values for any 'bio.variables' or 'uv.variables' will be excluded. The default is 'none'.}
 
-\item{save.se.obj}{Logical. Indicating whether to save the result in the metadata of the SummarizedExperiment object or
-to output the result as a logical vector. The default it is set to 'TRUE'. The file will be saved in
-'se.obj@metadata$NCG$supervised$output.name".}
+\item{save.se.obj}{Logical. Indicates whether to save the results in the metadata of the SummarizedExperiment object or output
+as a logical vector. The default is 'TRUE'. The result will be saved in 'se.obj@metadata$NCG$supervised$output.name'.}
 
-\item{output.name}{Symbol. A representation for the output s name. If set to 'NULL', the function will choose a name
-automatically. In this case, the file name will be constructed as paste0(sum(ncg.selected),'|', paste0(bio.variables,
-collapse = '&'), '|', paste0(uv.variables, collapse = '&'),'|TWAnova:', '|', assay.name).}
+\item{output.name}{Character. The name of the output. If set to 'NULL', the function will automatically generate a name.
+The default name is constructed as paste0(sum(ncg.selected),'|', paste0(bio.variables, collapse = '&'), '|', paste0(uv.variables,
+collapse = '&'),'|TWAnova:', '|', assay.name).}
 
-\item{save.imf}{Logical. Indicating whether to save the intermediate file in the SummarizedExperiment object or not.
-If set to 'TRUE', the function saves the results of the two-way ANOVA. Subsequently, if users wish to adjust parameters
-such as 'nb.bio.genes', 'ncg.selection.method', 'top.rank.bio.genes', and 'top.rank.uv.genes', the two-way ANOVA will not
-be recalculated. This accelerates parameter tuning for NCG selection. The default value is 'FALSE'.}
+\item{save.imf}{Logical. Indicates whether to save the intermediate file in the SummarizedExperiment object. If 'TRUE',
+the results of the two-way ANOVA will be saved, allowing users to adjust parameters without recalculating the ANOVA.
+This speeds up parameter tuning for NCG selection. The default is 'FALSE'.}
 
-\item{imf.name}{Symbol. Indicating the name to use when saving the intermediate file. If set to 'NULL', the function
-will create a name. In this case, the file name will be constructed as
-paste0(assay.name, '|TwoWayAnova|'). The default is 'NULL'.}
+\item{imf.name}{Character. The name of the intermediate file to be saved. If set to 'NULL', the function will generate a name,
+such as paste0(assay.name, '|TwoWayAnova|'). The default is 'NULL'.}
 
-\item{use.imf}{Logical. Indicating whether to use the intermediate file or not. The default is set to 'FALSE'.}
+\item{use.imf}{Logical. Indicates whether to use the intermediate file. The default is 'FALSE'.}
 
-\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
-}
-\value{
-Either the SummarizedExperiment object containing the a set of biological genes in the metadata  or a
-logical vector of the selected biological genes
+\item{verbose}{Logical. If 'TRUE', displays messages about the steps being executed.}
 }
 \description{
 This function uses different approaches to find genes that are highly affected by biological variables or highly

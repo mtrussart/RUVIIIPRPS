@@ -43,8 +43,8 @@ BiologicalVariables ; otherwise, the results will be returned as a vector. The d
 \item{verbose}{Logical. If ' TRUE' , displays messages for different steps of the function.}
 }
 \value{
-A ' SummarizedExperiment'  object containing all possible homogeneous groups in ' metadata$HGgroups$UVgroups'
-or a vector of all possible homogeneous groups.
+Either a ' SummarizedExperiment' object containing all possible homogeneous groups in 'metadata->HomogeneousGroups
+->BiologicalVariables' or a vector of all possible homogeneous sample groups.
 }
 \description{
 This function generates all possible homogeneous sample groups based on the specified biological variables.

@@ -17,22 +17,21 @@ createLogAssays(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or vector of symbols to specify the name(s) of the assay(s) in the
+\item{assay.names}{Character. A single symbol or a vector of symbols specifying the name(s) of the assay(s) in the
 SummarizedExperiment object. The default is "all," indicating that all assays in the SummarizedExperiment object will
 be selected.}
 
-\item{pseudo.count}{Numeric. A value serving as a pseudo count to be added to all measurements in the assay(s) before
-applying log-transformation. This helps prevent -Inf values for measurements equal to 0. The default is 1.}
+\item{pseudo.count}{Numeric. A value to be added to all measurements in the assay(s) before log-transformation to prevent
+-Inf values for measurements equal to 0. The default is 1.}
 
-\item{replace.assays}{Logical. When set to 'TRUE', the assay(s) will be substituted with the log transformation.}
+\item{replace.assays}{Logical. If 'TRUE', the original assay(s) will be replaced with the log-transformed values.}
 
-\item{new.name}{Symbol. A symbol to add to the current assay name for the log transformed data. The default is set to
-'log.' .}
+\item{new.name}{Character. A symbol to append to the name(s) of the assay(s) for the log-transformed data. The default is 'log.'.}
 
-\item{apply.round}{If 'TRUE', the measurements of individual assays will be rounded to two decimal points. The default
-is 'TRUE'.}
+\item{apply.round}{Logical. If 'TRUE', the measurements in the individual assays will be rounded to two decimal places.
+The default is 'TRUE'.}
 
-\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
+\item{verbose}{Logical. If 'TRUE', the function will display messages about the different steps being executed.}
 }
 \description{
 Apply log-transformation to the assay(s) of a SummarizedExperiment object.
