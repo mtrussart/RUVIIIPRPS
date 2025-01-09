@@ -119,6 +119,7 @@
 #' @importFrom SummarizedExperiment assay SummarizedExperiment
 #' @export
 
+
 findBioGenes <- function(
         se.obj,
         assay.name,
@@ -234,7 +235,6 @@ findBioGenes <- function(
             expr.data <- applyLog(
                 se.obj = se.obj,
                 assay.names = assay.name,
-                apply.log = apply.log,
                 pseudo.count = pseudo.count,
                 assessment = ' two-way ANOVA'
                 )[[assay.name]]
@@ -249,9 +249,6 @@ findBioGenes <- function(
                 bio.variables = bio.variables,
                 nb.clusters = nb.bio.clusters,
                 clustering.method = bio.clustering.method,
-                assess.variables = assess.variables,
-                cat.cor.coef = cat.cor.coef,
-                cont.cor.coef = cont.cor.coef,
                 assess.se.obj = FALSE,
                 save.se.obj = FALSE,
                 remove.na = 'none',
