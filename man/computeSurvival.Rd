@@ -2,7 +2,7 @@
 % Please edit documentation in R/compuetSurvival.R
 \name{computeSurvival}
 \alias{computeSurvival}
-\title{Compute variable and gene-level Kaplan-Meier survival.}
+\title{Computes variable and gene-level Kaplan-Meier survival.}
 \usage{
 computeSurvival(
   se.obj,
@@ -12,8 +12,8 @@ computeSurvival(
   survival.time,
   survival.events,
   expr.stratify = 2,
-  return.p.values = TRUE,
-  return.survival.plots = FALSE,
+  return.p.value = TRUE,
+  return.survival.plot = FALSE,
   plot.output = TRUE,
   assess.se.obj = TRUE,
   remove.na = "none",
@@ -24,46 +24,43 @@ computeSurvival(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
-SummarizedExperiment object to compute the survival. The default is set to "all, which indicates all the assays of the
-SummarizedExperiment object will be selected.}
+\item{assay.names}{Character. A character or a vector of characters specifying the name(s) of the assay(s) in the
+SummarizedExperiment object for gene-level survival analysis. The default is set to "all", which indicates that all
+assays in the SummarizedExperiment object will be selected.}
 
-\item{genes}{Symbol. A symbol or a vector of gene names/ids for the selection of genes for gene-level survival analysis.
-The default is set to 'all'.}
+\item{genes}{Character. A character or a vector of gene names/IDs specifying the genes to be used for gene-level survival
+analysis. The default is set to 'all'.}
 
-\item{variable}{Symbol. A symbol that indicates the column name of the SummarizedExperiment object that contains
-a categorical variable e.g. tumour subtypes, ... for variable-level survival analysis. The default is set to 'NULL'.}
+\item{variable}{Character. A character specifying the column name of the SummarizedExperiment object that contains
+a categorical variable (e.g., tumor subtypes) for variable-level survival analysis. The default is set to 'NULL'.}
 
-\item{survival.time}{Symbol.A symbol that indicates the column name of the SummarizedExperiment object that contains
+\item{survival.time}{Character. A character specifying the column name of the SummarizedExperiment object that contains
 survival time.}
 
-\item{survival.events}{Symbol.A symbol that indicates the column name of the SummarizedExperiment object that contains
-survival event (0 and 1).}
+\item{survival.events}{Character. A character specifying the column name of the SummarizedExperiment object that contains
+the survival event (0 and 1).}
 
-\item{expr.stratify}{Numeric. A numeric value that indicates how the gene expression of each genes should be stratified
-for gene-level survival analysis. The stratification is based on the quantiles of gene expression. The default is set
-to 2. This means expression level of each specified genes will be divvied in to group based on 50\% quantiles.}
+\item{expr.stratify}{Numeric. A numeric value indicating how the gene expression of each gene should be stratified
+for gene-level survival analysis. Stratification is based on the quantiles of gene expression. The default is 2,
+meaning the expression level of each specified gene will be divided into two groups based on the 50\% quantile (median).}
 
-\item{return.p.values}{Logical. Indicates whether to calculate p.values in the survival analysis or not. The default
-is set to 'TRUE'.}
+\item{return.p.value}{Logical. Indicates whether to calculate p-values in the survival analysis. The default is 'TRUE'.}
 
-\item{return.survival.plots}{Logical. Indicates whether to generate survival plot or not. The default
-is set to 'FALSE'.}
+\item{return.survival.plot}{Logical. Indicates whether to generate survival plots. The default is set to 'FALSE'.}
 
-\item{plot.output}{Logical. Indicates whether to plot variable-level survival analysis or not. The default is set to
-'TRUE'.}
+\item{plot.output}{Logical. Indicates whether to plot variable-level survival analysis. The default is 'TRUE'.}
 
-\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment object or not. See the checkSeObj
-function for more details.}
+\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment object. If 'TRUE', the 'checkSeObj'
+function will be applied. The default is 'TRUE'.}
 
-\item{remove.na}{Symbol. To remove NA or missing values from the assays or not. The options are 'assays' and 'none'.
-The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
-the checkSeObj function for more details.}
+\item{remove.na}{Character. Indicates whether to remove NA or missing values from the assays. Options are 'assays'
+, 'sample annotation' or 'none'. The default is set to 'assays', which removes all NA or missing values from the assays
+before performing the gene level analysis. See the 'checkSeObj' function for more details.}
 
-\item{save.se.obj}{Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object or
-to output the result as list. By default it is set to TRUE.}
+\item{save.se.obj}{Logical. Indicates whether to save the results of the survival analysis in the metadata of the
+SummarizedExperiment object or output the results as a list. The default is 'TRUE'.}
 
-\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
+\item{verbose}{Logical. If 'TRUE', displays messages for each step of the function.}
 }
 \description{
 This function computes gene-level and variable-level survival analysis.
