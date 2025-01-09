@@ -38,7 +38,6 @@
 #' @importFrom knitr kable
 #' @export
 
-brca.se.obj <- createHomogeneousUVGroups(se.obj = brca.se.obj, uv.variables = bio.variables)
 
 createHomogeneousUVGroups <- function(
         se.obj,
@@ -49,7 +48,7 @@ createHomogeneousUVGroups <- function(
         remove.na = 'sample.annotation',
         save.se.obj = TRUE,
         verbose = TRUE
-){
+        ){
     printColoredMessage(message = '------------The createHomogeneousUVGroups function starts:',
                         color = 'white',
                         verbose = verbose)
