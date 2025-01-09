@@ -3,19 +3,19 @@
 #' @author Marie Trussart
 
 #' @param se.obj A SummarizedExperiment object.
-#' @param assay.names Symbol. A symbol or vector of symbols to specify the name(s) of the assay(s) in the
+#' @param assay.names Character. A single symbol or a vector of symbols specifying the name(s) of the assay(s) in the
 #' SummarizedExperiment object. The default is "all," indicating that all assays in the SummarizedExperiment object will
 #' be selected.
-#' @param pseudo.count Numeric. A value serving as a pseudo count to be added to all measurements in the assay(s) before
-#' applying log-transformation. This helps prevent -Inf values for measurements equal to 0. The default is 1.
-#' @param replace.assays Logical. When set to 'TRUE', the assay(s) will be substituted with the log transformation.
-#' @param new.name Symbol. A symbol to add to the current assay name for the log transformed data. The default is set to
-#' 'log.' .
-#' @param apply.round If 'TRUE', the measurements of individual assays will be rounded to two decimal points. The default
-#' is 'TRUE'.
-#' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
+#' @param pseudo.count Numeric. A value to be added to all measurements in the assay(s) before log-transformation to prevent
+#' -Inf values for measurements equal to 0. The default is 1.
+#' @param replace.assays Logical. If 'TRUE', the original assay(s) will be replaced with the log-transformed values.
+#' @param new.name Character. A symbol to append to the name(s) of the assay(s) for the log-transformed data. The default is 'log.'.
+#' @param apply.round Logical. If 'TRUE', the measurements in the individual assays will be rounded to two decimal places.
+#' The default is 'TRUE'.
+#' @param verbose Logical. If 'TRUE', the function will display messages about the different steps being executed.
 
 #' @importFrom SummarizedExperiment assays assay colData
+
 
 createLogAssays <- function(
         se.obj,
@@ -48,16 +48,16 @@ createLogAssays <- function(
             color = 'magenta',
             verbose = verbose)
         ## log transformation ####
-        if(!is.null(pseudo.count)){
+        if (!is.null(pseudo.count)){
             printColoredMessage(
-                message = paste0('Apply log2 + ', pseudo.count,' (pseudo.count) on the ', x,' data.'),
+                message = paste0('Applying log2 + ', pseudo.count,' (pseudo.count) on the ', x,' data.'),
                 color = 'blue',
                 verbose = verbose
                 )
             temp.data <- log2(assay(x = se.obj, i = x) +  pseudo.count)
         } else {
             printColoredMessage(
-                message = paste0('Apply log2 on the', x, ' data.'),
+                message = paste0('Applying log2 on the', x, ' data.'),
                 color = 'blue',
                 verbose = verbose)
             temp.data <- log2(assay(x = se.obj, i = x))
