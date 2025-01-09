@@ -1,4 +1,4 @@
-#' Computes variable and gene-level Kaplan-Meier survival.
+#' Computes variable and gene-level Kaplan-Meier survival. Finalized
 
 #' @author Ramyar Molania
 
@@ -36,22 +36,6 @@
 #' @importFrom survminer ggsurvplot
 #' @import RColorBrewer
 #' @export
-
-se.obj  = brca.se.obj
-assay.names = 'all'
-genes = 'all'
-variable = NULL
-survival.time = 'os.time'
-survival.events = 'os.event'
-expr.stratify = 2
-return.p.value = TRUE
-return.survival.plot = FALSE
-plot.output = TRUE
-assess.se.obj = TRUE
-remove.na = 'none'
-save.se.obj = TRUE
-verbose = TRUE
-
 
 computeSurvival <- function(
         se.obj ,
