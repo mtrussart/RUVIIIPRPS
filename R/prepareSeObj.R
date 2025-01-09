@@ -1,4 +1,4 @@
-#' prepare a SummarizedExperiment object.
+#' Prepare a SummarizedExperiment object.
 
 #' @author Ramyar Molania
 
@@ -27,49 +27,49 @@
 #' more details.
 
 
-#' @param data List. A list containing assay(s) or expression data. For individual datasets, genes should be arranged
-#' in rows and samples in columns. If multiple datasets are provided, ensure that the row names of the assays are in the
-#' same order.
-#' @param raw.count.assay.name Symbol. The name of raw counts RNA-seq data within the list of assay(s) or expression data.
-#' Raw counts data must be included if 'remove.lowly.expressed.genes' or "calculate.library.size" is set to 'TRUE'.
-#' @param remove.lowly.expressed.genes 	Logical. If 'TRUE', the function identifies and removes lowly expressed genes from
+#' @param data List. A list containing data sets (assay(s)) or expression data. For individual datasets, genes should be arranged
+#' in rows and samples in columns. If multiple datasets are provided, ensure that the row names of the assays are in
+#' the same order.
+#' @param raw.count.assay.name Character. The name of the raw RNA-seq count data within the list of assays or expression data.
+#' Raw counts data is required if 'remove.lowly.expressed.genes' or 'calculate.library.size' is set to 'TRUE'.
+#' @param remove.lowly.expressed.genes Logical. If 'TRUE', lowly expressed genes will be identified and removed from
 #' the assay specified in the 'raw.count.assay.name' argument. The default is 'FALSE'.
 #' @param count.cutoff Numeric. Minimum count required for at least some sample groups. If the 'biological.group' argument
-#' is set to 'NULL', all samples will be considered as single group. Otherwise, the smallest subgroups of the
-#' 'biological.group' will be taken into account to remove lowly expressed genes. We refer to the filterByExpr function
-#' from the edgeR R package.
-#' @param biological.group Symbol. Indicates a column name in the sample annotation, specifying the biological groups.
-#' The smallest biological groups will be taken into account for removing lowly expressed genes. If is 'NULL', all samples
-#' will be considered as single group.
-#' @param minimum.proportion Numeric. In large sample situations, the minimum proportion of samples within a group in which
-#' a gene must be expressed. The default is 0.5.
-#' @param calculate.library.size Logical. If 'TRUE', then library size (total counts) is calculated using the data provided
-#' in 'raw.count.assay.name'. The library size will be calculated after removing lowly expressed genes.
-#' @param estimate.tumor.purity Symbol. A symbol indicating which methods to be used to estimt the tumour purity. Opoptiona
-#' include:'estimate', 'singscore', 'both' and 'NULL'. If 'estimate' is selected, the function will applied the ESTIMATE method to
-#' estimate tumor purity. If 'singscore', the function will utilize the 'singscore' method and if 'both', the two methods
-#' will be applied. The default is 'NULL'.
-#' @param assay.name.to.estimate.purity Symbol.The name of an assay data within the list of assay(s) or expression data to
-#' be used to estimate tumor purity.
-#' @param sample.annotation A data frame containing information for individual samples in the assay(s). The order of row
-#' names of the sample annotation should match with the columns names of the assay(s).
-#' @param create.sample.annotation Logical. If 'TRUE', a sample annotation will be generated, initially contains the
-#' column names of the assay(s). Additional variables such as library size will be included in the sample annotation.
-#' @param gene.annotation A data frame, containing details e.g. chromosome names,GC content,... for individual genes. The
-#' list of housekeeping genes, and immune and stromal genes will be included in the gene annotation.
-#' @param create.gene.annotation Logical. If 'TRUE', a gene annotation will be generated, initially contains row names of
-#' the assay(s). Additional gene lists and details will be included in the gene annotation.
+#' is set to 'NULL', all samples will be considered as a single group. Otherwise, the smallest subgroups of the
+#' 'biological.group' will be considered for filtering lowly expressed genes. This follows the 'filterByExpr' function
+#' from the edgeR package.
+#' @param biological.group Character. The column name in the sample annotation specifying the biological groups.
+#' The smallest biological groups will be considered for filtering lowly expressed genes. If 'NULL', all samples will
+#' be considered as a single group.
+#' @param minimum.proportion Numeric. The minimum proportion of samples within a group in which a gene must be expressed.
+#' The default is 0.5.
+#' @param calculate.library.size Logical. If 'TRUE', the library size (total counts) will be calculated using the data
+#' provided in 'raw.count.assay.name'. Library size will be computed after removing lowly expressed genes.
+#' @param estimate.tumor.purity Character. A method to estimate tumor purity. Options include: 'estimate', 'singscore',
+#' 'both', and 'NULL'. If 'estimate', the ESTIMATE method will be used. If 'singscore', the 'singscore' method will be
+#' applied. If 'both', both methods will be applied. The default is 'NULL'.
+#' @param assay.name.to.estimate.purity Character. The name of an assay within the list of assays or expression data
+#' to be used for estimating tumor purity.
+#' @param sample.annotation Data frame. Contains sample-specific information for the assays. The order of rows should
+#' match the column names of the assay(s).
+#' @param create.sample.annotation Logical. If 'TRUE', a sample annotation will be generated, initially containing
+#' the column names of the assay(s). Additional variables, such as library size, will be included in the annotation.
+#' @param gene.annotation Data frame. Contains gene-specific details (e.g., chromosome names, GC content). The list of
+#' housekeeping genes and immune/stromal genes will be included in the gene annotation.
+#' @param create.gene.annotation Logical. If 'TRUE', a gene annotation will be generated, initially containing row names
+#' of the assay(s). Additional gene details and lists will be added to the annotation.
 #' @param add.gene.details Logical. If 'TRUE', preset or provided gene details in the 'gene.details' argument will be
 #' added to the gene annotation.
-#' @param gene.group Symbol. The name of a gene class of the row names of the assay(s). This must be one of the 'entrezgene_id',
-#' 'hgnc_symbol', 'ensembl_gene_id'.
-#' @param gene.details Symbol. A symbol or a vector symbols indicating the gene details to be included to the gene annotation.
-#' @param add.housekeeping.genes Logical. if 'TRUE', several sets of publicly available "housekeeping" will be included in
-#' the gene annotation. The housekeeping could be potentially used as negative control genes for the RUV normalization.
-#' @param add.immun.stroma.genes Logical. If 'TRUE', the immune and stromal genes signature from Kosuke Yoshihara et.al will
-#' be added to the gene annotation. These genes signatures, can be used to estimate tumor purity in cancer RNA-seq data.
-#' @param metaData Any metadata data. The metadata can be in any format and dimensions.
-#' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
+#' @param gene.group Character. The name of a gene class from the row names of the assay(s). This must be one of the following:
+#' 'entrezgene_id', 'hgnc_symbol', or 'ensembl_gene_id'.
+#' @param gene.details Character or character vector. Indicates the gene details to be included in the gene annotation.
+#' @param add.housekeeping.genes Logical. If 'TRUE', publicly available "housekeeping" gene sets will be added to the gene
+#' annotation. These genes may be used as negative controls for RUV normalization.
+#' @param add.immun.stroma.genes Logical. If 'TRUE', immune and stromal gene signatures from Kosuke Yoshihara et al. will
+#' be added to the gene annotation. These signatures can be used to estimate tumor purity in cancer RNA-seq data.
+#' @param metaData Any. Metadata in any format and dimensions.
+#' @param verbose Logical. If 'TRUE', the function will print messages at various steps of the process.
+
 
 #' @return A SummarizedExperiment object containing assay(s) and also samples annotation, gene annotation and metadata
 #' if there are specified.
@@ -106,8 +106,7 @@ prepareSeObj <- function(
         add.immun.stroma.genes = FALSE,
         metaData = NULL,
         verbose = TRUE
-        )
-{
+        ){
     printColoredMessage(message = '------------The prepareSeObj function starts:',
                         color = 'white',
                         verbose = verbose
@@ -1115,7 +1114,7 @@ prepareSeObj <- function(
                       ol.names = 'nb.genes'))
         }
         ## add immune and stroma genes signatures ####
-        if(isTRUE(add.immun.stroma.genes)){
+        if (isTRUE(add.immun.stroma.genes)){
             printColoredMessage(
                 message = '-- Adding immune and stromal genes signature to the gene annotation:',
                 color = 'magenta',
@@ -1144,7 +1143,7 @@ prepareSeObj <- function(
                 color = 'blue',
                 verbose = verbose
             )
-            for(g in colnames(hk.im.genes)[10:11])
+            for (g in colnames(hk.im.genes)[10:11])
                 gene.annotation[[g]][is.na(gene.annotation[[g]])] <- FALSE
             nb.genes <- lapply(
                 colnames(hk.im.genes)[10:11],
@@ -1158,7 +1157,7 @@ prepareSeObj <- function(
                 )
         }
         ## estimate tumor purity ####
-        if(!is.null(estimate.tumor.purity)){
+        if (!is.null(estimate.tumor.purity)){
             printColoredMessage(
                 message = '-- Estimating tumour purity (this is just for cancer RNAseq data):',
                 color = 'magenta',
@@ -1293,12 +1292,12 @@ prepareSeObj <- function(
         printColoredMessage(message = '------------The prepareSeObj function finished.',
                             color = 'white',
                             verbose = verbose)
+        return(data)
 
     }
     # else {
     #     stop('The "data" must be either a SummarizedExperiment object or a list of data set (s).')
     # }
-    return(se.obj)
 }
 
 
