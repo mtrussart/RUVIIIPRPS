@@ -1,4 +1,4 @@
-#' Compute gene-gene partial correlation.
+#' Compute gene-gene partial correlation analysis. -- finalized
 
 #' @author Ramyar Molania
 
@@ -11,40 +11,38 @@
 #' variables.
 
 #' @param se.obj A SummarizedExperiment object.
-#' @param assay.names Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
-#' SummarizedExperiment object to calculate RLE data, medians and interquartile ranges. The default is set to "all, which
-#' indicates all the assays of the SummarizedExperiment object will be selected.
-#' @param variable Symbol. A symbol that indicates the column name of the SummarizedExperiment object that contains a
-#' continuous variable such as library size, tumor purity, ... .
-#' @param method Symbol. A symbol that indicates which correlation methods should be used. The options are 'pearson',
-#' 'kendall', or "spearman". The default is set to 'spearman'.
-#' @param genes Vector. A vector comprising genes upon which the correlation analysis will be performed. The vector can be
-#' logical, numeric or gene names. The default is 'NULL'.
-#' @param select.genes Logical. If 'TRUE', the function will compute correlation between individual genes and the specified
-#' variable, then select a subset of gene based the "corr.coff.cutoff" for down-stream analysis. The default is set to
-#' 'TRUE'.
-#' @param reference.data Symbol. A symbol specifying the name of the assay to be used to select genes using the correlation
-#' analysis. The default is NULL. This means all the specified assays will be used.
-#' @param corr.coff.cutoff Numeric. A numeric value to be used as a cutoff for selecting the genes. The default is set to
-#' 0.7.
-#' @param apply.log Logical. Indicates whether to apply a log-transformation to the data or not. The default is TRUE.
-#' @param pseudo.count Numeric. A value as a pseudo count to be added to all measurements of the assay(s) before applying
-#' log transformation to avoid -Inf for measurements that are equal to 0. The default is 1.
-#' @param apply.round Logical. Indicates whether to round the correlations coefficients or not. The default is set to 'TRUE'.
-#' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment object or not. See the checkSeObj
-#' function for more details.
-#' @param remove.na Symbol. To remove NA or missing values from the assays or not. The options are 'assays' and 'none'.
-#' The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
-#' the checkSeObj function for more details.
-#' @param override.check Logical. When set to 'TRUE', the function verifies the current SummarizedExperiment object to
-#' determine if the PPcorr has already been computed for the current parameters. If it has, the metric will not be recalculated.
-#' The default is set to FALSE.
+#' @param assay.names Character. A character string or vector of character strings specifying the name(s) of the assay(s)
+#' in the SummarizedExperiment object for calculating the correlations. The default is ste to "all", which indicates that
+#' all assays of the SummarizedExperiment object will be selected.
+#' @param variable Character. A character string indicating the column name in the SummarizedExperiment object that contains a
+#' continuous variable, such as library size, tumor purity, etc.
+#' @param method Character. Specifies which correlation method should be used. The options are 'pearson', 'kendall', or
+#' 'spearman'. The default is set to 'spearman'.
+#' @param genes Character or Numeric. A vector containing genes on which the correlation analysis will be performed. The
+#' vector can be logical, numeric, or gene names (symbol). The default is to 'NULL', which means all genes will be selected.
+#' @param select.genes Logical. If 'TRUE', the function will compute the correlation between individual genes and the specified
+#' variable, then select a subset of genes based on the "corr.coff.cutoff" for downstream analysis. The default is set
+#' to 'TRUE'. This will speed up the computational time.
+#' @param reference.data Character. A character string specifying the name of the assay to be used for selecting genes
+#' based on the correlation analysis. The default is NULL, which means all specified assays will be used.
+#' @param corr.coff.cutoff Numeric. A numeric value used as a cutoff for selecting genes. The default is 0.7.
+#' @param apply.log Logical. Indicates whether to apply a log-transformation to the data. The default is TRUE.
+#' @param pseudo.count Numeric. A numeric value representing a pseudo count to be added to all measurements of the assay(s) before applying
+#' the log transformation to avoid -Inf for measurements that are equal to 0. The default is 1.
+#' @param apply.round Logical. Indicates whether to round the correlation coefficients. The default is TRUE.
+#' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment object. See the `checkSeObj` function for more details.
+#' @param remove.na Character. Specifies whether to remove NA or missing values from the assays. The options are 'assays' and 'none'.
+#' The default is "assays", meaning that all NA or missing values from the assays will be removed before computing RLE. See
+#' the `checkSeObj` function for more details.
+#' @param override.check Logical. When set to 'TRUE', the function verifies whether the PPcorr has already been computed for the current parameters
+#' on the SummarizedExperiment object. If it has, the metric will not be recalculated. The default is FALSE.
 #' @param save.se.obj Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object or
-#' to output the result as list. By default it is set to TRUE.
-#' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
+#' to output the result as a list. The default is TRUE.
+#' @param verbose Logical. If TRUE, displays the messages for different steps of the function.
 
-#' @return The SummarizedExperiment object that contains the correlation coefficients or a list of the correlation coefficient
+#' @return A SummarizedExperiment object containing the correlation coefficients or a list of the correlation coefficients
 #' for individual assays.
+
 
 #' @importFrom Rfast correls
 #' @importFrom stats cor
@@ -72,8 +70,11 @@ computeGenesPartialCorrelation <- function(
                         color = 'white',
                         verbose = verbose)
 
-    # Check to override or not ####
-    if(isTRUE(override.check)){
+    # Checking to override or not ####
+    if (!is.logical(override.check)){
+        stop('The "override.check" must be logical(TRUE or FALSE)')
+    }
+    if (isTRUE(override.check)){
         override.check <- overrideCheck(
             se.obj = se.obj,
             slot = 'Metrics',
@@ -84,7 +85,7 @@ computeGenesPartialCorrelation <- function(
             variable = variable,
             file.name = 'correlations'
         )
-        if(is.logical(override.check)){
+        if (is.logical(override.check)){
             compute.metric <- FALSE
         } else if (is.list(override.check)) {
             compute.metric <- TRUE
@@ -92,15 +93,18 @@ computeGenesPartialCorrelation <- function(
         }
     } else if (isFALSE(override.check)) compute.metric <- TRUE
 
-    if(isTRUE(compute.metric)){
+    if (isTRUE(compute.metric)){
         # Check the inputs ####
         if (is.list(assay.names)) {
             stop('The "assay.names" cannot be a list.')
-        } else if (is.null(variable)) {
+        }
+        if (is.null(variable)) {
             stop('The "variable" cannot be NULL or empty.')
-        } else if (length(variable) > 1) {
+        }
+        if (length(variable) > 1) {
             stop('The "variable" must be the name of a variable in the SummarizedExperiment object.')
-        } else if (!variable %in% colnames(colData(se.obj))) {
+        }
+        if (!variable %in% colnames(colData(se.obj))) {
             stop('The "variable" cannot be found in the SummarizedExperiment object.')
         }
         if(isTRUE(select.genes)){
@@ -135,15 +139,15 @@ computeGenesPartialCorrelation <- function(
             }
         }
 
-        # Check the assays ####
+        # Checking the assays ####
         if (length(assay.names) == 1 && assay.names == 'all') {
             assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
         } else  assay.names <- factor(x = assay.names , levels = assay.names)
-        if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
+        if (!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
             stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
         }
 
-        # Assess the SummarizedExperiment object ####
+        # Assessing the SummarizedExperiment object ####
         if (isTRUE(assess.se.obj)) {
             se.obj <- checkSeObj(
                 se.obj = se.obj,
@@ -153,44 +157,51 @@ computeGenesPartialCorrelation <- function(
                 verbose = verbose)
         }
 
-        # Data log transformation ####
+        # Applying log transformation on data ####
         printColoredMessage(
-            message ='-- Data log transformation:',
+            message ='-- Applying log transformation:',
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose,
+            )
         all.assays <- applyLog(
             se.obj = se.obj,
             assay.names = levels(assay.names),
-            apply.log = apply.log,
             pseudo.count = pseudo.count,
             assessment = 'partail gene-gene correlation',
             verbose = verbose
         )
         # Select genes ####
         printColoredMessage(
-            message ='-- Select genes based the current parameters:',
+            message ='-- Selecting genes based the current parameters:',
             color = 'magenta',
             verbose = verbose
             )
 
-        if(is.null(genes) & isFALSE(select.genes)){
+        if (is.null(genes) & isFALSE(select.genes)){
             printColoredMessage(
                 message = '- Both "genes" and "select.genes" are not specified, so all genes will be selected.',
                 color = 'blue',
-                verbose = verbose)
+                verbose = verbose
+                )
             selected.genes <- row.names(se.obj)
         }
-        if(isTRUE(select.genes) & is.null(genes)){
+        if (isTRUE(select.genes) & is.null(genes)){
             printColoredMessage(
-                message = paste0('- Select genes that are highly correlated with the "', variable, '" variable.'),
+                message = paste0(
+                    '- Selecting genes that are highly correlated with the "',
+                    variable,
+                    '" variable.'),
                 color = 'orange',
                 verbose = verbose
             )
-            if(!is.null(reference.data)){
+            if (!is.null(reference.data)){
                 printColoredMessage(
                     message = paste0(
-                        '* Find genes that have absolute correlations more than ',
-                        corr.coff.cutoff, ' in the "', reference.data, '" data.'),
+                        '* Finding genes that have absolute correlations more than ',
+                        corr.coff.cutoff,
+                        ' in the "',
+                        reference.data,
+                        '" data.'),
                     color = 'blue',
                     verbose = verbose
                     )
@@ -199,20 +210,24 @@ computeGenesPartialCorrelation <- function(
                     x = t(all.assays[[reference.data]]) ,
                     type = method)[ , 'correlation', drop = FALSE]
                 selected.genes <- row.names(corr.genes.var)[abs(corr.genes.var[ ,'correlation']) > corr.coff.cutoff]
-                if(length(selected.genes) == 0){
+                if (length(selected.genes) == 0){
                     stop('Any genes cannot be found based on the current "corr.coff.cutoff".')
                 }
                 printColoredMessage(
                     message = paste0(
-                        '- ', length(selected.genes), ' genes are selected for pairwise-partial correlation analysis.' ),
+                        '- ',
+                        length(selected.genes),
+                        ' genes are selected for pairwise-partial correlation analysis.' ),
                     color = 'blue',
                     verbose = verbose
                     )
             }
-            if(is.null(reference.data)){
+            if (is.null(reference.data)){
                 printColoredMessage(
                     message = paste0(
-                        '* Find genes that have absolute correlations more than ', corr.coff.cutoff, ' in each datasets.'),
+                        '* Finding genes that have absolute correlations more than ',
+                        corr.coff.cutoff,
+                        ' in each datasets.'),
                     color = 'blue',
                     verbose = verbose
                     )
@@ -226,22 +241,24 @@ computeGenesPartialCorrelation <- function(
                         selected.genes <- row.names(corr.genes.var)[abs(corr.genes.var[,'correlation']) > corr.coff.cutoff]
                     })
                 selected.genes <- unique(unlist(all.corr.genes.var))
-                if(length(selected.genes) == 0){
+                if (length(selected.genes) == 0){
                     stop('Any genes cannot be found based on the current "corr.coff.cutoff".')
                 }
                 printColoredMessage(
                     message = paste0(
-                        '- ', length(selected.genes), ' genes are selected for pairwise-partial correlation analysis.' ),
+                        '- ',
+                        length(selected.genes),
+                        ' genes are selected for pairwise-partial correlation analysis.'),
                     color = 'blue',
                     verbose = verbose
                     )
             }
         }
-        if(!is.null(genes) & isFALSE(select.genes)){
+        if (!is.null(genes) & isFALSE(select.genes)){
             selected.genes <- genes
         }
 
-        ## update all assays ####
+        ## updating all assays ####
         all.assays <- lapply(
             levels(assay.names),
             function(x) all.assays[[x]][ selected.genes, ])
@@ -250,7 +267,7 @@ computeGenesPartialCorrelation <- function(
 
         # Compute gene-gene correlation ####
         printColoredMessage(
-            message ='-- Compute all possible pairwise gene-gene correlations:',
+            message ='-- Computing all possible pairwise gene-gene correlations:',
             color = 'magenta',
             verbose = verbose
             )
@@ -258,7 +275,10 @@ computeGenesPartialCorrelation <- function(
             levels(assay.names),
             function(x){
                 printColoredMessage(
-                    message = paste0('- Compute all gene-gene correlations for the "', x , '" data.'),
+                    message = paste0(
+                        '- Compute all gene-gene correlations for the "',
+                        x ,
+                        '" data.'),
                     color = 'blue',
                     verbose = verbose
                     )
@@ -266,7 +286,7 @@ computeGenesPartialCorrelation <- function(
                 upper.tri <- upper.tri(cor.matrix)
                 variable.pairs <- which(upper.tri, arr.ind = TRUE)
                 correlation.coefficients <- cor.matrix[upper.tri]
-                if(isTRUE(apply.round))
+                if (isTRUE(apply.round))
                     correlation.coefficients <- round(x = correlation.coefficients, digits = 2)
                 correlation.df <- data.frame(
                     gene1 = rownames(cor.matrix)[variable.pairs[, 1]],
@@ -276,9 +296,12 @@ computeGenesPartialCorrelation <- function(
             })
         names(gene.gene.correlation) <- levels(assay.names)
 
-        # Compute gene-variable correlation ####
+        # Computing gene-variable correlation ####
         printColoredMessage(
-            message = paste0('-- Compute correlation between each genes with the "', variable, '" variable:'),
+            message = paste0(
+                '-- Computing correlation between each genes with the "',
+                variable,
+                '" variable:'),
             color = 'magenta',
             verbose = verbose
             )
@@ -286,14 +309,18 @@ computeGenesPartialCorrelation <- function(
             levels(assay.names),
             function(x){
                 printColoredMessage(
-                    message = paste0('- Compute the correlation for the "', x,  '" data:'),
+                    message = paste0(
+                        '- Computing the correlation for the "',
+                        x,
+                        '" data:'),
                     color = 'blue',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
                 corr.genes.var <- correls(
                     y = se.obj@colData[[variable]],
                     x = t(all.assays[[x]]) ,
                     type = method)[ , 'correlation', drop = FALSE]
-                if(isTRUE(apply.round))
+                if (isTRUE(apply.round))
                     corr.genes.var[,1] <- round(x = corr.genes.var[,1], digits = 2)
                 corr.genes.var
             })
@@ -301,7 +328,7 @@ computeGenesPartialCorrelation <- function(
 
         # Compute gene-gene partial correlation ####
         printColoredMessage(
-            message = '-- Compute all possible partial pairwise gene-gene correlations:',
+            message = '-- Computing all possible partial pairwise gene-gene correlations:',
             color = 'magenta',
             verbose = verbose
             )
@@ -309,7 +336,10 @@ computeGenesPartialCorrelation <- function(
             levels(assay.names),
             function(x){
                 printColoredMessage(
-                    message = paste0('- Compute the correlation for the "', x,  '" data:'),
+                    message = paste0(
+                        '- Computing the correlation for the "',
+                        x,
+                        '" data:'),
                     color = 'blue',
                     verbose = verbose
                     )
@@ -322,7 +352,7 @@ computeGenesPartialCorrelation <- function(
                 d <- c(1 - correlation.df$gene1.corr^2) * c(1 - correlation.df$gene2.corr^2)
                 correlation.df$pp.cor <- NULL
                 correlation.df$pp.cor <- b/sqrt(d)
-                if(isTRUE(apply.round))
+                if (isTRUE(apply.round))
                     correlation.df$pp.cor <- round(x = correlation.df$pp.cor, digits = 2)
                 return(correlation.df)
             })
@@ -331,13 +361,13 @@ computeGenesPartialCorrelation <- function(
         # Save the data ####
         ## add results to the SummarizedExperiment object ####
         printColoredMessage(
-            message = '-- Save all the correlation coefficients data:',
+            message = '-- Saving all the correlation coefficients data:',
             color = 'magenta',
             verbose = verbose
             )
         if (isTRUE(save.se.obj)) {
             printColoredMessage(
-                message = '- Save all the correlation data to the "metadata" of the SummarizedExperiment object.',
+                message = '- Saving all the correlation data to the "metadata" of the SummarizedExperiment object.',
                 color = 'orange',
                 verbose = verbose
                 )
@@ -381,17 +411,6 @@ computeGenesPartialCorrelation <- function(
                             verbose = verbose)
         return(se.obj = se.obj)
     }
-}
-
-
-RamyarPcorr <- function(x, y, z){
-    rxy <- cor.test(x , y)[[4]]
-    rxz <- cor.test(x , z)[[4]]
-    ryz <- cor.test(y , z)[[4]]
-    rxyz.a <- rxy - c(rxz *ryz)
-    rxyz.b <- c(1-rxz^2)*c(1-ryz^2)
-    ppcor <- rxyz.a/sqr(rxyz.b)
-    return(ppcor)
 }
 
 

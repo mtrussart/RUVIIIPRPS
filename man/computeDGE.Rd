@@ -2,13 +2,13 @@
 % Please edit documentation in R/computeDGE.R
 \name{computeDGE}
 \alias{computeDGE}
-\title{Perform differential gene expression analysis.}
+\title{Performs differential gene expression analysis.}
 \usage{
 computeDGE(
   se.obj,
   assay.names = "all",
-  method = "limma",
   variable,
+  method = "limma",
   apply.log = TRUE,
   pseudo.count = 1,
   assess.se.obj = TRUE,
@@ -21,42 +21,43 @@ computeDGE(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) of the
-SummarizedExperiment object to compute the differential gene expression analysis. By default all the assays of the
-SummarizedExperiment object will be selected.}
+\item{assay.names}{Character. A character string or a vector of character strings for the selection of the name(s) of
+the assay(s) in the SummarizedExperiment object to compute the differential gene expression analysis. By default, all
+the assays of the SummarizedExperiment object will be selected.}
 
-\item{method}{Symbol. A symbol that indicates which DE method should be used. Options are 'limma' and 'Wilcoxon'. The
-defalut is set to 'limma'.}
+\item{variable}{Character. A character string indicating a column name in the SummarizedExperiment object that contains
+a categorical variable, such as batches. If the variable has more than two levels, the function performs differential
+gene expression (DGE) analysis between all possible pairwise groups.}
 
-\item{variable}{Symbol. A symbol that indicates a column name of the SummarizedExperiment object that contains a
-categorical variable such as batches. If the variable has more than two levels, the function perform DGE between all
-possible pairwise groups.}
+\item{method}{Character. A character string indicating which differential expression method should be used. Options are
+'limma' and 'Wilcoxon'. The default is set to 'limma'.}
 
-\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data before compuritn DGE. The
-default is 'TRUE'.}
+\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data before computing differential gene
+expression. The default is set to 'TRUE'.}
 
-\item{pseudo.count}{Numeric. A value as a pseudo count to be added to all measurements before log transformation. The
-default is 1.}
+\item{pseudo.count}{Numeric. A numeric value representing a pseudo count to be added to all measurements before log
+transformation. The default is set to 1.}
 
-\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment class object.}
+\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment object. The defult is se to 'TRUE'.
+Refer to the 'checkSeObj' for more detail.}
 
-\item{remove.na}{Symbol. Indicates whether to remove missing/NA values from either the 'assays', 'sample.annotation',
-'both' or 'none'. If 'assays' is selected, the genes that contains missing/NA values will be excluded. If 'sample.annotation'
-is selected, the samples that contains NA or missing values for each 'variables' will be excluded. By default, it is
-set to 'both'.}
+\item{remove.na}{Character. Indicates whether to remove missing/NA values from either 'assays', 'sample.annotation',
+'both', or 'none'. If 'assays' is selected, the genes that contain missing/NA values will be excluded. If 'sample.annotation'
+is selected, the samples that contain NA or missing values for the specified 'variable' will be excluded. By default,
+it is set to 'both'.}
 
 \item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment
-object 'se.obj' or to output the result. By default it is set to TRUE.}
+object ('se.obj') or to output the result. By default, it is set to 'TRUE'.}
 
 \item{override.check}{Logical. When set to 'TRUE', the function verifies the current SummarizedExperiment object to
-determine if the DGE has already been computed for the current parameters. If it has, the metric will not be recalculated.
-The default is set to FALSE.}
+determine if the differential gene expression (DGE) analysis has already been computed for the current parameters. If
+it has, the metric will not be recalculated. The default is set to FALSE.}
 
-\item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
+\item{verbose}{Logical. If TRUE, displays process messages during execution.}
 }
 \value{
-A SummarizedExperiment object or a list containing all the stats of the Wilcoxon test and if requested the
-associated p-value histograms.
+Either a SummarizedExperiment object or a list containing all the statistics from the Limma or Wilcoxon test
+and, if requested.
 }
 \description{
 This function performs differential gene expression analysis using Wilcoxon test between all possible pairs of a

@@ -1,4 +1,4 @@
-#' Computes variable and gene-level Kaplan-Meier survival. Finalized
+#' Computes variable and gene-level Kaplan-Meier survival analysis. Finalized
 
 #' @author Ramyar Molania
 

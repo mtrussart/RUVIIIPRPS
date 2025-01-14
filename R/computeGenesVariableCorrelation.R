@@ -1,4 +1,4 @@
-#' Compute the correlation between individual gene expression and a continuous variable.
+#' Computes the correlation between individual gene expression and a continuous variable.
 
 #' @author Ramyar Molania
 
@@ -6,42 +6,44 @@
 #' This function computes Spearman or Pearson correlations between individual gene-level expression of each assay and
 #' a continuous variable in SummarizedExperiment object.
 
-#' @param se.obj A SummarizedExperiment object.
-#' @param assay.names Symbol. A symbol or vector of symbols for the selection of the name(s) of the assay(s) of the
-#' SummarizedExperiment object to compute the correlation. By default all the assays of the SummarizedExperiment class
-#' object will be selected.
-#' @param variable Symbol. A symbol indicating a column name of the SummarizedExperiment object that contains a continuous
-#' variable such as library size, tumor purity, ....
-#' @param method Symbol. Indicates which correlation methods should be used. The options are 'pearson', 'kendall', or
-#' "spearman". The default is set to 'spearman'.
-#' @param a Numeric. The significance level used for the confidence intervals in the correlation, by default it is set to
-#' 0.05. We refer to the correls function from the Rfast package for more details.
-#' @param rho Numeric. The value of the hypothesized correlation to be used in the hypothesis testing, by default it is
-#' set to 0. We refer to the correls function from the Rfast package for more details.
-#' @param apply.log Logical. Indicates whether to apply a log-transformation to the data before computing the correlation.
-#' By default the log transformation will be selected.
-#' @param pseudo.count Numeric. A numeric value as a pseudo count to be added to all measurements before log transformation.
-#' The default it is set to 1.
-#' @param plot.top.genes Logical. Indicates whether to plot the gene expression of the number of genes from the high or
-#' low correlation, by default it is set to FALSE.
-#' @param nb.top.genes Numeric. Defines the number of genes that show the highest or lowest correlation with variable to
-#' plot. The default is 3.
-#' @param apply.round Logical. Indicates whether to round the correlation coefficients. The default it TRUE.
-#' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment class object. We refer to the
-#' checkSeObj function for more details. The default is TRUE.
-#' @param remove.na To remove NA or missing values from the assays and variable.
-#' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the current SummarizedExperiment
-#' object or to output the result. By default it is set to TRUE.
-#' @param override.check Logical. When set to 'TRUE', the function verifies the current SummarizedExperiment object to
-#' determine if the correlation has already been computed for the current parameters. If it has, the metric will not be recalculated.
-#' The default is set to FALSE.
-#' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
-
-#' @return A SummarizedExperiment object or a list that contains the correlation coefficients on the continuous variable.
-
 #' @references
 #' Molania R., ..., Speed, T. P., Removing unwanted variation from large-scale RNA sequencing data with PRPS,
 #' Nature Biotechnology, 2023
+
+#' @param se.obj A SummarizedExperiment object.
+#' @param assay.names Character. A character string or vector of character strings specifying the name(s) of the assay(s)
+#' in the SummarizedExperiment object for computing the correlation. By default is set to 'all', which indicates all
+#' assays in the SummarizedExperiment object will be selected.
+#' @param variable Character. A character string indicating a column name in the SummarizedExperiment object that contains
+#' a continuous variable, such as library size, tumor purity, etc.
+#' @param method Character. Specifies which correlation method should be used. The options are 'pearson', 'kendall', or
+#' "spearman". The default is set to 'spearman'.
+#' @param a Numeric. The significance level used for the confidence intervals in the correlation. The default is 0.05.
+#' Refer to the 'correls' function from the Rfast R package for more details.
+#' @param rho Numeric. The hypothesized correlation value to be used in hypothesis testing. The default is 0.
+#' Refer to the 'correls' function from the Rfast R package for more details.
+#' @param apply.log Logical. Indicates whether to apply a log-transformation to the data before computing the correlation.
+#' By default, the log transformation is applied.
+#' @param pseudo.count Numeric. A numeric value to be added as a pseudo count to all measurements before log transformation.
+#' The default is set to 1.
+#' @param plot.top.genes Logical. Indicates whether to plot the gene expression for the top or bottom genes based on
+#' correlation values. The default is set to 'FALSE'.
+#' @param nb.top.genes Numeric. Defines the number of genes with the highest or lowest correlation to the variable to plot.
+#' The default is 3.
+#' @param apply.round Logical. Indicates whether to round the correlation coefficients. The default is TRUE.
+#' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment object.
+#' Refer to the 'checkSeObj' function for more details. The default is TRUE.
+#' @param remove.na Character. Specifies whether to remove NA or missing values from the assays and variable.
+#' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the current SummarizedExperiment
+#' object or to output the result. By default, it is set to TRUE.
+#' @param override.check Logical. When set to 'TRUE', the function verifies the current SummarizedExperiment object to
+#' determine if the correlation has already been computed with the current parameters. If so, the metric will not be recalculated.
+#' The default is FALSE.
+#' @param verbose Logical. If 'TRUE', displays the messages for different steps of the function.
+
+#' @return Either a SummarizedExperiment object or a list containing the correlation coefficients for compuated for individual
+#' genes.
+
 
 #' @importFrom SummarizedExperiment assays assay colData
 #' @importFrom tidyr pivot_longer %>%
@@ -73,7 +75,10 @@ computeGenesVariableCorrelation <- function(
                         verbose = verbose)
 
     # Check to override or not ####
-    if(isTRUE(override.check)){
+    if (!is.logical(override.check)){
+        stop('The "override.check" must be logical (TRUE or FALSE)')
+    }
+    if (isTRUE(override.check)){
         override.check <- overrideCheck(
             se.obj = se.obj,
             slot = 'Metrics',
@@ -84,7 +89,7 @@ computeGenesVariableCorrelation <- function(
             variable = variable,
             file.name = 'correlations.pvalues'
         )
-        if(is.logical(override.check)){
+        if (is.logical(override.check)){
             compute.metric <- FALSE
         } else if (is.list(override.check)) {
             compute.metric <- TRUE
@@ -92,39 +97,56 @@ computeGenesVariableCorrelation <- function(
         }
     } else if (isFALSE(override.check)) compute.metric <- TRUE
 
-    if(isTRUE(compute.metric)){
-        # Check the inputs ####
+    if (isTRUE(compute.metric)){
+        # Checking the inputs ####
         if (is.null(assay.names)) {
             stop('The "assay.names" cannot be empty.')
-        } else if (is.list(assay.names)){
+        }
+        if (is.list(assay.names)){
             stop('The "assay.names" must be a vector of the assay names(s) or "assay.names = all".')
-        } else if (is.null(variable)) {
+        }
+        if (is.null(variable)) {
             stop('The "variable" cannot be empty.')
-        } else if (!class(se.obj@colData[, variable]) %in% c('numeric', 'integer')) {
+        }
+        if (!class(se.obj@colData[, variable]) %in% c('numeric', 'integer')) {
             stop(paste0('The ', variable, 'should be a continuous variable.'))
-        } else if (!method %in% c('pearson', 'spearman')) {
+        }
+        if (!method %in% c('pearson', 'spearman')) {
             stop('The method must be one of the "pearson" or "spearman".')
         }
         if (var(se.obj[[variable]]) == 0) {
             stop(paste0('The ', variable, ' appears to have no variation.'))
         }
 
-        # Check the assays ####
+        # Checking the assays ####
         if (length(assay.names) == 1 && assay.names == 'all') {
             assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
         } else  assay.names <- factor(x = assay.names , levels = assay.names)
         if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
             stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
         }
+        if (!is.logical(plot.top.genes)){
+            stop('The "plot.top.genes" must be logical (TRUE or FALSE)')
+        }
+        if (!is.logical(apply.round)){
+            stop('The "apply.round" must be logical (TRUE or FALSE)')
+        }
+        if (!is.logical(save.se.obj)){
+            stop('The "save.se.obj" must be logical (TRUE or FALSE)')
+        }
+        if (!is.logical(verbose)){
+            stop('The "verbose" must be logical (TRUE or FALSE)')
+        }
 
-        # Check SummarizedExperiment object ####
-        if (assess.se.obj) {
+        # Checking SummarizedExperiment object ####
+        if (isTRUE(assess.se.obj)) {
             se.obj <- checkSeObj(
                 se.obj = se.obj,
                 assay.names = levels(assay.names),
                 variables = variable,
                 remove.na = remove.na,
-                verbose = verbose)
+                verbose = verbose
+                )
         }
 
         # Data transformation ####
@@ -143,18 +165,27 @@ computeGenesVariableCorrelation <- function(
 
         # Compute correlation analyses ####
         printColoredMessage(
-            message = paste0('Perform ' , method,' correlation between individual genes expression of the assay(s) and the "',
-                             variable, '" variable.'),
+            message = paste0(
+                'Performing ' ,
+                method,
+                ' correlation between individual genes expression of the assay(s) and the "',
+                variable,
+                '" variable.'),
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         all.correlations <- lapply(
             levels(assay.names),
             function(x) {
                 # correlation ####
                 printColoredMessage(
-                    message = paste0('- Perform the correlation on the "', x, '" data and obtain the coefficients.'),
+                    message = paste0(
+                        '- Performing the correlation on the "',
+                        x,
+                        '" data and obtain the coefficients.'),
                     color = 'blue',
-                    verbose = verbose)
+                    verbose = verbose
+                    )
                 corr.genes.var <- correls(
                     y = se.obj@colData[, variable],
                     x = t(all.assays[[x]]),
@@ -172,8 +203,11 @@ computeGenesVariableCorrelation <- function(
                 # plot highly affected genes ####
                 if (isTRUE(plot.top.genes)) {
                     printColoredMessage(
-                        message = paste0('- Plot top ' , nb.top.genes,
-                                         ' highly correlated (positive and negative) genes with the ', variable,'.'),
+                        message = paste0(
+                            '- Plotting top ' ,
+                            nb.top.genes,
+                            ' highly correlated (positive and negative) genes with the ',
+                            variable,'.'),
                         color = 'blue',
                         verbose = verbose)
                     temp.corr <- corr.genes.var[order(corr.genes.var[, 'correlation'], decreasing = TRUE, na.last = TRUE) , ]
@@ -238,9 +272,10 @@ computeGenesVariableCorrelation <- function(
 
         # Save the results ####
         printColoredMessage(
-            message = '-- Save the correlation results:',
+            message = '-- Saving the correlation results:',
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         ## add results to the SummarizedExperiment object ####
         if (isTRUE(save.se.obj)) {
             printColoredMessage(
@@ -260,8 +295,11 @@ computeGenesVariableCorrelation <- function(
                 results.data = all.correlations
             )
             printColoredMessage(
-                message = paste0('- The correlation results of all the assays are saved to the ',
-                                 ' "se.obj@metadata$metric$AssayName$Correlation$', method, '$library.size" in the SummarizedExperiment object.'),
+                message = paste0(
+                    '- The correlation results of all the assays are saved to the ',
+                    ' "se.obj@metadata$metric$AssayName$Correlation$',
+                    method,
+                    ' in the SummarizedExperiment object.'),
                 color = 'blue',
                 verbose = verbose)
 

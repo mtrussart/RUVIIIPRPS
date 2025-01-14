@@ -2,7 +2,7 @@
 % Please edit documentation in R/computeSilhouette.R
 \name{computeSilhouette}
 \alias{computeSilhouette}
-\title{Compute the average silhouette width.}
+\title{Computes the average silhouette width using PCs. -- Finalized}
 \usage{
 computeSilhouette(
   se.obj,
@@ -18,31 +18,31 @@ computeSilhouette(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
-SummarizedExperiment object to calculate Silhouette coefficient. The default is set to 'all', which indicates all the
-assays of the SummarizedExperiment object will be selected.}
+\item{assay.names}{Character. A character string or a vector of character strings specifying the name(s) of the assay(s)
+in the SummarizedExperiment object for which to calculate the Silhouette coefficient. The default is set to 'all', which
+indicates that all the assays of the SummarizedExperiment object will be selected.}
 
-\item{variable}{Symbol. A symbol that indicates the column name that contain categorical variable in the
-SummarizedExperiment object. The variable can be biological or unwanted variable.}
+\item{variable}{Character. A character string indicating the column name that contains the categorical variable in the
+SummarizedExperiment object. The variable can represent a biological or unwanted variable.}
 
-\item{dist.measure}{Symbol. A symbol that indicates which ditsance measure to be used to calculate silhouette coefficient.
-The options are 'euclidean', 'maximum', manhattan', 'canberra', 'binary' or 'minkowski'. The default is set to 'euclidean'.
-Refer to the function 'dist' from the 'stats' R package for more details.}
+\item{dist.measure}{Character. A character string indicating which distance measure to use for calculating the Silhouette
+coefficient. The options are 'euclidean', 'maximum', 'manhattan', 'canberra', 'binary', or 'minkowski'. The default is
+set to 'euclidean'. Refer to the 'dist' function from the 'stats' R package for more details.}
 
-\item{fast.pca}{Logical. Indicates whether to use the PC calculated using fast PCA or not. The default is set to 'TRUE'.
-The fast PCA and ordinary PCA do not affect the silhouette coefficient calculation.}
+\item{fast.pca}{Logical. Indicates whether to use the PCs calculated using fast PCA. The default is set to 'TRUE'.
+Fast PCA and ordinary PCA do not affect the Silhouette coefficient calculation.}
 
-\item{nb.pcs}{Numeric. A numeric value indicates the number of first PCs to be used to calculated the distances between
-samples. The default is set to 3.}
+\item{nb.pcs}{Numeric. A numeric value indicating the number of principal components (PCs) to use when calculating the
+distances between samples. The default is set to 3.}
 
-\item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment object
-or to output the result. By default it is set to 'TRUE'.}
+\item{save.se.obj}{Logical. Indicates whether to save the silhouette coefficient  results in the metadata of the
+SummarizedExperiment object or to output the result. The default is set to 'TRUE'.}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
 \value{
-Either the SummarizedExperiment object containing the computed silhouette coefficient in the metadata or a list
-of silhouette coefficient for all specified assay(s)
+Either the SummarizedExperiment object containing the computed Silhouette coefficient stored in the metadata
+or a list of Silhouette coefficients for all specified assay(s).
 }
 \description{
 This function calculates the average silhouette width for each categorical variables such as sample biological subtypes,

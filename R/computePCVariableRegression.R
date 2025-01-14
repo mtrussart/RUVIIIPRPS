@@ -1,10 +1,10 @@
-#' compute the linear regression.
+#' Computes the linear regression. --- Finalized
 
 #' @author Ramyar Molania
 
 #' @description
-#' This functions calculates the linear regression between the the first cumulative PCs of the gene expression (assays)
-#' of a SummarizedExperiment object and a continuous variable (i.e. library size).
+#' This function calculates the linear regression between the the first 'nb.pcs' PCs (cumulatively) of the gene expression
+#' data (assays) of a SummarizedExperiment object and a continuous variable (i.e. library size or tumor purity).
 
 #' @details
 #' R2 values of fitted linear models are used to quantity the strength of the (linear) relationships between a single
@@ -12,21 +12,21 @@
 #' summary statistics, such as the first k PCs (1 ≤ k ≤ 10).
 
 #' @param se.obj A SummarizedExperiment object.
-#' @param assay.names Symbol. A symbol or list of symbols for the selection of the name(s) of the assay(s) in the
-#' SummarizedExperiment object to calculate regression analysis. The default is "all, which indicates all
-#' the assays of the SummarizedExperiment object will be selected.
-#' @param variable Symbol. A symbol indicating the name of the column in the sample annotation of the SummarizedExperiment object.
-#' The variable must be a continuous variable such as library size, tumor purity, ... .
-#' @param fast.pca Logical. Indicates whether to use the computed fast PCA or PCA results computed by the computePCA function. The
-#' default is 'TRUE'.
-#' @param nb.pcs Numeric. A numeric value specifying the number of first PCs to be used to compute the vector correlation.
-#' The default is set to 10.
-#' @param save.se.obj Logical. Indicates whether to save the vector correlation plots to the 'metadata' of the
-#' SummarizedExperiment object or to output the result as list. By default it is set to TRUE.
-#' @param verbose Logical. If TRUE, displaying process messages is enabled.
+#' @param assay.names Character. A character string or list of character strings specifying the name(s) of the assay(s)
+#' in the SummarizedExperiment object for performing regression analysis. The default is set to "all", which indicates that
+#' all assays of the SummarizedExperiment object will be selected.
+#' @param variable Character. A character string indicating the name of the column in the sample annotation of the
+#' SummarizedExperiment object. The variable must be continuous, such as library size, tumor purity, etc.
+#' @param fast.pca Logical. Indicates whether to use the computed fast PCA or PCA results from the 'computePCA' function.
+#' The default is set to 'TRUE'. If 'FALSE', the 'fast.pca' argument in the 'computePCA' function should be set to 'FALSE'.
+#' @param nb.pcs Numeric. A numeric value specifying the number of the first principal components (PCs) to use for computing
+#' the vector correlation. The default is set to 10.
+#' @param save.se.obj Logical. Indicates whether to save the results, regression R^2, to the 'metadata' of the
+#' SummarizedExperiment object or output the result as a list. By default, it is set to 'TRUE'.
+#' @param verbose Logical. If 'TRUE', displays the messages for the different steps of the function.
 
-#' @return A SummarizedExperiment object containing the computed regression for
-#' the continuous variable and if requested the associated plot.
+#' @return A SummarizedExperiment object containing the computed regression R^2 for or output the result as a list.
+
 
 #' @importFrom stats lm var
 #' @import ggplot2
@@ -44,20 +44,26 @@ computePCVariableRegression <- function(
     printColoredMessage(message = '------------The computePCVariableRegression function starts:',
                         color = 'white',
                         verbose = verbose)
-    # Check the inputs ####
+    # Checking the inputs ####
     if (is.null(assay.names)) {
         stop('The "assay.names" cannot be empty.')
-    } else if (is.list(assay.names)){
+    }
+    if (is.list(assay.names)){
         stop('The "assay.names" must be a vector of the assay names(s).')
-    } else if (is.null(variable)) {
+    }
+    if (is.null(variable)) {
         stop('The "variable" cannot be empty.')
-    } else if (length(variable) > 1){
-        stop('The "variable" must contain only one variable.')
-    } else if (!variable %in% colnames(se.obj@colData)){
+    }
+    if (length(variable) > 1){
+        stop('The "variable" must be the name of a column in the sample annotation of the SummarizedExperiment object.')
+    }
+    if (!variable %in% colnames(se.obj@colData)){
         stop('The "variable" cannot be found in the SummarizedExperiment object.')
-    } else if (var(se.obj[[variable]]) == 0) {
+    }
+    if (var(se.obj[[variable]]) == 0) {
         stop('The "variable" must have some variation.')
-    } else if (!class(se.obj@colData[, variable]) %in% c('numeric', 'integer')) {
+    }
+    if (!class(se.obj@colData[, variable]) %in% c('numeric', 'integer')) {
         stop('The "variable" must be a continuous varible.')
     }
     if (sum(is.na(se.obj@colData[[variable]])) > 0){
@@ -65,28 +71,54 @@ computePCVariableRegression <- function(
                     ' Run the checkSeObj function with "remove.na = both"',
                     ', then "computePCA"-->"computePCVariableRegression".'))
     }
+    if (!is.logical(fast.pca)){
+        stop('The "fast.pca" must be logical(TRUE or FALSE)')
+    }
+    if (length(fast.pca) > 1){
+        stop('The "nb.pcs" must be a numerical value.')
+    }
+    if (!is.numeric(nb.pcs)){
+        stop('The "nb.pcs" must be a numerical value.')
+    }
+    if (is.null(nb.pcs)) {
+        stop('The number of PCs (nb.pcs) must be specified.')
+    }
+    if(!is.logical(save.se.obj)){
+        stop('The "save.se.obj" must be logical (TRUE or FALSE)')
+    }
+    if(!is.logical(verbose)){
+        stop('The "verbose" must be logical (TRUE or FALSE)')
+    }
 
     # Check the assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else  assay.names <- factor(x = assay.names , levels = assay.names)
-    if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
+    if (!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
     # Compute the regression on all assays ####
     printColoredMessage(
-        message =  paste0('-- Compute linear regression between the first ',
-                          nb.pcs, ' PCs (cumulatively) and the "', variable, 'variable:' ),
+        message =  paste0(
+            '-- Computing linear regression between the first ',
+            nb.pcs,
+            ' PCs (cumulatively) and the "',
+            variable,
+            'variable:' ),
         color = 'magenta',
-        verbose = verbose)
+        verbose = verbose
+        )
     ## obtain computed PCs from the SummarizedExperiment object ####
     printColoredMessage(
-        message = paste0('- Obtain the first ', nb.pcs, ' computed PCs from the SummarizedExperiment object.'),
+        message = paste0(
+            '- Obtaining the first ',
+            nb.pcs,
+            ' computed PCs from the SummarizedExperiment object.'),
         color = 'blue',
         verbose = verbose
     )
-    if(isTRUE(fast.pca)){
+    if( isTRUE(fast.pca)){
         method = 'fast.svd'
     } else method = 'svd'
     all.pca.data <- getMetricFromSeObj(
@@ -107,13 +139,18 @@ computePCVariableRegression <- function(
         levels(assay.names),
         function(x) {
             printColoredMessage(
-                message = paste0('- Compute the linear regression for the "', x , '" data:'),
+                message = paste0(
+                    '- Computing the linear regression for the "',
+                    x ,
+                    '" data:'),
                 color = 'orange',
-                verbose = verbose)
+                verbose = verbose
+                )
             printColoredMessage(
-                message = '* compute the R squared of the linear regression analysis.',
+                message = '* computing the R squared of the linear regression analysis.',
                 color = 'blue',
-                verbose = verbose)
+                verbose = verbose
+                )
             r.squared <- sapply(
                 1:nb.pcs,
                 function(y) lm.ls <- summary(lm(se.obj@colData[[variable]] ~ all.pca.data[[x]]$u[, 1:y]))$r.squared)
@@ -123,14 +160,16 @@ computePCVariableRegression <- function(
 
     # Save the results ####
     printColoredMessage(
-        message = '-- Save all the R squared of the linear regression analysis:',
+        message = '-- Saving all the R squared of the linear regression analysis:',
         color = 'magenta',
         verbose = verbose
         )
     ## add results to the SummarizedExperiment object ####
     if (isTRUE(save.se.obj)) {
         printColoredMessage(
-            message = '- Save all the R squared of the linear regression analysis for each assay(s) the "metadata" of the SummarizedExperiment object.',
+            message = paste0(
+                '- Saving all the R squared of the linear regression analysis for each assay(s)',
+                'the "metadata" of the SummarizedExperiment object.'),
             color = 'blue',
             verbose = verbose)
         se.obj <- addMetricToSeObj(
@@ -145,8 +184,9 @@ computePCVariableRegression <- function(
             results.data = all.r.squared
             )
         printColoredMessage(
-            message = paste0('- The the R squared for the individal assay(s) are saved to the',
-                             ' "se.obj@metadata$metric$AssayName$LRA$Varible$rseq" in the SummarizedExperiment object.'),
+            message = paste0(
+                '- The the R squared for the individal assay(s) are saved to the',
+                ' "se.obj@metadata$metric$AssayName$LRA$Varible$rseq" in the SummarizedExperiment object.'),
             color = 'blue',
             verbose = verbose
             )

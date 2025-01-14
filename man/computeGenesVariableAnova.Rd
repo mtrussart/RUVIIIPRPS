@@ -2,7 +2,7 @@
 % Please edit documentation in R/computeGenesVariableAnova.R
 \name{computeGenesVariableAnova}
 \alias{computeGenesVariableAnova}
-\title{Compute ANOVA between individual gene expression and a categorical variable.}
+\title{Computes ANOVA between individual gene expression and a categorical variable.--Finalized}
 \usage{
 computeGenesVariableAnova(
   se.obj,
@@ -24,50 +24,55 @@ computeGenesVariableAnova(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or vector of symbols for the selection of the name(s) of the assay(s) of the
-SummarizedExperiment object to compute the correlation. By default all the assays of the SummarizedExperiment class
-object will be selected.}
+\item{assay.names}{Character. A character string or vector of character strings specifying the name(s) of the assay(s)
+in the SummarizedExperiment object to compute the ANOVA. By default is set to 'all', which means all assays of the
+SummarizedExperiment object will be selected.}
 
-\item{variable}{Symbol. A symbol indicating a column name of the SummarizedExperiment object that contains a
-categorical variable such as experimental batches, ... .}
+\item{variable}{Character. A character string indicating a column name in the sample annotation of the SummarizedExperiment
+object that contains a categorical variable, such as experimental batches, etc.}
 
-\item{method}{Symbol. A symbol indicating which method is to be used for the ANOVA analysis. The options are "aov" and
-"welch". The default is set to "aov".}
+\item{method}{Character. A character string specifying the method to be used for the ANOVA analysis. The options are
+"aov" and "welch". The default is set to "aov". The function applies a fast implementation of one-way ANOVA using the
+row_oneway_equalvar() or the row_oneway_welch() functions from the matrixTests R package. The first function assumes
+equal variance between the groups while the second function applied the Welch correction for the groups with unequal
+variances.}
 
-\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data before applying ANOVA. The default
-is set to 'TRUE'.}
+\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data before performing ANOVA. The
+default is set to 'TRUE'.}
 
-\item{pseudo.count}{Numeric. A numeric value as a pseudo count to be added to all measurements before applying log transformation.
-The default is set to 1.}
+\item{pseudo.count}{Numeric. A numeric value representing a pseudo count to be added to all measurements before applying
+the log transformation. The default is set to 1.}
 
-\item{plot.top.genes}{Logical. Indicates whether to plot the gene expression of "nb.top.genes" number genes with highest
-and lowest F-statistics across the specified variable. The default is set to 'FALSE'.}
+\item{plot.top.genes}{Logical. Indicates whether to plot the gene expression of the "nb.top.genes" genes, as visual
+examples, with the highest and lowest F-statistics across the specified variable. The default is set to 'FALSE'.}
 
-\item{nb.top.genes}{Numeric. A numeric value Defining the number of genes from the top or bottom listing of ANOVA
-F-statistics to plot. The default is set to 3.}
+\item{nb.top.genes}{Numeric. A numeric value specifying the number of genes to plot from the top or bottom of the ANOVA
+F-statistics list. The default is set to 3.}
 
 \item{apply.round}{Logical. Indicates whether to round the values of F-statistics. The default is set to 'TRUE'.}
 
-\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment class object. The default is set to
-'TRUE'.}
+\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment object. The default is set to 'TRUE'.
+This means the function will apply the 'checkSeObj' function.}
 
-\item{remove.na}{Symbol. A symbol that specifies whether to eliminate missing values from either 'assays', 'sample.annotation',}
+\item{remove.na}{Character. A character string specifying whether to eliminate missing values from 'assays', 'sample.annotation',
+'both', or 'none'. When 'assays' is chosen, genes with missing values will be omitted. If 'sample.annotation' is selected,
+samples with NA or missing values for each 'variable' will be excluded. The default is 'both'.}
 
-\item{save.se.obj}{Logical. Indicates whether to save the results, ANOVA F-statistics and p-values, in the metadata
-of the SummarizedExperiment object or to output the result as a list or vector. The default is set to 'TRUE'.}
+\item{save.se.obj}{Logical. Indicates whether to save the results, ANOVA F-statistics, and p-values in the metadata
+of the SummarizedExperiment object or to output these results as a list or vector. The default is set to 'TRUE'.}
 
-\item{override.check}{Logical. When set to 'TRUE', the function verifies the current SummarizedExperiment object to
-determine if the ANOVA has already been computed for the current parameters. If it has, the metric will not be recalculated.
-The default is set to FALSE.}
+\item{override.check}{Logical. When set to TRUE, the function checks whether ANOVA has already been computed for the
+current parameters on the SummarizedExperiment object. If it has, the metric will not be recalculated. The default is
+set to 'FALSE'.}
 
-\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
+\item{verbose}{Logical. If TRUE, displays the messages of different steps of the function.}
 }
 \value{
-A SummarizedExperiment object containing the log2 F-statistics of ANOVA on the continuous
-variable and if requested the associated boxplot.
+Either a SummarizedExperiment object containing the log2 F-statistics and p-values of ANOVA for the continuous
+variable or a list of these results.
 }
 \description{
-This function calculates the ANOVA between individual gene expression of the assays in a SummarizedExperiment object
+This function calculates the ANOVA between individual gene expression of the assay(s) in a SummarizedExperiment object
 and a categorical variable as factor.
 }
 \details{

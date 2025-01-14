@@ -2,7 +2,7 @@
 % Please edit documentation in R/computeGenesPartialCorrelation.R
 \name{computeGenesPartialCorrelation}
 \alias{computeGenesPartialCorrelation}
-\title{Compute gene-gene partial correlation.}
+\title{Compute gene-gene partial correlation analysis. -- finalized}
 \usage{
 computeGenesPartialCorrelation(
   se.obj,
@@ -26,54 +26,51 @@ computeGenesPartialCorrelation(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
-SummarizedExperiment object to calculate RLE data, medians and interquartile ranges. The default is set to "all, which
-indicates all the assays of the SummarizedExperiment object will be selected.}
+\item{assay.names}{Character. A character string or vector of character strings specifying the name(s) of the assay(s)
+in the SummarizedExperiment object for calculating the correlations. The default is ste to "all", which indicates that
+all assays of the SummarizedExperiment object will be selected.}
 
-\item{variable}{Symbol. A symbol that indicates the column name of the SummarizedExperiment object that contains a
-continuous variable such as library size, tumor purity, ... .}
+\item{variable}{Character. A character string indicating the column name in the SummarizedExperiment object that contains a
+continuous variable, such as library size, tumor purity, etc.}
 
-\item{method}{Symbol. A symbol that indicates which correlation methods should be used. The options are 'pearson',
-'kendall', or "spearman". The default is set to 'spearman'.}
+\item{method}{Character. Specifies which correlation method should be used. The options are 'pearson', 'kendall', or
+'spearman'. The default is set to 'spearman'.}
 
-\item{genes}{Vector. A vector comprising genes upon which the correlation analysis will be performed. The vector can be
-logical, numeric or gene names. The default is 'NULL'.}
+\item{genes}{Character or Numeric. A vector containing genes on which the correlation analysis will be performed. The
+vector can be logical, numeric, or gene names (symbol). The default is to 'NULL', which means all genes will be selected.}
 
-\item{select.genes}{Logical. If 'TRUE', the function will compute correlation between individual genes and the specified
-variable, then select a subset of gene based the "corr.coff.cutoff" for down-stream analysis. The default is set to
-'TRUE'.}
+\item{select.genes}{Logical. If 'TRUE', the function will compute the correlation between individual genes and the specified
+variable, then select a subset of genes based on the "corr.coff.cutoff" for downstream analysis. The default is set
+to 'TRUE'. This will speed up the computational time.}
 
-\item{reference.data}{Symbol. A symbol specifying the name of the assay to be used to select genes using the correlation
-analysis. The default is NULL. This means all the specified assays will be used.}
+\item{reference.data}{Character. A character string specifying the name of the assay to be used for selecting genes
+based on the correlation analysis. The default is NULL, which means all specified assays will be used.}
 
-\item{corr.coff.cutoff}{Numeric. A numeric value to be used as a cutoff for selecting the genes. The default is set to
-0.7.}
+\item{corr.coff.cutoff}{Numeric. A numeric value used as a cutoff for selecting genes. The default is 0.7.}
 
-\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data or not. The default is TRUE.}
+\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data. The default is TRUE.}
 
-\item{pseudo.count}{Numeric. A value as a pseudo count to be added to all measurements of the assay(s) before applying
-log transformation to avoid -Inf for measurements that are equal to 0. The default is 1.}
+\item{pseudo.count}{Numeric. A numeric value representing a pseudo count to be added to all measurements of the assay(s) before applying
+the log transformation to avoid -Inf for measurements that are equal to 0. The default is 1.}
 
-\item{apply.round}{Logical. Indicates whether to round the correlations coefficients or not. The default is set to 'TRUE'.}
+\item{apply.round}{Logical. Indicates whether to round the correlation coefficients. The default is TRUE.}
 
-\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment object or not. See the checkSeObj
-function for more details.}
+\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment object. See the \code{checkSeObj} function for more details.}
 
-\item{remove.na}{Symbol. To remove NA or missing values from the assays or not. The options are 'assays' and 'none'.
-The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
-the checkSeObj function for more details.}
+\item{remove.na}{Character. Specifies whether to remove NA or missing values from the assays. The options are 'assays' and 'none'.
+The default is "assays", meaning that all NA or missing values from the assays will be removed before computing RLE. See
+the \code{checkSeObj} function for more details.}
 
-\item{override.check}{Logical. When set to 'TRUE', the function verifies the current SummarizedExperiment object to
-determine if the PPcorr has already been computed for the current parameters. If it has, the metric will not be recalculated.
-The default is set to FALSE.}
+\item{override.check}{Logical. When set to 'TRUE', the function verifies whether the PPcorr has already been computed for the current parameters
+on the SummarizedExperiment object. If it has, the metric will not be recalculated. The default is FALSE.}
 
 \item{save.se.obj}{Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object or
-to output the result as list. By default it is set to TRUE.}
+to output the result as a list. The default is TRUE.}
 
-\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
+\item{verbose}{Logical. If TRUE, displays the messages for different steps of the function.}
 }
 \value{
-The SummarizedExperiment object that contains the correlation coefficients or a list of the correlation coefficient
+A SummarizedExperiment object containing the correlation coefficients or a list of the correlation coefficients
 for individual assays.
 }
 \description{

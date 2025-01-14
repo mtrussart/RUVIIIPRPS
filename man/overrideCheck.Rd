@@ -2,7 +2,7 @@
 % Please edit documentation in R/overrideCheck.R
 \name{overrideCheck}
 \alias{overrideCheck}
-\title{Check whether to override a current metric or not.}
+\title{Checks whether to override a current metric or not. Finalized}
 \usage{
 overrideCheck(
   se.obj,
@@ -19,25 +19,25 @@ overrideCheck(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{slot}{Symbol. A symbol indicating the name of the slots in the 'metadata' of the SummarizedExperiment object.}
+\item{slot}{Character. A character string indicating the name of the slot(s) in the 'metadata' of the SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or a vector of symbols specifying the name(s) of the assay(s) in the SummarizedExperiment
+\item{assay.names}{Character. A character string or a vector of character strings specifying the name(s) of the assay(s) in the SummarizedExperiment
 object. The default is set to 'all'.}
 
-\item{assessment.type}{Symbol. A symbol indicating the type of assessment. Options are 'gene.level' or 'global.level'.}
+\item{assessment.type}{Character. A character string indicating the type of assessment. Options are 'gene.level' or 'global.level'.}
 
-\item{assessment}{Symbol. A symbol indicating the name of the metric to be checked.}
+\item{assessment}{Character. A character string indicating the name of the metric to be checked.}
 
-\item{method}{Symbol. A symbol indicating the method used to calculate the metric.}
+\item{method}{Character. A character string indicating the method used to calculate the metric.}
 
-\item{variable}{Symbol. A symbol indicating the variable used to calculate the metric.}
+\item{variable}{Character. A character string indicating the variable used to calculate the metric.}
 
-\item{file.name}{Symbol. A symbol indicating the file name to which the results of the metric are assigned.}
+\item{file.name}{Character. A character string indicating the file name to which the results of the metric are assigned.}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }
 \description{
-This function checks whether to re-calculate the specified metric or not.
+This function checks whether to re-calculate the specified metric or no.
 }
 \author{
 Ramyar Molania

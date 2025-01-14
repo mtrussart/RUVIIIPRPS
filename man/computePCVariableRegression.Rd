@@ -2,7 +2,7 @@
 % Please edit documentation in R/computePCVariableRegression.R
 \name{computePCVariableRegression}
 \alias{computePCVariableRegression}
-\title{compute the linear regression.}
+\title{Computes the linear regression. --- Finalized}
 \usage{
 computePCVariableRegression(
   se.obj,
@@ -17,31 +17,30 @@ computePCVariableRegression(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or list of symbols for the selection of the name(s) of the assay(s) in the
-SummarizedExperiment object to calculate regression analysis. The default is "all, which indicates all
-the assays of the SummarizedExperiment object will be selected.}
+\item{assay.names}{Character. A character string or list of character strings specifying the name(s) of the assay(s)
+in the SummarizedExperiment object for performing regression analysis. The default is set to "all", which indicates that
+all assays of the SummarizedExperiment object will be selected.}
 
-\item{variable}{Symbol. A symbol indicating the name of the column in the sample annotation of the SummarizedExperiment object.
-The variable must be a continuous variable such as library size, tumor purity, ... .}
+\item{variable}{Character. A character string indicating the name of the column in the sample annotation of the
+SummarizedExperiment object. The variable must be continuous, such as library size, tumor purity, etc.}
 
-\item{fast.pca}{Logical. Indicates whether to use the computed fast PCA or PCA results computed by the computePCA function. The
-default is 'TRUE'.}
+\item{fast.pca}{Logical. Indicates whether to use the computed fast PCA or PCA results from the 'computePCA' function.
+The default is set to 'TRUE'. If 'FALSE', the 'fast.pca' argument in the 'computePCA' function should be set to 'FALSE'.}
 
-\item{nb.pcs}{Numeric. A numeric value specifying the number of first PCs to be used to compute the vector correlation.
-The default is set to 10.}
+\item{nb.pcs}{Numeric. A numeric value specifying the number of the first principal components (PCs) to use for computing
+the vector correlation. The default is set to 10.}
 
-\item{save.se.obj}{Logical. Indicates whether to save the vector correlation plots to the 'metadata' of the
-SummarizedExperiment object or to output the result as list. By default it is set to TRUE.}
+\item{save.se.obj}{Logical. Indicates whether to save the results, regression R^2, to the 'metadata' of the
+SummarizedExperiment object or output the result as a list. By default, it is set to 'TRUE'.}
 
-\item{verbose}{Logical. If TRUE, displaying process messages is enabled.}
+\item{verbose}{Logical. If 'TRUE', displays the messages for the different steps of the function.}
 }
 \value{
-A SummarizedExperiment object containing the computed regression for
-the continuous variable and if requested the associated plot.
+A SummarizedExperiment object containing the computed regression R^2 for or output the result as a list.
 }
 \description{
-This functions calculates the linear regression between the the first cumulative PCs of the gene expression (assays)
-of a SummarizedExperiment object and a continuous variable (i.e. library size).
+This function calculates the linear regression between the the first 'nb.pcs' PCs (cumulatively) of the gene expression
+data (assays) of a SummarizedExperiment object and a continuous variable (i.e. library size or tumor purity).
 }
 \details{
 R2 values of fitted linear models are used to quantity the strength of the (linear) relationships between a single

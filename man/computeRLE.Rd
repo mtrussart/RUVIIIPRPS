@@ -2,7 +2,7 @@
 % Please edit documentation in R/computeRLE.R
 \name{computeRLE}
 \alias{computeRLE}
-\title{calculate relative log expression (RLE) of RNA-seq data.}
+\title{Calculates relative log expression (RLE) of RNA-seq data.}
 \usage{
 computeRLE(
   se.obj,
@@ -20,41 +20,41 @@ computeRLE(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
-SummarizedExperiment object to calculate RLE data, medians and interquartile ranges. The default is set to "all, which
-indicates all the assays of the SummarizedExperiment object will be selected.}
+\item{assay.names}{Character. A character string or a vector of character strings specifying the name(s) of the assay(s)
+in the SummarizedExperiment object to calculate RLE data, medians, and interquartile ranges. The default is set to "all",
+which indicates that all assays in the SummarizedExperiment object will be selected.}
 
-\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data or not. The default is TRUE.
-Please, note, any RNA-seq data (assays) must be in log scale before computing RLE.}
+\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data. The default is set to 'TRUE'.
+Please note that any RNA-seq data (assays) must be in log scale before computing RLE.}
 
-\item{pseudo.count}{Numeric. A value as a pseudo count to be added to all measurements of the assay(s) before applying
-log transformation to avoid -Inf for measurements that are equal to 0. The default is 1.}
+\item{pseudo.count}{Numeric. A value to be added as a pseudo count to all measurements of the assay(s) before applying
+log transformation. This avoids -Inf for measurements equal to 0. The default is set to 1.}
 
-\item{outputs.to.return}{Symbol. Specifies the type of RLE computations to be performed and the data to be returned.
+\item{outputs.to.return}{Character. Specifies the type of RLE computations to be performed and the data to be returned.
 Options include "all", "rle", "rle.med", "rle.iqr", and "rle.med.iqr". Selecting "all" returns RLE data along with
-medians and interquartile ranges. Choosing "rle" returns only the RLE data for each assay. Opting for "rle.med" returns
-only the RLE data medians. Selecting "rle.iqr" returns only the interquartile ranges of the RLE data. If "rle.med.iqr"
-is chosen, both RLE medians and interquartile ranges are returned. The default is 'all'.}
+medians and interquartile ranges. Choosing "rle" returns only the RLE data for each assay. "rle.med" returns only the
+RLE  medians. "rle.iqr" returns only the interquartile ranges of the RLE data. "rle.med.iqr" returns both the
+RLE medians and interquartile ranges. The default is set to  'all'.}
 
-\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment object or not. See the checkSeObj
-function for more details.}
+\item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment object. If 'TRUE', the 'checkSeObj'
+function will be applied. The default is set to 'TRUE'}
 
-\item{remove.na}{Symbol. To remove NA or missing values from the assays or not. The options are 'assays' and 'none'.
-The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
-the checkSeObj function for more details.}
+\item{remove.na}{Character. Indicates whether to remove NA or missing values from the assays. Options are 'assays' or
+'none'. The default is "assays", meaning all NA or missing values in the assays will be removed before computing RLE.
+Refer to the 'checkSeObj' function for more details.}
 
-\item{save.se.obj}{Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object or
-to output the result as list. By default it is set to TRUE.}
+\item{save.se.obj}{Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object,
+or output the result as a list. The default is set to 'TRUE'.}
 
-\item{override.check}{Logical. When set to 'TRUE', the function verifies the current SummarizedExperiment object to
-determine if the RLE has already been computed for the current parameters. If it has, the metric will not be recalculated.
-The default is set to FALSE.}
+\item{override.check}{Logical. When set to 'TRUE', the function verifies if the RLE has already been computed for the
+current parameters in the SummarizedExperiment object. If already computed, the metric will not be recalculated. The
+default is set to 'FALSE'.}
 
-\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
+\item{verbose}{Logical. If 'TRUE', shows messages for each step of the function.}
 }
 \value{
-A SummarizedExperiment object or a list that contains all the RLE data of individual assay(s) in the
-SummarizedExperiment object.
+Either a SummarizedExperiment object that contain the RLE results or a list containing the RLE data for each
+individual assay in the SummarizedExperiment object.
 }
 \description{
 This function calculates relative log expression (RLE) of the assay(s) in a SummarizedExperiment object. In addition,

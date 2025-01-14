@@ -1,4 +1,4 @@
-#' Compute the vector correlation.
+#' Computes the vector correlation.
 
 #' @author Ramyar Molania
 
@@ -20,22 +20,23 @@
 #' Nature Biotechnology, 2023
 
 #' @param se.obj A SummarizedExperiment object.
-#' @param assay.names Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
-#' SummarizedExperiment object to calculate the vector correlation. The default is "all, which indicates all the assays
-#' of the SummarizedExperiment object will be selected.
-#' @param variable Symbol. A symbol indicating the name of the column in the sample annotation of the SummarizedExperiment
-#' object. The variable must be a categorical variable.
-#' @param fast.pca Logical. Indicates whether to use the fast PCA or PCA results computed by the computePCA function. The
-#' default is 'TRUE'.
-#' @param nb.pcs Numeric. A numeric value indicating the number of the first PCs to be used to calculate the vector correlation.
-#' The default is 10.
-#' This number cannot be bigger that number of PCs calculated by the 'computePCA' function.
-#' @param save.se.obj Logical. Indicates whether to save the results in the metadata of the SummarizedExperiment
-#' object  or to output the result as list. By default it is set to TRUE.
-#' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
+#' @param assay.names Character. A character string or a vector of character strings specifying the name(s) of the assay(s)
+#' in the SummarizedExperiment object for calculating the vector correlation. The default is set to "all", which indicates
+#' that all assays of the SummarizedExperiment object will be selected.
+#' @param variable Character. A character string indicating the name of the column in the sample annotation of the SummarizedExperiment
+#' object. The variable must be categorical variable such as batches or sample subtypes.
+#' @param fast.pca Logical. Indicates whether to use the fast PCA or PCA results computed by the 'computePCA' function.
+#' The default is set to 'TRUE'. If 'FALSE', the 'fast.pca' argument in the 'computePCA' function should be set to 'FALSE'.
+#' @param nb.pcs Numeric. A numeric value indicating the number of the first principal components (PCs) to use for
+#' calculating the vector correlation. The default is set to 10. This number cannot exceed the number of PCs calculated
+#' by the 'computePCA' function.
+#' @param save.se.obj Logical. Indicates whether to save the results, correlation coefficients, in the metadata of the
+#' SummarizedExperiment object or to output the result as a list. By default, it is set to 'TRUE'.
+#' @param verbose Logical. If 'TRUE', displays the messages for the different steps of the function.
 
-#' @return A SummarizedExperiment object or a list that contains the vector correlation plots of individual assay(s) for
+#' @return A SummarizedExperiment object or a list containing the vector correlation plots of individual assay(s) for
 #' a categorical variable.
+
 
 #' @importFrom SummarizedExperiment assays assay
 #' @importFrom fastDummies dummy_cols
@@ -56,61 +57,99 @@ computePCVariableCorrelation <- function(
                         color = 'white',
                         verbose = verbose)
 
-    # Check the inputs ####
+    # Checking the inputs ####
     if (is.null(assay.names)) {
         stop('The "assay.names" cannot be empty.')
-    } else if (is.list(assay.names)){
+    }
+    if (is.list(assay.names)){
         stop('The "assay.names" must be a vector of the assay names(s).')
-    } else if (is.null(variable)) {
-        stop('The "variable" cannot be empty.')
-    } else if(length(variable) > 1){
-        stop('The "variable" must be the name of a variable.')
-    } else if (!variable %in% colnames(se.obj@colData)){
+    }
+    if (is.null(variable) | is.logical(variable)) {
+        stop('The "variable" cannot be empty or logical.')
+    }
+    if (length(variable) > 1){
+        stop('The "variable" must be the name of a column in the sample annotation of the SummarizedExperiment object.')
+    }
+    if (!variable %in% colnames(se.obj@colData)){
         stop('The "variable" cannot be found in the SummarizedExperiment object.')
-    } else if (class(se.obj@colData[[variable]]) %in% c('numeric', 'integer')) {
+    }
+    if (class(se.obj@colData[[variable]]) %in% c('numeric', 'integer')) {
         stop(paste0('The "', variable, '" must be a categorical varible.'))
-    } else if (length(unique(se.obj@colData[, variable])) < 2) {
+    }
+    if (length(unique(se.obj@colData[[variable]])) < 2) {
         stop('The "variable" must have at least two levels.')
-    } else if (sum(is.na(se.obj@colData[[variable]])) > 0){
+    }
+    if (!is.logical(fast.pca)){
+        stop('The "fast.pca" must be logical(TRUE or FALSE)')
+    }
+    if (length(fast.pca) > 1){
+        stop('The "nb.pcs" must be a numerical value.')
+    }
+    if (!is.numeric(nb.pcs)){
+        stop('The "nb.pcs" must be a numerical value.')
+    }
+    if (is.null(nb.pcs)) {
+        stop('The number of PCs (nb.pcs) must be specified.')
+    }
+    if (sum(is.na(se.obj@colData[[variable]])) > 0){
         stop(paste0('The "', variable, '" contains NA. Re-run the computePCA with "remove.na = both"'))
     }
-
-    # Check the assays ####
+    if(!is.logical(save.se.obj)){
+        stop('The "save.se.obj" must be logical (TRUE or FALSE)')
+    }
+    if(!is.logical(verbose)){
+        stop('The "verbose" must be logical (TRUE or FALSE)')
+    }
+    # Checking the assays names ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else  assay.names <- factor(x = assay.names , levels = assay.names)
-    if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
+    if (!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
-    # Create dummy variables ####
+    # Creating dummy variables ####
     printColoredMessage(
-        message =  paste0('-- Create dummy variables for the "', variable, '" variable:'),
+        message =  paste0(
+            '-- Creating dummy variables for the "',
+            variable,
+            '" variable:'),
         color = 'magenta',
         verbose = verbose
         )
     catvar.dummies <- fastDummies::dummy_cols(se.obj@colData[[variable]])
     catvar.dummies <- catvar.dummies[, c(2:ncol(catvar.dummies))]
     printColoredMessage(
-        message =  paste0('- A data frame with ', ncol(catvar.dummies), ' binary columns is created.'),
+        message =  paste0(
+            '- A data frame with ',
+            ncol(catvar.dummies),
+            ' binary columns is created.'),
         color = 'blue',
         verbose = verbose
         )
-    # Compute vector correlation ####
+
+    # Computing vector correlation ####
     printColoredMessage(
-        message =  paste0('-- Compute vector correlation between the first ',
-                          nb.pcs, ' PCs (cumulatively) and the "', variable, '" variable:' ),
+        message =  paste0(
+            '-- Computing vector correlation between the first ',
+            nb.pcs,
+            ' PCs (cumulatively) and the "',
+            variable,
+            '" variable:' ),
         color = 'magenta',
         verbose = verbose
         )
 
-    ## obtain computed PCs from the SummarizedExperiment object ####
+    ## obtaining computed PCs from the SummarizedExperiment object ####
     printColoredMessage(
-        message = paste0('- Obtain the first ', nb.pcs, ' computed PCs from the SummarizedExperiment object.'),
+        message = paste0(
+            '- Obtaining the first ',
+            nb.pcs,
+            ' computed PCs from the SummarizedExperiment object.'),
         color = 'blue',
         verbose = verbose
     )
-    if(isTRUE(fast.pca)){
+    if (isTRUE(fast.pca)){
         method = 'fast.svd'
     } else method = 'svd'
     all.pca.data <- getMetricFromSeObj(
@@ -128,7 +167,7 @@ computePCVariableCorrelation <- function(
     )
     ## calculate the vector correlation ####
     printColoredMessage(
-        message = '- calculate the vector correlation.',
+        message = '- calculating the vector correlation.',
         color = 'blue',
         verbose = verbose
         )
@@ -136,7 +175,10 @@ computePCVariableCorrelation <- function(
         levels(assay.names),
         function(x){
             printColoredMessage(
-                message = paste0('- Compute the vector correlation for the "', x, '" data:'),
+                message = paste0(
+                    '- Computing the vector correlation for the "',
+                    x,
+                    '" data:'),
                 color = 'orange',
                 verbose = verbose)
             vector.corr <- sapply(
@@ -151,15 +193,17 @@ computePCVariableCorrelation <- function(
 
     # Save the results ####
     printColoredMessage(
-        message = '-- Save all the vector correlation results:',
+        message = '-- Saving all the vector correlation results:',
         color = 'magenta',
-        verbose = verbose)
+        verbose = verbose
+        )
     ## add results to the SummarizedExperiment object ####
     if (isTRUE(save.se.obj)) {
         printColoredMessage(
-            message = '- Save all the vector correlations to the "metadata" in the SummarizedExperiment object.',
+            message = '- Saving all the vector correlations to the "metadata" in the SummarizedExperiment object.',
             color = 'orange',
-            verbose = verbose)
+            verbose = verbose
+            )
         se.obj <- addMetricToSeObj(
             se.obj = se.obj,
             slot = 'Metrics',
@@ -172,12 +216,13 @@ computePCVariableCorrelation <- function(
             results.data = all.vec.corr
             )
         printColoredMessage(
-            message = paste0('* The vector correlation for the individal assay(s) are saved to the',
-                             ' "se.obj@metadata$metric$AssayName$VCA" in the SummarizedExperiment object.'),
+            message = paste0(
+                '* The vector correlation for the individal assay(s) are saved to the',
+                ' "se.obj@metadata$metric$AssayName$VCA" in the SummarizedExperiment object.'),
             color = 'blue',
             verbose = verbose
             )
-        printColoredMessage(message = '------------The computePCVariableCorrelations function finished.',
+        printColoredMessage(message = '------------The computePCVariableCorrelation function finished.',
                             color = 'white',
                             verbose = verbose)
         return(se.obj = se.obj)

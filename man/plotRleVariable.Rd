@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotRleVariable.R
 \name{plotRleVariable}
 \alias{plotRleVariable}
-\title{Plot a variable against the medians and IQRs of relative log expression (RLE) data.}
+\title{Plots a variable against the medians and IQRs of relative log expression (RLE) data.}
 \usage{
 plotRleVariable(
   se.obj,
@@ -22,42 +22,41 @@ plotRleVariable(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
-SummarizedExperiment object to plot. The default is "all, which indicates all the assays of the SummarizedExperiment
+\item{assay.names}{Character. A character string or a vector of character strings representing the names of the assay(s)
+in the SummarizedExperiment object to plot. The default is "all", which indicates that all assays in the SummarizedExperiment
 object will be selected.}
 
-\item{variable}{Symbol. Indicates a name of the columns in the sample annotation of the SummarizedExperiment object.
-The variable can be either categorical or continuous. This variable can be either categorical or continuous. If a
-categorical variable is provided, boxplots of the RLE medians and IQRs will be generated across the variable separately.
-. If a continuous variable is provided, scatter plots of the RLE medians and IQRs will be produced against the variable
-separately.}
+\item{variable}{Character. The name of the column(s) in the sample annotation of the SummarizedExperiment object.
+The variable can be either categorical or continuous. If a categorical variable is provided, boxplots of the RLE medians
+and IQRs will be generated across the variable separately. If a continuous variable is provided, scatter plots of the RLE
+medians and IQRs will be produced against the variable separately.}
 
-\item{rle.data.type}{Symbol. Indicates which RLE data should be used for plotting. The options are 'rle.medians',
-'rle.iqr' or 'both'. If 'rle.medians' is selected, the RLE medians will be plotted against the variable. If 'rle.iqr',
+\item{rle.data.type}{Character. Indicates which RLE data should be used for plotting. The options are 'rle.medians',
+'rle.iqr', or 'both'. If 'rle.medians' is selected, the RLE medians will be plotted against the variable. If 'rle.iqr'
 is selected, the RLE IQRs will be plotted against the variable, and if 'both', both RLE medians and IQRs will be plotted
 against the variable. The default is 'both'.}
 
-\item{ylim.rle.med.plot}{Numeric. Indicates the ylim of the boxplot or scatter plots when the RLE medians are used. If
-is NULL, the function will automatically find an suitable ylim for the plots.}
+\item{ylim.rle.med.plot}{Numeric. Specifies the ylim of the boxplot or scatter plots when the RLE medians are used. If
+NULL, the function will automatically determine an appropriate ylim for the plots.}
 
-\item{ylim.rle.iqr.plot}{Numeric. Indicates the ylim of the boxplot or scatter plots when the RLE IQRs are used. If
-is NULL, the function will automatically find an suitable ylim for the plots. The default is NULL.}
+\item{ylim.rle.iqr.plot}{Numeric. Specifies the ylim of the boxplot or scatter plots when the RLE IQRs are used. If
+NULL, the function will automatically determine an appropriate ylim for the plots. The default is NULL.}
 
-\item{points.size}{Numeric. Indicates the points size of the scatter plots. The default is 1.}
+\item{points.size}{Numeric. Specifies the point size of the scatter plots. The default is 1.}
 
-\item{plot.ncol}{Numeric. Indicates number of columns in the plot grid.}
+\item{plot.ncol}{Numeric. Specifies the number of columns in the plot grid.}
 
-\item{plot.nrow}{Numeric. Indicates number of rows in the plot grid.}
+\item{plot.nrow}{Numeric. Specifies the number of rows in the plot grid.}
 
 \item{plot.output}{Logical. If TRUE, individual RLE plot(s) will be printed while the function is running.}
 
-\item{save.se.obj}{Logical. Indicates whether to save the plots in the metadata of the SummarizedExperiment object or
-to output them as list. Default is set to TRUE.}
+\item{save.se.obj}{Logical. Specifies whether to save the plots in the metadata of the SummarizedExperiment object or
+to output them as a list. The default is TRUE.}
 
-\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
+\item{verbose}{Logical. If TRUE, messages for different steps of the function will be shown.}
 }
 \value{
-A SummarizedExperiment object that contains all the plot(s) in the metadata or a list that contains all the plot(s).
+A SummarizedExperiment object that contains all the plot(s) in the metadata or a list containing all the plot(s).
 }
 \description{
 This function plots a variable against the medians and IQR of a relative log expression (RLE) data. Because of the
@@ -66,7 +65,7 @@ IQR with potential sources of unwanted variation. In the absence of any influenc
 we should see no such associations.
 }
 \details{
-If the variable is categorical, the, boxplots of the RLE medians and IQR against the variable will be generated. If
+If the variable is categorical, boxplots of the RLE medians and IQR against the variable will be generated. If
 the variable is continuous, scatter plots will be created.
 }
 \references{

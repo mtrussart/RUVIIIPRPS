@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotRLE.R
 \name{plotRLE}
 \alias{plotRLE}
-\title{Generate boxplot of the relative log expression (RLE) distributions of RNA-seq data.}
+\title{Generates boxplot of the relative log expression (RLE) distributions of RNA-seq data.}
 \usage{
 plotRLE(
   se.obj,
@@ -24,20 +24,20 @@ plotRLE(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or vector of symbols for the selection of the name(s) of the assay(s) in the
-SummarizedExperiment object to plot the RLE data. The default is set to "all, which indicates all the assays of the
-SummarizedExperiment object will be selected.}
+\item{assay.names}{Character. A character string or vector of character strings for the selection of the name(s) of
+the assay(s) in the SummarizedExperiment object to plot the RLE data. The default is set to "all", which indicates that
+all the assays of the SummarizedExperiment object will be selected.}
 
-\item{variable}{Symbol. Indicates the name of the column in the sample annotation of the SummarizedExperiment object.
+\item{variable}{Character. Indicates the name of the column in the sample annotation of the SummarizedExperiment object.
 The interquartile ranges of the RLE boxplots will be colored based on the specified variable. The variable must be a
 categorical variable. The default is set to 'NULL'.}
 
-\item{variable.colors}{Vector. A vector of colors for the interquartile ranges of the RLE boxplots if the 'variable' is
-specified.}
+\item{variable.colors}{Character. A vector of colors for the interquartile ranges of the RLE boxplots if the 'variable'
+is specified. The default is set to 'NULL'. This means the function will select required colors.}
 
-\item{ylim.rle.plot}{Numeric. A vector of two values to specify the ylim of the RLE plot(s). If is 'NULL', the function
+\item{ylim.rle.plot}{Numeric. A vector of two values to specify the ylim of the RLE plot(s). If 'NULL', the function
 uses the minimum and maximum interquartile ranges of all the RLE data to specify the ylim. The default is 'NULL'. The
-ylim of the RLE plots should be the same to able to compare them against each other.}
+ylim of the RLE plots should be the same to be able to compare them against each other.}
 
 \item{iqr.width}{Numeric. A numeric value indicating the width size of RLE interquartile ranges in the plot. The default
 is set to 1.}
@@ -45,21 +45,21 @@ is set to 1.}
 \item{median.points.size}{Numeric. A numeric value indicating the size of the points of the RLE medians in the boxplot(s).
 The default is set to 1.}
 
-\item{median.points.color}{Symbol. Specifies the color of the points representing RLE medians in the boxplot(s).}
+\item{median.points.color}{Character. Specifies the color of the points representing RLE medians in the boxplot(s).}
 
-\item{geom.hline.color}{Symbol. Indicates the color of the horizontal line (geom.hline) crossing 0 in the RLE boxplot(s).
+\item{geom.hline.color}{Character. Indicates the color of the horizontal line (geom.hline) crossing 0 in the RLE boxplot(s).
 This line aids in visualizing the deviation of the RLE medians within the RLE boxplot(s).}
 
 \item{plot.ncol}{Numeric. A numeric value indicating the number of columns in the plot grid. When the number of selected
-assay is more than 1, the function puts all the RLE boxplots in one grid. The default is set to 2.}
+assays is more than 1, the function puts all the RLE boxplots in one grid. The default is set to 2.}
 
 \item{plot.nrow}{Numeric. A numeric value indicating the number of rows in the plot grid. When the number of selected
-assay is more than 1, the function puts all the RLE boxplots in one grid. The default is set to 3.}
+assays is more than 1, the function puts all the RLE boxplots in one grid. The default is set to 3.}
 
-\item{plot.output}{Logical. If 'TRUE', the individual RLE plot(s) will be printed while functions is running.}
+\item{plot.output}{Logical. If 'TRUE', the individual RLE plot(s) will be printed while the function is running.}
 
 \item{save.se.obj}{Logical. Indicates whether to save the RLE plots in the metadata of the SummarizedExperiment object
-or to output the result as list. By default it is set to TRUE.}
+or to output the result as a list. By default, it is set to TRUE.}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
 }

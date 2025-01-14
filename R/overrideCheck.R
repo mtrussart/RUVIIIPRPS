@@ -1,19 +1,19 @@
-#' Check whether to override a current metric or not.
+#' Checks whether to override a current metric or not. Finalized
 
 #' @author Ramyar Molania
 
 #' @description
-#' This function checks whether to re-calculate the specified metric or not.
+#' This function checks whether to re-calculate the specified metric or no.
 
 #' @param se.obj A SummarizedExperiment object.
-#' @param slot Symbol. A symbol indicating the name of the slots in the 'metadata' of the SummarizedExperiment object.
-#' @param assay.names Symbol. A symbol or a vector of symbols specifying the name(s) of the assay(s) in the SummarizedExperiment
+#' @param slot Character. A character string indicating the name of the slot(s) in the 'metadata' of the SummarizedExperiment object.
+#' @param assay.names Character. A character string or a vector of character strings specifying the name(s) of the assay(s) in the SummarizedExperiment
 #' object. The default is set to 'all'.
-#' @param assessment.type Symbol. A symbol indicating the type of assessment. Options are 'gene.level' or 'global.level'.
-#' @param assessment Symbol. A symbol indicating the name of the metric to be checked.
-#' @param method Symbol. A symbol indicating the method used to calculate the metric.
-#' @param variable Symbol. A symbol indicating the variable used to calculate the metric.
-#' @param file.name Symbol. A symbol indicating the file name to which the results of the metric are assigned.
+#' @param assessment.type Character. A character string indicating the type of assessment. Options are 'gene.level' or 'global.level'.
+#' @param assessment Character. A character string indicating the name of the metric to be checked.
+#' @param method Character. A character string indicating the method used to calculate the metric.
+#' @param variable Character. A character string indicating the variable used to calculate the metric.
+#' @param file.name Character. A character string indicating the file name to which the results of the metric are assigned.
 #' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
 
 #' @importFrom SummarizedExperiment assays
@@ -37,14 +37,17 @@ overrideCheck <- function(
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
     printColoredMessage(
-        message = paste('-- Check to override the current', assessment, ' analysis or not:'),
+        message = paste('-- Checking whether to override the current', assessment, ' analysis or not:'),
         color = 'magenta',
         verbose = verbose
     )
     compute.metric <- FALSE
     if (length(se.obj@metadata) == 0 | !'Metrics' %in% names(se.obj@metadata)) {
         printColoredMessage(
-            message = paste0('- The ',  assessment, ' data cannot be found in the SummarizedExperiment, the this will be computed for all the assay(s).'),
+            message = paste0(
+                '- The ',
+                assessment,
+                ' data cannot be found in the SummarizedExperiment, then this will be computed for all the assay(s).'),
             color = 'blue',
             verbose = verbose
         )
@@ -67,11 +70,14 @@ overrideCheck <- function(
                 selected.assays <- c(selected.assays, x)
             }
         }
-        if(length(selected.assays) == 0){
+        if (length(selected.assays) == 0){
             printColoredMessage(
                 message = paste0(
-                    '- The ', assessment , ' data have been already computed for the "',
-                    variable, '" variable for all the assay(s).'),
+                    '- The ',
+                    assessment ,
+                    ' data have been already computed for the "',
+                    variable,
+                    '" variable for all the assay(s).'),
                 color = 'blue',
                 verbose = verbose
             )
@@ -79,7 +85,11 @@ overrideCheck <- function(
         } else if (length(selected.assays) == length(assay.names)){
             printColoredMessage(
                 message = paste0(
-                    '- The ', assessment , ' data will be computed for the "', variable, '" variable for all the assay(s).'),
+                    '- The ',
+                    assessment ,
+                    ' data will be computed for the "',
+                    variable,
+                    '" variable for all the assay(s).'),
                 color = 'blue',
                 verbose = verbose
             )
@@ -88,15 +98,21 @@ overrideCheck <- function(
         } else if (length(selected.assays) < length(assay.names)){
             printColoredMessage(
                 message = paste0(
-                    '- The ', assessment , ' data have been already computed for the "', variable, '" variable for all the ',
+                    '- The ',
+                    assessment ,
+                    ' data have been already computed for the "',
+                    variable,
+                    '" variable for all the ',
                     paste0(assay.names[!assay.names %in% selected.assays], collapse = ', '), ' assays.'),
                 color = 'blue',
                 verbose = verbose
             )
             printColoredMessage(
-                message = paste0('- Then, the ', assessment , ' data will be computed for only the ',
-                                 paste0(selected.assays, collapse = ', '),
-                                 ' assay(s).'),
+                message = paste0(
+                    '- Then, the ',
+                    assessment , ' data will be computed for only the ',
+                    paste0(selected.assays, collapse = ', '),
+                    ' assay(s).'),
                 color = 'blue',
                 verbose = verbose
             )
@@ -104,7 +120,7 @@ overrideCheck <- function(
             assay.names <- droplevels(assay.names[assay.names %in% selected.assays])
         }
     }
-    if(isFALSE(compute.metric)){
+    if (isFALSE(compute.metric)){
         return(compute.metric)
     } else
         return(list(

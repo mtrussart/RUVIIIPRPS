@@ -1,4 +1,4 @@
-#' calculate relative log expression (RLE) of RNA-seq data.
+#' Calculates relative log expression (RLE) of RNA-seq data.
 
 #' @author Ramyar Molania
 
@@ -27,32 +27,32 @@
 #' Nature Biotechnology, 2023
 
 #' @param se.obj A SummarizedExperiment object.
-#' @param assay.names Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
-#' SummarizedExperiment object to calculate RLE data, medians and interquartile ranges. The default is set to "all, which
-#' indicates all the assays of the SummarizedExperiment object will be selected.
-#' @param apply.log Logical. Indicates whether to apply a log-transformation to the data or not. The default is TRUE.
-#' Please, note, any RNA-seq data (assays) must be in log scale before computing RLE.
-#' @param pseudo.count Numeric. A value as a pseudo count to be added to all measurements of the assay(s) before applying
-#' log transformation to avoid -Inf for measurements that are equal to 0. The default is 1.
-#' @param outputs.to.return Symbol. Specifies the type of RLE computations to be performed and the data to be returned.
+#' @param assay.names Character. A character string or a vector of character strings specifying the name(s) of the assay(s)
+#' in the SummarizedExperiment object to calculate RLE data, medians, and interquartile ranges. The default is set to "all",
+#' which indicates that all assays in the SummarizedExperiment object will be selected.
+#' @param apply.log Logical. Indicates whether to apply a log-transformation to the data. The default is set to 'TRUE'.
+#' Please note that any RNA-seq data (assays) must be in log scale before computing RLE.
+#' @param pseudo.count Numeric. A value to be added as a pseudo count to all measurements of the assay(s) before applying
+#' log transformation. This avoids -Inf for measurements equal to 0. The default is set to 1.
+#' @param outputs.to.return Character. Specifies the type of RLE computations to be performed and the data to be returned.
 #' Options include "all", "rle", "rle.med", "rle.iqr", and "rle.med.iqr". Selecting "all" returns RLE data along with
-#' medians and interquartile ranges. Choosing "rle" returns only the RLE data for each assay. Opting for "rle.med" returns
-#' only the RLE data medians. Selecting "rle.iqr" returns only the interquartile ranges of the RLE data. If "rle.med.iqr"
-#' is chosen, both RLE medians and interquartile ranges are returned. The default is 'all'.
-#' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment object or not. See the checkSeObj
-#' function for more details.
-#' @param remove.na Symbol. To remove NA or missing values from the assays or not. The options are 'assays' and 'none'.
-#' The default is "assays", so all the NA or missing values from the assay(s) will be removed before computing RLE. See
-#' the checkSeObj function for more details.
-#' @param save.se.obj Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object or
-#' to output the result as list. By default it is set to TRUE.
-#' @param override.check Logical. When set to 'TRUE', the function verifies the current SummarizedExperiment object to
-#' determine if the RLE has already been computed for the current parameters. If it has, the metric will not be recalculated.
-#' The default is set to FALSE.
-#' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
-
-#' @return A SummarizedExperiment object or a list that contains all the RLE data of individual assay(s) in the
-#' SummarizedExperiment object.
+#' medians and interquartile ranges. Choosing "rle" returns only the RLE data for each assay. "rle.med" returns only the
+#' RLE  medians. "rle.iqr" returns only the interquartile ranges of the RLE data. "rle.med.iqr" returns both the
+#' RLE medians and interquartile ranges. The default is set to  'all'.
+#' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment object. If 'TRUE', the 'checkSeObj'
+#' function will be applied. The default is set to 'TRUE'
+#' @param remove.na Character. Indicates whether to remove NA or missing values from the assays. Options are 'assays' or
+#' 'none'. The default is "assays", meaning all NA or missing values in the assays will be removed before computing RLE.
+#' Refer to the 'checkSeObj' function for more details.
+#' @param save.se.obj Logical. Indicates whether to save the RLE results in the metadata of the SummarizedExperiment object,
+#' or output the result as a list. The default is set to 'TRUE'.
+#' @param override.check Logical. When set to 'TRUE', the function verifies if the RLE has already been computed for the
+#' current parameters in the SummarizedExperiment object. If already computed, the metric will not be recalculated. The
+#' default is set to 'FALSE'.
+#' @param verbose Logical. If 'TRUE', shows messages for each step of the function.
+#'
+#' @return Either a SummarizedExperiment object that contain the RLE results or a list containing the RLE data for each
+#' individual assay in the SummarizedExperiment object.
 
 #' @importFrom matrixStats rowMedians colMedians colIQRs
 #' @importFrom SummarizedExperiment assays assay
@@ -76,7 +76,10 @@ computeRLE <- function(
                         color = 'white',
                         verbose = verbose)
 
-    # Check to override or not ####
+    # Checking to override or not ####
+    if (!is.logical(override.check)){
+        stop('The "override.check" must be logical (TRUE or FALSE)')
+    }
     if(isTRUE(override.check)){
         override.check <- overrideCheck(
             se.obj = se.obj,
@@ -97,9 +100,9 @@ computeRLE <- function(
     } else if (isFALSE(override.check)) compute.metric <- TRUE
 
     if(isTRUE(compute.metric)){
-        # Check inputs ####
+        # Checking inputs ####
         if(is.list(assay.names) | is.logical(assay.names)){
-            stop('The "assay.names" must be a vector of assay names(s) or assay.names = "all".')
+            stop('The "assay.names" must be a vector of assay names(s) or set to "all".')
         }
         if (isFALSE(is.logical(apply.log))) {
             stop('The "apply.log" must be "TRUE" or "FALSE".')
@@ -117,18 +120,28 @@ computeRLE <- function(
         if (!remove.na %in% c('assays', 'none')) {
             stop('The "remove.na" must be one of the "assays" or "none".')
         }
+        if (!is.logical(assess.se.obj)){
+            stop('The "save.se.obj" must be logical (TRUE or FALSE)')
+        }
+        if (!is.logical(save.se.obj)){
+            stop('The "save.se.obj" must be logical (TRUE or FALSE)')
+        }
+        if (!is.logical(verbose)){
+            stop('The "verbose" must be logical (TRUE or FALSE)')
+        }
 
         # Assess the SummarizedExperiment object ####
-        if (assess.se.obj) {
+        if (isTRUE(assess.se.obj)) {
             se.obj <- checkSeObj(
                 se.obj = se.obj,
                 assay.names = assay.names,
                 variables = NULL,
                 remove.na = remove.na,
-                verbose = verbose)
+                verbose = verbose
+                )
         }
 
-        # Check the assays ####
+        # Checking the assays ####
         if (length(assay.names) == 1 && assay.names == 'all') {
             assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
         } else  assay.names <- factor(x = assay.names , levels = assay.names)
@@ -151,7 +164,7 @@ computeRLE <- function(
 
         # Compute RLE for each assay ####
         printColoredMessage(
-            message = '-- Compute the RLE data for individual assay(s):',
+            message = '-- Computing the RLE data for individual assay(s):',
             color = 'magenta',
             verbose = verbose
             )
@@ -159,18 +172,18 @@ computeRLE <- function(
             levels(assay.names),
             function(x) {
                 printColoredMessage(
-                    message = paste0('- Compute the RLE for the "', x, '" data:'),
+                    message = paste0('- Computing the RLE for the "', x, '" data:'),
                     color = 'orange',
                     verbose = verbose)
                 rle.data <- all.assays[[x]] - matrixStats::rowMedians(all.assays[[x]])
-                if(outputs.to.return == 'all'){
+                if (outputs.to.return == 'all'){
                     printColoredMessage(
-                        message = '* obtain the RLE data.',
+                        message = '* obtaining the RLE data.',
                         color = 'blue',
                         verbose = verbose
                         )
                     printColoredMessage(
-                        message = '* obtain the RLE medians and interquartile ranges.',
+                        message = '* obtaining the RLE medians and interquartile ranges.',
                         color = 'grey',
                         verbose = verbose
                         )
@@ -183,18 +196,18 @@ computeRLE <- function(
                         )
                 } else if (outputs.to.return == 'rle.data'){
                     printColoredMessage(
-                        message = '* obtain the RLE data.',
+                        message = '* obtaining the RLE data.',
                         color = 'blue',
                         verbose = verbose)
                     rle <- list(rle.data = rle.data)
                 } else if (outputs.to.return == 'rle.med'){
                     printColoredMessage(
-                        message = '* obtain the RLE data.',
+                        message = '* obtaining the RLE data.',
                         color = 'blue',
                         verbose = verbose
                         )
                     printColoredMessage(
-                        message = '* obtain the RLE medians.',
+                        message = '* obtaining the RLE medians.',
                         color = 'blue',
                         verbose = verbose
                         )
@@ -202,22 +215,22 @@ computeRLE <- function(
                     rle <- list(rle.data = rle.data, rle.med = rle.med)
                 } else if (outputs.to.return == 'rle.iqr'){
                     printColoredMessage(
-                        message = '* obtain the RLE data.',
+                        message = '* obtaining the RLE data.',
                         color = 'blue',
                         verbose = verbose)
                     printColoredMessage(
-                        message = '* obtain the interquartile ranges.',
+                        message = '* obtaining the interquartile ranges.',
                         color = 'blue',
                         verbose = verbose)
                     rle.iqr <- matrixStats::colIQRs(rle.data)
                     rle <- list(rle.data = rle.data, rle.iqr = rle.iqr)
                 } else if (outputs.to.return == 'rle.med.iqr'){
                     printColoredMessage(
-                        message = '* obtain the RLE data.',
+                        message = '* obtaining the RLE data.',
                         color = 'blue',
                         verbose = verbose)
                     printColoredMessage(
-                        message = '* obtain the RLE medians and interquartile ranges.',
+                        message = '* obtaining the RLE medians and interquartile ranges.',
                         color = 'blue',
                         verbose = verbose)
                     rle.med <- matrixStats::colMedians(rle.data)
@@ -231,12 +244,13 @@ computeRLE <- function(
         # Save the results ####
         ## add results to the SummarizedExperiment object ####
         printColoredMessage(
-            message = '-- Save the RLE data:',
+            message = '-- Saving the results of the RLE computation:',
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         if (isTRUE(save.se.obj)) {
             printColoredMessage(
-                message = '- Save all the RLE data to the "metadata" of the SummarizedExperiment object.',
+                message = '- Saving all the RLE data to the "metadata" of the SummarizedExperiment object.',
                 color = 'blue',
                 verbose = verbose
                 )
@@ -252,8 +266,9 @@ computeRLE <- function(
                 results.data = all.assays
                 )
             printColoredMessage(
-                message = paste0('* The RLE data, RLE medians, and RLE interquartile of individual assay(s) are saved to ',
-                                 'the "se.obj@metadata$metric$AssayName$RLE$rle.data" in SummarizedExperiment object.'),
+                message = paste0(
+                    '* The RLE data, RLE medians, and RLE interquartile of individual assay(s) are saved to ',
+                    'the "se.obj@metadata$metric$AssayName$RLE$rle.data" in SummarizedExperiment object.'),
                 color = 'blue',
                 verbose = verbose
                 )

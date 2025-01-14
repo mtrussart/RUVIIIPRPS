@@ -2,7 +2,7 @@
 % Please edit documentation in R/compuetSurvival.R
 \name{computeSurvival}
 \alias{computeSurvival}
-\title{Computes variable and gene-level Kaplan-Meier survival.}
+\title{Computes variable and gene-level Kaplan-Meier survival analysis. Finalized}
 \usage{
 computeSurvival(
   se.obj,

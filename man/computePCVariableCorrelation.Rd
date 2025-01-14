@@ -2,7 +2,7 @@
 % Please edit documentation in R/computePCVariableCorrelation.R
 \name{computePCVariableCorrelation}
 \alias{computePCVariableCorrelation}
-\title{Compute the vector correlation.}
+\title{Computes the vector correlation.}
 \usage{
 computePCVariableCorrelation(
   se.obj,
@@ -17,27 +17,27 @@ computePCVariableCorrelation(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
-SummarizedExperiment object to calculate the vector correlation. The default is "all, which indicates all the assays
-of the SummarizedExperiment object will be selected.}
+\item{assay.names}{Character. A character string or a vector of character strings specifying the name(s) of the assay(s)
+in the SummarizedExperiment object for calculating the vector correlation. The default is set to "all", which indicates
+that all assays of the SummarizedExperiment object will be selected.}
 
-\item{variable}{Symbol. A symbol indicating the name of the column in the sample annotation of the SummarizedExperiment
-object. The variable must be a categorical variable.}
+\item{variable}{Character. A character string indicating the name of the column in the sample annotation of the SummarizedExperiment
+object. The variable must be categorical variable such as batches or sample subtypes.}
 
-\item{fast.pca}{Logical. Indicates whether to use the fast PCA or PCA results computed by the computePCA function. The
-default is 'TRUE'.}
+\item{fast.pca}{Logical. Indicates whether to use the fast PCA or PCA results computed by the 'computePCA' function.
+The default is set to 'TRUE'. If 'FALSE', the 'fast.pca' argument in the 'computePCA' function should be set to 'FALSE'.}
 
-\item{nb.pcs}{Numeric. A numeric value indicating the number of the first PCs to be used to calculate the vector correlation.
-The default is 10.
-This number cannot be bigger that number of PCs calculated by the 'computePCA' function.}
+\item{nb.pcs}{Numeric. A numeric value indicating the number of the first principal components (PCs) to use for
+calculating the vector correlation. The default is set to 10. This number cannot exceed the number of PCs calculated
+by the 'computePCA' function.}
 
-\item{save.se.obj}{Logical. Indicates whether to save the results in the metadata of the SummarizedExperiment
-object  or to output the result as list. By default it is set to TRUE.}
+\item{save.se.obj}{Logical. Indicates whether to save the results, correlation coefficients, in the metadata of the
+SummarizedExperiment object or to output the result as a list. By default, it is set to 'TRUE'.}
 
-\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
+\item{verbose}{Logical. If 'TRUE', displays the messages for the different steps of the function.}
 }
 \value{
-A SummarizedExperiment object or a list that contains the vector correlation plots of individual assay(s) for
+A SummarizedExperiment object or a list containing the vector correlation plots of individual assay(s) for
 a categorical variable.
 }
 \description{
