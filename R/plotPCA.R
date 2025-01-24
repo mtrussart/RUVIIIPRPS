@@ -1,54 +1,56 @@
 #' Generates scatter and boxplot plot of principal components.
 
 #' @description
-#' This functions generates scatter and boxplot the first principal components of the assay(s) of a SummarizedExperiment
-#' object. The function can generate pairwise scatter plots of the first principal components colored by a categorical
-#' variable or creates boxplots of each PC across the variable. Boxplots of principal components become beneficial when
-#' the levels of a categorical variable are numerous, making visualization through colored scatter plots challenging. If
-#' a continuous variable is provided, the function creates a scatter plot of each PC against the variable.
+#' This function generates scatter and boxplots of the first principal components (PCs) of the assay(s) in a
+#' SummarizedExperiment object. The function can generate pairwise scatter plots of the first principal components,
+#' colored by a categorical variable, or create boxplots of each PC across the variable. Boxplots of principal components
+#' are especially useful when the levels of a categorical variable are numerous, making visualization through colored
+#' scatter plots challenging. If a continuous variable is provided, the function creates scatter plots of each PC against
+#'  the variable.
 
 #' @param se.obj A SummarizedExperiment object.
-#' @param assay.names Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
-#' SummarizedExperiment object to PC. The default is "all, which indicates all the assays of the SummarizedExperiment
+#' @param assay.names Character or vector. A character string or a vector of strings specifying the name(s) of the assay(s)
+#' in the SummarizedExperiment object for computing principal components (PCs). By default, all assays in the SummarizedExperiment
 #' object will be selected.
-#' @param variable Symbol. Indicates a name of the column in the sample annotation of the SummarizedExperiment object.
-#' The variable can be either a categorical or continuous. If a continuous variable is provided, the function creates
-#' a scatter plot of each PC against the variable. If a categorical variable is given, the function can generate pairwise
-#' scatter plots of the first principal components colored by a categorical variable or creates boxplots of each PC across
-#' the variable.
-#' @param fast.pca Logical. Indicates whether to use the computed fast PC ro not. The default is 'TRUE'. We refe to the
-#' computePCA function for more details.
-#' @param nb.pcs Numeric. A numeric value indicating the number of first PCs to be used for plotting. The default is set to 3.It's important to note
-#' that the variation of PCs for a portion of all selected PCs will be based solely on those selected PCs.
-#' @param plot.type Symbol. A symbol specifying which plot type should be generated. Options are: 'scatter' and 'boxplot'.
-#' The default is set to 'scatter'. Please note, the 'plot.type' cannot be set to 'scatter' of a categorical variable is
-#' provided.
-#' @param variable.colors Symbol. A vector of color names in scatter plots of PCs when a categorical variable is specified.
-#' If is 'NULL', the function will use the default colors.
-#' @param points.size Numeric. A numeric value specifying the size of points in the scatter PCA plots. The default is set
-#' to 1.
-#' @param stroke.color Symbol. A symbol specifying the color of the stroke of the points in the scatter PCA plots. The
-#' default is set to 'gray'.
-#' @param stroke.size Numeric. A numeric value indicating the size of the stroke of the points in the scatter PCA plots.
+#' @param variable Character. The name of the column in the sample annotation of the SummarizedExperiment object that
+#' contains either a categorical or continuous variable. If a continuous variable is provided, the function creates scatter
+#' plots of each PC against the variable. If a categorical variable is provided, the function can generate pairwise scatter
+#' plots of the first principal components, colored by the categorical variable, or create boxplots of each PC across the variable.
+#' @param fast.pca Logical. Indicates whether to use the pre-computed fast PCA or not. The default is set to 'TRUE'. Refer
+#' to the computePCA' function for more details.
+#' @param nb.pcs Numeric. A numeric value specifying the number of principal components to be used for plotting. The
+#' default is set to 3. It’s important to note that the variation in the PCs for the selected subset will be based solely
+#'  on the chosen number of PCs.
+#' @param plot.type Character. Specifies which type of plot should be generated. Options are: 'scatter' and 'boxplot'.
+#' The default is set to 'scatter'. Note that the 'plot.type' cannot be set to 'scatter' if a categorical variable is provided.
+#' @param variable.colors Character vector. Specifies the colors to be used in scatter plots of PCs when a categorical
+#' variable is provided. If 'NULL', the function will use the default color scheme.
+#' @param points.size Numeric. A numeric value specifying the size of the points in the scatter PCA plots. The default
+#' is set to 1.
+#' @param stroke.color Character. Specifies the color of the stroke around the points in the scatter PCA plots. The default
+#'  is set to 'gray'.
+#' @param stroke.size Numeric. A numeric value indicating the thickness of the stroke around the points in the scatter PCA plots.
 #' The default is set to 0.1.
 #' @param points.alpha Numeric. A numeric value indicating the transparency of the points in the scatter PCA plots. The
 #' default is set to 0.5.
-#' @param densities.alpha Numeric.  A numeric value indicating the transparency of the densities in the scatter PCA plots.
+#' @param densities.alpha Numeric. A numeric value indicating the transparency of the density plots in the scatter PCA plots.
 #' The default is set to 0.5.
-#' @param legend.position Symbol. A symbol indicating the location of the plot legend.  This setting will apply when a categorical
-#' variable is provided and the 'plot.type' is set to 'scatter'. Options are: 'top', 'right', 'bottom' and 'left'. The default
-#' is set to "bottom".
-#' @param plot.ncol Numeric. A numeric value indicating the number of columns in the plot grid. When the number of selected
-#' assay is more than 1, the function puts all the PCA plots in one grid.
-#' @param plot.nrow Numeric. A numeric value indicating number of rows in the plot grid. When the number of selected assay is more than
-#' 3, the function puts all the PCA plots in one grid.
-#' @param plot.output Logical. If 'TRUE', the individual PCA plot(s) will be printed while functions is running.
+#' @param legend.position Character. Specifies the position of the plot legend. This setting applies when a categorical
+#' variable is provided, and the 'plot.type' is set to 'scatter'. Options are: 'top', 'right', 'bottom', and 'left'. The
+#' default is set to "bottom".
+#' @param plot.ncol Numeric. A numeric value indicating the number of columns in the plot grid. When more than one assay
+#'  is selected,
+#' the function arranges all the PCA plots in one grid.
+#' @param plot.nrow Numeric. A numeric value indicating the number of rows in the plot grid. When more than three assays
+#'  are selected,
+#' the function arranges all the PCA plots in one grid.
+#' @param plot.output Logical. If 'TRUE', the individual PCA plot(s) will be displayed as the function runs.
 #' @param save.se.obj Logical. Indicates whether to save the plots in the metadata of the SummarizedExperiment object
-#' or to output the results as list. By default it is set to 'TRUE'.
-#' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
+#' or to output the results as a list. By default, this is set to 'TRUE'.
+#' @param verbose Logical. If 'TRUE', process messages will be displayed during execution.
 
-#' @return A SummarizedExperiment object that contains all the PCA plot(s) in the metadata or a list that contains all
-#' the PCA plot(s).
+#' @return A SummarizedExperiment object containing the PCA plot(s) in its metadata, or a list containing the PCA plot(s).
+
 
 #' @importFrom ggpubr ggarrange theme_pubr stat_cor
 #' @importFrom patchwork plot_spacer plot_layout
@@ -80,31 +82,36 @@ plotPCA <- function(
     printColoredMessage(message = '------------The plotPCA function starts:',
                         color = 'white',
                         verbose = verbose)
-    # Check the inputs ####
+    # Checking the inputs ####
     if (is.null(assay.names)){
         stop('The "assay.names" cannot be empty.')
-    } else if (is.null(variable)) {
+    }
+    if (is.null(variable)) {
         stop('The "variable" cannot be empty.')
-    } else if (length(variable) > 1){
+    }
+    if (length(variable) > 1){
         stop('The "variable" must contain only one variable.')
-    } else if (!variable %in% colnames(colData(se.obj))) {
+    }
+    if (!variable %in% colnames(colData(se.obj))) {
         stop('The "variable" cannot be found in the SummarizedExperiment object.')
-    } else if (is.null(nb.pcs)){
+    }
+    if (is.null(nb.pcs)){
         stop('The "nb.pcs" cannot be empty.')
-    } else if (!plot.type %in% c('scatter', 'boxplot')){
+    }
+    if (!plot.type %in% c('scatter', 'boxplot')){
         stop('The "plot.type" must be one of "scatter" or "boxplot".')
     }
 
-    # Check the assays ####
+    # Checking the assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else  assay.names <- factor(x = assay.names , levels = assay.names)
-    if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
+    if (!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
-    # Select colors ####
-    if(!is.null(variable)){
+    # Selecting colors ####
+    if (!is.null(variable)){
         if(is.null(variable.colors)){
             n.colors <- length(unique(colData(se.obj)[[variable]]))
             pca.plot.colors <- scales::hue_pal()(n.colors*2)
@@ -116,11 +123,14 @@ plotPCA <- function(
 
     # Obtain computed PCs from the SummarizedExperiment object ####
     printColoredMessage(
-        message = paste0('-- Obtain the first ', nb.pcs, ' computed PCs from the SummarizedExperiment object.'),
+        message = paste0(
+            '-- Obtaining the first ',
+            nb.pcs,
+            ' computed PCs from the SummarizedExperiment object.'),
         color = 'magenta',
         verbose = verbose
         )
-    if(isTRUE(fast.pca)){
+    if( isTRUE(fast.pca)){
         method = 'fast.svd'
     } else method = 'svd'
     all.pca.data <- getMetricFromSeObj(
@@ -152,25 +162,30 @@ plotPCA <- function(
 
     # Plot different PCA plots ####
     ## categorical variable ####
-    if(class(colData(se.obj)[[variable]]) %in% c('character','factor')){
+    if (class(colData(se.obj)[[variable]]) %in% c('character','factor')){
         ### scatter plots for individual assays  ####
-        if(plot.type == 'scatter'){
+        if (plot.type == 'scatter'){
             printColoredMessage(
                 message = paste0(
-                    '-- Create scatter PCA plots colored by the "',
-                    variable, '" variable for the individual assay(s):'),
+                    '-- Creating scatter PCA plots colored by the "',
+                    variable,
+                    '" variable for the individual assay(s):'),
                 color = 'magenta',
-                verbose = verbose)
+                verbose = verbose
+                )
             all.scat.pca.plots <- lapply(
                 levels(assay.names),
                 function(x) {
                     pca.data <- all.pca.data[[x]]$u[ , seq_len(nb.pcs)]
                     pair.pcs <- combn(x = ncol(pca.data), m = 2)
                     printColoredMessage(
-                        message = paste0( '- Create all possible pairwise scatter plots using the first ',
-                                          nb.pcs, ' PCs for the ', x, ' data'),
+                        message = paste0(
+                            '- Creating all possible pairwise scatter plots using the first ',
+                            nb.pcs,
+                            ' PCs for the ', x, ' data'),
                         color = 'blue',
-                        verbose = verbose)
+                        verbose = verbose
+                        )
                     plot.per.data <- lapply(
                         1:ncol(pair.pcs),
                         function(i) {
@@ -238,7 +253,7 @@ plotPCA <- function(
 
             ### put all the scatter PCA plot for individual assay(s) ####
             printColoredMessage(
-                message = '- Put all the scatter PCA plots togather for each assay.',
+                message = '- Putting all the scatter PCA plots togather for each assay.',
                 color = 'blue',
                 verbose = verbose
                 )
@@ -257,7 +272,7 @@ plotPCA <- function(
             ### put all the scatter PCA of all the assays together ####
             if(length(assay.names) > 1){
                 printColoredMessage(
-                    message = '-- Combine all the scatter PCA plots of all the assyas together:',
+                    message = '-- Combining all the scatter PCA plots of all the assyas together:',
                     color = 'magenta',
                     verbose = verbose
                     )
@@ -288,8 +303,11 @@ plotPCA <- function(
                                     size = 18),
                                 bottom = text_grob(
                                     label = paste0(
-                                        'Analysis: ', 'scatter plots of the principal components.\n',
-                                        'Variable ', variable, '.'),
+                                        'Analysis: ',
+                                        'scatter plots of the principal components.\n',
+                                        'Variable ',
+                                        variable,
+                                        '.'),
                                     color = "black",
                                     hjust = 1,
                                     x = 1,
@@ -309,8 +327,11 @@ plotPCA <- function(
                             size = 18),
                         bottom = text_grob(
                             label = paste0(
-                                'Analysis: ', 'scatter plots of the principal components.\n',
-                                'Variable ', variable, '.'),
+                                'Analysis: ',
+                                'scatter plots of the principal components.\n',
+                                'Variable ',
+                                variable,
+                                '.'),
                             color = "black",
                             hjust = 1,
                             x = 1,
@@ -320,15 +341,19 @@ plotPCA <- function(
                     message = '- The individual assay scatter PCA plots are combined into one.',
                     color = 'blue',
                     verbose = verbose)
-                if(isTRUE(plot.output)) suppressMessages(print(overall.scat.pca.plot))
+                if (isTRUE(plot.output)) suppressMessages(print(overall.scat.pca.plot))
             }
         }
         ## boxplot of PCs of individual assays ####
         if (plot.type == 'boxplot'){
             printColoredMessage(
-                message = paste0('-- Create boxplot of PCs acorss the "', variable, '" for the individual assay(s):'),
+                message = paste0(
+                    '-- Creating boxplot of PCs acorss the "',
+                    variable,
+                    '" for the individual assay(s):'),
                 color = 'magenta',
-                verbose = verbose)
+                verbose = verbose
+                )
             all.boxplot.pca.plots <- lapply(
                 levels(assay.names),
                 function(x) {
@@ -338,7 +363,9 @@ plotPCA <- function(
                     pca.data$var <- colData(se.obj)[, variable]
                     printColoredMessage(
                         message = paste0(
-                            '- Create all possible boxplots using the first ', nb.pcs, ' PCs for the ', x, ' data'),
+                            '- Creating all possible boxplots using the first ',
+                            nb.pcs,
+                            ' PCs for the ', x, ' data'),
                         color = 'blue',
                         verbose = verbose)
                     pca.data <- tidyr::pivot_longer(
@@ -369,9 +396,9 @@ plotPCA <- function(
                 })
             names(all.boxplot.pca.plots) <- levels(assay.names)
             ### put all boxplot PCA of assays together ####
-            if(length(assay.names) > 1){
+            if (length(assay.names) > 1){
                 printColoredMessage(
-                    message = '-- Put all the plots of each assyas together:',
+                    message = '-- Putting all the plots of each assyas together:',
                     color = 'magenta',
                     verbose = verbose
                     )
@@ -380,7 +407,7 @@ plotPCA <- function(
                     nrow = plot.nrow,
                     ncol = plot.ncol
                     )
-                if(class(overall.boxplot.pca.plot)[[1]] == 'list'){
+                if (class(overall.boxplot.pca.plot)[[1]] == 'list'){
                     plot.list <- lapply(
                         seq(length(overall.boxplot.pca.plot)),
                         function(x){
@@ -414,8 +441,11 @@ plotPCA <- function(
                             size = 18),
                         bottom = text_grob(
                             label = paste0(
-                                'Analysis: ', 'boxplots of the principal components.\n',
-                                'Variable ', variable, '.'),
+                                'Analysis: ',
+                                'boxplots of the principal components.\n',
+                                'Variable ',
+                                variable,
+                                '.'),
                             color = "black",
                             hjust = 1,
                             x = 1,
@@ -431,7 +461,7 @@ plotPCA <- function(
         }
     }
     ## continuous variable ####
-    if(class(colData(se.obj)[[variable]]) %in% c('numeric','integer')){
+    if (class(colData(se.obj)[[variable]]) %in% c('numeric','integer')){
         #### scatter plots for individual assays ####
         printColoredMessage(
             message = paste0(
@@ -451,7 +481,10 @@ plotPCA <- function(
                 colnames(pca.data) <- paste0('PC', seq_len(nb.pcs), ' (', all.pca.percentage[[x]][seq_len(nb.pcs)], '%)')
                 pca.data$var <- colData(se.obj)[[variable]]
                 printColoredMessage(
-                    message = paste0('- Create all possible scatter plots of the first ', nb.pcs, ' PCs.'),
+                    message = paste0(
+                        '- Creating all possible scatter plots of the first ',
+                        nb.pcs,
+                        ' PCs.'),
                     color = 'blue',
                     verbose = verbose)
                 pca.data <- tidyr::pivot_longer(
@@ -491,7 +524,7 @@ plotPCA <- function(
         names(all.scat.pca.plots.assays) <- levels(assay.names)
         if(length(assay.names) > 1){
             printColoredMessage(
-                message = '-- Put all the plots of each assyas together:',
+                message = '-- Putting all the plots of each assyas together:',
                 color = 'magenta',
                 verbose = verbose
                 )
@@ -513,8 +546,10 @@ plotPCA <- function(
                                 size = 18),
                             bottom = text_grob(
                                 label = paste0(
-                                    'Analysis: ', 'boxplots of the principal components.\n',
-                                    'Variable ', variable, '.'),
+                                    'Analysis: ',
+                                    'boxplots of the principal components.\n',
+                                    'Variable ',
+                                    variable, '.'),
                                 color = "black",
                                 hjust = 1,
                                 x = 1,
@@ -535,8 +570,10 @@ plotPCA <- function(
                         size = 18),
                     bottom = text_grob(
                         label = paste0(
-                            'Analysis: ', 'boxplots of the principal components.\n',
-                            'Variable ', variable, '.'),
+                            'Analysis: ',
+                            'boxplots of the principal components.\n',
+                            'Variable ',
+                            variable, '.'),
                         color = "black",
                         hjust = 1,
                         x = 1,
@@ -577,13 +614,16 @@ plotPCA <- function(
             results.data = results.data
         )
         printColoredMessage(
-            message = paste0('- The PCA plots of individual assay (s) are saved to the',
-                             ' "se.obj@metadata$metric$AssayName$PCA$', method, '$pca.plot" in the SummarizedExperiment object.'),
+            message = paste0(
+                '- The PCA plots of individual assay (s) are saved to the',
+                ' "se.obj@metadata$metric$AssayName$PCA$',
+                method,
+                '$pca.plot" in the SummarizedExperiment object.'),
             color = 'blue',
             verbose = verbose
             )
         ### overall pca plots ####
-        if(length(assay.names) > 1){
+        if (length(assay.names) > 1){
             if(plot.type == 'scatter'){
                 results.data <- overall.scat.pca.plot
             } else results.data <- overall.boxplot.pca.plot

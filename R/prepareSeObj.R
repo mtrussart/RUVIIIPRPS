@@ -1,4 +1,4 @@
-#' Prepare a SummarizedExperiment object.
+#' Prepares a SummarizedExperiment object.
 
 #' @author Ramyar Molania
 

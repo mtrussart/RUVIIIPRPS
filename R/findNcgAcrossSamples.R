@@ -1,4 +1,4 @@
-#' Find a set of negative control genes (NCG) using ANOVA and correlation across all samples.
+#' Finds a set of negative control genes (NCG) using ANOVA and correlation across all samples.
 
 #' @author Ramyar Molania
 
@@ -57,102 +57,101 @@
 
 
 #' @param se.obj A SummarizedExperiment object.
-#' @param assay.name Symbol. Indicates a name of an assay in the SummarizedExperiment object. The selected assay should
-#' be the one that will be used for the RUV-III-PRPS normalization. We recommend to use raw data without any transformation.
+#' @param assay.name Character string. Indicates the name of an assay in the SummarizedExperiment object. The selected assay should
+#' be the one that will be used for the RUV-III-PRPS normalization. We recommend using raw data without any transformation.
 #' @param nb.ncg Numeric. Specifies the number of genes to be chosen as negative control genes (NCG) when the
-#' 'ncg.selection.method' parameter is set to 'auto'. This value ,'nb.ncg', corresponds to a fraction of the total genes
+#' 'ncg.selection.method' parameter is set to 'auto'. This value, 'nb.ncg', corresponds to a fraction of the total genes
 #' in the SummarizedExperiment object. By default, this fraction is set to 0.1.
-#' @param bio.variables Symbols. Indicates the columns name(s) that contain biological variable(s) in the SummarizedExperiment
+#' @param bio.variables Character vector. Indicates the column name(s) that contain biological variable(s) in the SummarizedExperiment
 #' object. This cannot be set to 'NULL'.
-#' @param uv.variables Symbols. Indicates the column name(s) that contain unwanted variable(s) in the SummarizedExperiment
+#' @param uv.variables Character vector. Indicates the column name(s) that contain unwanted variable(s) in the SummarizedExperiment
 #' object. This cannot be set to 'NULL'.
-#' @param ncg.selection.method Symbol. Indicates how to summarize different statistics and select a set genes as negative
-#' control genes. The options are 'prod', 'average', 'sum', 'non.overlap', 'auto' and 'quantile'. The default is set to
+#' @param ncg.selection.method Character string. Indicates how to summarize different statistics and select a set of genes as negative
+#' control genes. The options are 'prod', 'average', 'sum', 'non.overlap', 'auto', and 'quantile'. The default is set to
 #' 'non.overlap'. For more information, refer to the details of the function.
-#' @param top.rank.bio.genes Numeric. Indicates the percentage of top ranked genes that are highly affected by the biological
+#' @param top.rank.bio.genes Numeric. Indicates the percentage of top-ranked genes that are highly affected by biological
 #' variation. This is required to be specified when the 'ncg.selection.method' is either 'auto' or 'non.overlap'. The default
 #' is set to 0.2.
-#' @param top.rank.uv.genes Numeric. Indicates the percentage of top ranked genes that are highly affected by the unwanted
+#' @param top.rank.uv.genes Numeric. Indicates the percentage of top-ranked genes that are highly affected by unwanted
 #' variables. This is required to be specified when the 'ncg.selection.method' is either 'auto' or 'non.overlap'. The default
 #' is set to 0.2.
-#' @param bio.percentile Numeric. The percentile cut off to select genes that are highly affected with the biological
+#' @param bio.percentile Numeric. The percentile cut-off to select genes that are highly affected by biological
 #' variation. The default is 0.8.
-#' @param uv.percentile Numeric. The percentile cut off to select genes that are highly affected with the unwanted
+#' @param uv.percentile Numeric. The percentile cut-off to select genes that are highly affected by unwanted
 #' variation. The default is 0.8.
-#' @param bio.percentile Numeric. The percentile cut off of F-statistics and correlation coefficients to select genes that
-#' are highly affected with the biological variation. The default is set to 0.8.
-#' @param bio.percentile Numeric. The percentile cut off of F-statistics and correlation coefficients to select genes that
-#' are highly affected with the unwanted variation. The default is set to 0.8.
-#' @param grid.nb Numeric. Indicates the number of genes for grid search when the 'ncg.selection.method' is auto'. In the
-#' 'auto' approach, the grid search starts with the initial top.rank.uv.genes' and 'top.rank.bio.genes' values and the add
-#' or drop  the 'grid.nb' in each loop to find 'nb.ncg' of genes as negative control genes.
-#' @param grid.group Symbol. Indicates whether the grid search should be performed on biological, unwanted or both factors
-#' when the ncg.selection.method' is set to 'auto'. The options are 'bio', 'uv' or 'both'. The default is set to 'uv'.
-#' For more details, refer to the details of the function.
-#' @param grid.direction Symbol. Indicates the grid search should be performed in decreasing or increasing order, when the
-#' 'ncg.selection.method' is set to 'auto'.The options are 'increase' or 'decrease'. The default is set to 'decrease'.
+#' @param grid.nb Numeric. Indicates the number of genes for grid search when the 'ncg.selection.method' is set to 'auto'. In the
+#' 'auto' approach, the grid search starts with the initial 'top.rank.uv.genes' and 'top.rank.bio.genes' values and adds
+#' or drops the 'grid.nb' in each loop to find 'nb.ncg' of genes as negative control genes.
+#' @param grid.group Character string. Indicates whether the grid search should be performed on biological, unwanted, or both factors
+#' when the 'ncg.selection.method' is set to 'auto'. The options are 'bio', 'uv', or 'both'. The default is set to 'uv'.
+#' For more details, refer to the function documentation.
+#' @param grid.direction Character string. Indicates whether the grid search should be performed in decreasing or increasing
+#' order when the ncg.selection.method' is set to 'auto'. The options are 'increase' or 'decrease'. The default is set
+#' to 'decrease'.
 #' @param min.sample.for.aov Numeric. Indicates the minimum number of samples to perform correlation analyses between
 #' continuous sources of variation (biological and unwanted variation) with individual gene expression. The default is set
 #' to 3. The minimum value can be 3.
 #' @param min.sample.for.correlation Numeric. Indicates the minimum number of samples to perform correlation analyses
-#' between continuous sources of variation (biological and unwanted variation) with individual gene expression.The default
+#' between continuous sources of variation (biological and unwanted variation) with individual gene expression. The default
 #' is set to 10. The minimum value can be 3.
-#' @param regress.out.bio.variables Symbol. Indicates the column names of biological variables in the SummarizedExperiment
+#' @param regress.out.bio.variables Character vector. Indicates the column names of biological variables in the SummarizedExperiment
 #' object that will be regressed out from the data before performing correlation and ANOVA. Regressing out biological variables
-#' might help to better identify genes that are highly affected by unwanted variation. The default is 'NULL'.
-#' @param regress.out.uv.variables Symbol. Indicates the column names of unwanted variables the SummarizedExperiment object
-#' that will be regressed out from the data before performing correlation and ANOVA. Regressing out unwanted variables
-#' might help to better identify genes that are highly affected by biological variation.The default is 'NULL'.
-#' @param normalization Symbols.I ndicates winch normalization method to use for library size adjustment before fining genes
+#' might help better identify genes that are highly affected by unwanted variation. The default is 'NULL'.
+#' @param regress.out.uv.variables Character vector. Indicates the column names of unwanted variables in the SummarizedExperiment
+#' object that will be regressed out from the data before performing correlation and ANOVA. Regressing out unwanted variables
+#' might help better identify genes that are highly affected by biological variation. The default is 'NULL'.
+#' @param normalization Character string. Indicates which normalization method to use for library size adjustment before finding genes
 #' that are highly affected by biological variation. The default is 'CPM'. Refer to the 'applyOtherNormalization' function
 #' for more details.
 #' @param apply.log Logical. Indicates whether to apply a log-transformation to the data before any statistical analyses.
 #' The default is set to 'TRUE'.
-#' @param pseudo.count Numeric. A value as a pseudo count to be added to all measurements before applyinglog transformation.
+#' @param pseudo.count Numeric. A value to be added as a pseudo count to all measurements before applying log transformation.
 #' The default is set to 1.
-#' @param corr.method Numeric. Indicates which correlation methods should be used for the correlation analyses. The options
+#' @param corr.method Character string. Indicates which correlation methods should be used for the correlation analyses. The options
 #' are 'pearson' or 'spearman'. The default is set to 'spearman'.
-#' @param a Numeric. The significance level used for the confidence intervals in the correlation, by default it is set
+#' @param a Numeric. The significance level used for the confidence intervals in the correlation; by default, it is set
 #' to 0.05. Refer to the function 'correls' from the Rfast R package for more details.
-#' @param rho Numeric. The value of the hypothesised correlation to be used in the hypothesis testing. The default it is
+#' @param rho Numeric. The value of the hypothesized correlation to be used in the hypothesis testing. The default is
 #' set to 0. Refer to the function 'correls' from the Rfast R package for more details.
-#' @param anova.method Symbols. Indicates which ANOVA methods to use. The options are 'aov' or 'welch'. The default is
+#' @param anova.method Character string. Indicates which ANOVA method to use. The options are 'aov' or 'welch'. The default is
 #' 'aov'. Refer to the function 'row_oneway_equalvar' or 'row_oneway_welch' from the R package matrixTests for more details.
 #' @param assess.ncg Logical. Indicates whether to assess the performance of selected genes as negative control or not.
-#' This analysis involves principal component analysis on the selected genes and then explore the R^2 or vector correlation
-#' between the 'nb.pcs' first principal components and with the biological and unwanted variables. The default is set to 'TRUE'.
-#' @param variables.to.assess.ncg Symbols. Indicates the column names of the SummarizedExperiment object that
+#' This analysis involves principal component analysis on the selected genes, followed by exploration of the R^2 or vector correlation
+#' between the first 'nb.pcs' principal components and the biological and unwanted variables. The default is set to 'TRUE'.
+#' @param variables.to.assess.ncg Character vector. Indicates the column names of the SummarizedExperiment object that
 #' contain variables whose association with the selected genes as NCG needs to be evaluated. The default is 'NULL'. This
 #' means all the variables specified in the 'bio.variables' and 'uv.variables' will be assessed.
-#' @param nb.pcs Numeric. Indicates the number of the first principal components on selected negative control genes to be
-#' used to assess the performance of them. The default is set to 5.
-#' @param center Logical. Indicates whether to scale the data or not before applying SVD. If center is 'TRUE', then
-#' centering is done by subtracting the column means of the assay from their corresponding columns. The default is 'TRUE'.
-#' @param scale Logical. Indicates whether to scale the data or not before applying SVD.  If scale is TRUE, then scaling
-#' is done by dividing the (centered) columns of the assays by their standard deviations if center is TRUE, and the root
-#' mean square otherwise. The default is 'FALSE'.
-#' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment class object or not. If is 'TRUE',
-#' the function 'checkSeObj' will be used. The default is 'TRUE'.
-#' @param remove.na Symbol. Indicates whether to remove NA or missing values from either the 'assays', the 'sample.annotation',
-#' 'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If
-#' 'sample.annotation' is selected, the samples that contains NA or missing values for any 'bio.variables' and 'uv.variables'
-#'  will be excluded. By default, it is set to 'non'.
+#' @param nb.pcs Numeric. Indicates the number of the first principal components of selected negative control genes to be
+#' used to assess their performance. The default is set to 5.
+#' @param center Logical. Indicates whether to scale the data before applying SVD. If TRUE, centering is done by subtracting
+#' the column means of the assay from their corresponding columns. The default is 'TRUE'.
+#' @param scale Logical. Indicates whether to scale the data before applying SVD. If TRUE, scaling is done by dividing the
+#'  (centered) columns of the assays by their standard deviations if centering is TRUE, and by the root mean square otherwise.
+#'   The default is 'FALSE'.
+#' @param assess.se.obj Logical. Indicates whether to assess the SummarizedExperiment object. If TRUE, the function
+#' 'checkSeObj' will be used. The default is 'TRUE'.
+#' @param remove.na Character string. Indicates whether to remove NA or missing values from the 'assays', the 'sample.annotation',
+#' 'both', or 'none'. If 'assays' is selected, genes containing NA or missing values will be excluded. If 'sample.annotation'
+#'  is selected,
+#' the samples containing NA or missing values for any 'bio.variables' or 'uv.variables' will be excluded. By default,
+#' it is set to 'none'.
 #' @param save.se.obj Logical. Indicates whether to save the result of the function in the metadata of the SummarizedExperiment
-#' object or to output the result. The default is 'TRUE'.
-#' @param output.name Symbol. A representation for the output's name. If set to 'NULL', the function will choose a name
-#' automatically.
-#' @param ncg.group Symbol. A symbol indicating the name of the group of NCG.
-#' @param  plot.output TTT
-#' @param save.imf Logical. Indicates whether to save the intermediate file or not. If 'TRUE', the function save the results
-#' of the statistical analyses in the metadata of the SummarizedExperiment object. Then, if users want to change the parameters
-#' including 'nb.ncg', 'ncg.selection.method', top.rank.bio.genes' and 'top.rank.uv.genes', the analyses  will not be re-calculated.
+#' object or output the result. The default is 'TRUE'.
+#' @param output.name Character string. A representation for the output's name. If set to 'NULL', the function will
+#' choose a name automatically.
+#' @param ncg.group Character string. A name indicating the group of NCG.
+#' @param plot.output Logical. Indicates whether to generate output plots.
+#' @param save.imf Logical. Indicates whether to save the intermediate file. If 'TRUE', the function saves the results
+#' of the statistical analyses in the metadata of the SummarizedExperiment object. If users want to change the parameters
+#' including 'nb.ncg', 'ncg.selection.method', 'top.rank.bio.genes', and 'top.rank.uv.genes', the analyses will not be re-calculated.
 #' The default is set to 'FALSE'.
-#' @param use.imf Logical. Indicates whether to use the intermediate file or not. The default is set to 'FALSE'.
-#' @param imf.name Symbol. A name to save the intermediate file. If is 'NULL', the function creates a name.
-#' @param verbose Logical. If 'TRUE', shows the messages of different steps of the function.
+#' @param use.imf Logical. Indicates whether to use the intermediate file. The default is set to 'FALSE'.
+#' @param imf.name Character string. A name to save the intermediate file. If 'NULL', the function generates a name.
+#' @param verbose Logical. If 'TRUE', shows messages of different steps of the function.
 
-#' @return Either the SummarizedExperiment object containing the a set of negative control genes in the metadata or a
+#' @return Either the SummarizedExperiment object containing a set of negative control genes in the metadata or a
 #' logical vector of the selected negative control genes.
+
 
 #' @importFrom SummarizedExperiment assay SummarizedExperiment
 #' @importFrom matrixTests row_oneway_welch row_oneway_equalvar
@@ -211,25 +210,34 @@ findNcgAcrossSamples <- function(
                         color = 'white',
                         verbose = verbose)
     # Check inputs ####
-    if(!is.vector(assay.name) | length(assay.name) > 1 | is.logical(assay.name)){
+    if (!is.vector(assay.name) | length(assay.name) > 1 | is.logical(assay.name)){
         stop('The "assay.name" must be a single assay name in the SummarizedExperiment object.')
-    } else if (is.null(bio.variables)){
+    }
+    if (is.null(bio.variables)){
         stop('The "bio.variables" cannot be empty or "NULL".')
-    } else if (is.null(uv.variables)){
+    }
+    if (is.null(uv.variables)){
         stop('The "uv.variables" cannot be empty or "NULL".')
-    } else if(!is.vector(bio.variables) | !is.vector(uv.variables) ){
+    }
+    if(!is.vector(bio.variables) | !is.vector(uv.variables) ){
         stop('The "uv.variables" and "bio.variables" must be a vector of variables names in the SummarizedExperiment object.')
-    } else if (length(intersect(bio.variables, uv.variables)) > 0){
+    }
+    if (length(intersect(bio.variables, uv.variables)) > 0){
         stop('Individual specified variable must be either in "bio.variables" or "uv.variables".')
-    } else if (nb.ncg >= 1 | nb.ncg <= 0){
+    }
+    if (nb.ncg >= 1 | nb.ncg <= 0){
         stop('The "nb.ncg" must be a positve value 0 < nb.ncg < 1.')
-    } else if (!ncg.selection.method %in% c('prod', 'sum', 'average', 'auto', 'non.overlap', 'quantile')){
+    }
+    if (!ncg.selection.method %in% c('prod', 'sum', 'average', 'auto', 'non.overlap', 'quantile')){
         stop('The "ncg.selection.method" muat be one of "prod", "sum", "average", "auto", "non.overlap" or "quantile".')
-    } else if (top.rank.bio.genes > 1 | top.rank.bio.genes <= 0){
+    }
+    if (top.rank.bio.genes > 1 | top.rank.bio.genes <= 0){
         stop('The "top.rank.bio.genes" must be a positve value  0 < top.rank.bio.genes < 1.')
-    } else if (top.rank.uv.genes > 1 | top.rank.uv.genes <= 0){
+    }
+    if (top.rank.uv.genes > 1 | top.rank.uv.genes <= 0){
         stop('The "top.rank.uv.genes" must be a positve value  0 < top.rank.uv.genes < 1.')
-    } else if (is.null(min.sample.for.aov)){
+    }
+    if (is.null(min.sample.for.aov)){
         stop('The "min.sample.for.aov" cannot be empty.')
     } else if (min.sample.for.aov <= 2){
         stop('The "min.sample.for.aov" should be at least 3.')
@@ -318,41 +326,66 @@ findNcgAcrossSamples <- function(
     }
 
     # Check the SummarizedExperiment object ####
-    if (assess.se.obj) {
+    if (isTRUE(assess.se.obj)) {
         se.obj <- checkSeObj(
             se.obj = se.obj,
             assay.names = assay.name,
             variables = unique(c(bio.variables, uv.variables, variables.to.assess.ncg)),
             remove.na = remove.na,
-            verbose = verbose)
+            verbose = verbose
+            )
+    }
+    if (remove.na == 'none'){
+        if (is.null(variables.to.assess.ncg))
+            variables.to.assess.ncg <- c(bio.variables, uv.variables)
+        mout <- lapply(
+            variables.to.assess.ncg,
+            function(x){
+                if (sum(is.na(se.obj[[x]])) > 0)
+                    stop('There are NA or missing values in the specified variables.')
+            })
     }
     # Data transformation and normalization ####
     printColoredMessage(
-        message = '-- Data transformation and normalization:',
+        message = '-- Applyign data transformation and normalization:',
         color = 'magenta',
-        verbose = verbose)
+        verbose = verbose
+        )
     ## apply log ####
     if (isTRUE(apply.log) & !is.null(pseudo.count)){
         printColoredMessage(
-            message = paste0('Applying log2 + ', pseudo.count, ' (pseudo.count) on the ', assay.name, ' data.'),
+            message = paste0(
+                '- Applying log2 + ',
+                pseudo.count,
+                ' (pseudo.count) on the ',
+                assay.name,
+                ' data.'),
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         expr.data <- log2(assay(x = se.obj, i = assay.name) + pseudo.count)
     } else if (isTRUE(apply.log) & is.null(pseudo.count)){
         printColoredMessage(
-            message = paste0('Applying log2 on the ', assay.name,' data.'),
+            message = paste0(
+                '- Applying log2 on the ',
+                assay.name,
+                ' data.'),
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         expr.data <- log2(assay(x = se.obj, i = assay.name))
     } else if (isFALSE(apply.log)) {
         printColoredMessage(
-            message = paste0('The ', assay.name, ' data will be used without any log transformation.'),
+            message = paste0(
+                '- The ',
+                assay.name,
+                ' data will be used without any log transformation.'),
             color = 'blue',
             verbose = verbose)
         expr.data <- assay(x = se.obj, i = assay.name)
     }
     ## normalization ####
-    if(!is.null(normalization)){
+    if (!is.null(normalization)){
         expr.data.nor <- applyOtherNormalizations(
             se.obj = se.obj,
             assay.name = assay.name,
@@ -362,10 +395,11 @@ findNcgAcrossSamples <- function(
             assess.se.obj = FALSE,
             save.se.obj = FALSE,
             remove.na = 'none',
-            verbose = verbose)
+            verbose = verbose
+            )
     }
     ## regress out unwanted variables ####
-    if(!is.null(regress.out.uv.variables) & !is.null(normalization)){
+    if (!is.null(regress.out.uv.variables) & !is.null(normalization)){
         printColoredMessage(
             message = paste0(
                 'The ',
@@ -373,7 +407,8 @@ findNcgAcrossSamples <- function(
                 ' will be regressed out from the data,',
                 ' please make sure your data is log transformed.'),
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         printColoredMessage(
             message = paste0(
                 'Note, we do not recommend regressing out the ',
@@ -382,7 +417,8 @@ findNcgAcrossSamples <- function(
                 paste0(bio.variables, collapse = ' & '),
                 '.'),
             color = 'red',
-            verbose = verbose)
+            verbose = verbose
+            )
         expr.data.reg.uv <- t(expr.data.nor)
         uv.variables.all <- paste('se.obj', regress.out.uv.variables, sep = '$')
         expr.data.reg.uv <- lm(as.formula(paste(
@@ -393,7 +429,7 @@ findNcgAcrossSamples <- function(
         colnames(expr.data.reg.uv) <- colnames(se.obj)
         row.names(expr.data.reg.uv) <- row.names(se.obj)
     }
-    if(!is.null(regress.out.uv.variables) & is.null(normalization)){
+    if (!is.null(regress.out.uv.variables) & is.null(normalization)){
         printColoredMessage(
             message = paste0(
                 'The',
@@ -401,7 +437,8 @@ findNcgAcrossSamples <- function(
                 ' will be regressed out from the data,',
                 ' please make sure your data is log transformed.'),
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         printColoredMessage(
             message = paste0(
                 'Note: we do not recommend regressing out ',
@@ -409,7 +446,8 @@ findNcgAcrossSamples <- function(
                 'if they are largely associated with the ',
                 paste0(bio.variables, collapse = ' & '), '.'),
             color = 'red',
-            verbose = verbose)
+            verbose = verbose
+            )
         expr.data.reg.uv <- t(expr.data)
         uv.variables.all <- paste('se.obj', regress.out.uv.variables, sep = '$')
         expr.data.reg.uv <- lm(as.formula(paste(
@@ -423,14 +461,15 @@ findNcgAcrossSamples <- function(
     }
 
     ## regress out biological variables ####
-    if(!is.null(regress.out.bio.variables)){
+    if (!is.null(regress.out.bio.variables)){
         printColoredMessage(
             message = paste0(
                 paste0(regress.out.bio.variables, collapse = ' & '),
                 ' will be regressed out from the data,',
                 ' please make sure your data is log transformed.'),
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         printColoredMessage(
             message = paste0(
                 'We do not recommend regressing out the ',
@@ -438,7 +477,8 @@ findNcgAcrossSamples <- function(
                 'if they are largely associated with the ',
                 paste0(uv.variables, collapse = ' & '), '.'),
             color = 'red',
-            verbose = verbose)
+            verbose = verbose
+            )
         expr.data.reg.bio <- t(expr.data)
         bio.variables.all <- paste('se.obj', regress.out.bio.variables, sep = '$')
         expr.data.reg.bio <- lm(as.formula(paste(
@@ -451,25 +491,27 @@ findNcgAcrossSamples <- function(
     }
 
     # Gene-level ANOVA and correlation analyses  ####
-    if(isFALSE(use.imf)){
+    if (isFALSE(use.imf)){
         ## select genes that are highly affected by unwanted variation ####
         printColoredMessage(
-            message = '-- Find genes that are highly affected by each sources of unwnated variation:',
+            message = '-- Finding genes that are highly affected by each specified source(s) of unwnated variation:',
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         uv.var.class <- unlist(lapply(
             uv.variables,
-            function(x) class(colData(se.obj)[[x]])))
+            function(x) class(colData(se.obj)[[x]]))
+            )
         categorical.uv <- uv.variables[uv.var.class %in% c('factor', 'character')]
         continuous.uv <- uv.variables[uv.var.class %in% c('numeric', 'integer')]
         ### anova between genes and categorical sources of unwanted variation ####
-        if(length(categorical.uv) > 0 ){
-            if(!is.null(regress.out.bio.variables)){
+        if (length(categorical.uv) > 0 ){
+            if (!is.null(regress.out.bio.variables)){
                 data.to.use <- expr.data.reg.bio
             } else data.to.use <- expr.data
             printColoredMessage(
                 message = paste0(
-                    '- Perform ANOVA between individual gene-level ',
+                    '- Performing ANOVA between individual gene-level ',
                     'expression and each categorical source of unwanted variation: ',
                     paste0(categorical.uv, collapse = ' & '),
                     '.'),
@@ -481,21 +523,24 @@ findNcgAcrossSamples <- function(
                 function(x) {
                     keep.samples <- findRepeatingPatterns(
                         vec = colData(se.obj)[[x]],
-                        n.repeat = min.sample.for.aov)
-                    if(length(keep.samples) == 0){
+                        n.repeat = min.sample.for.aov
+                        )
+                    if (length(keep.samples) == 0){
                         stop(paste0(
                             'There are not enough samples to perfrom ANOVA between individual gene expression and the ',
                             x,
-                            ' variable. Possible solutions is to lower min.sample.for.aov or remove',
+                            ' variable. Possible solutions is to lower "min.sample.for.aov" or remove',
                             x,
-                            'from the uv.variables and re-run the function.'))
+                            'from the "uv.variables" and re-run the function.')
+                            )
                     } else if(length(keep.samples) == 1 ){
                         stop(paste0(
                             'There is only a single batch from ',
                             x,
                             ' that have enough samples ',
                             min.sample.for.aov,
-                            '(min.sample.for.aov). Possible solutions is to lower min.sample.for.aov or remove'))
+                            '(min.sample.for.aov). Possible solutions is to lower min.sample.for.aov or remove')
+                            )
                     } else if(length(keep.samples) != length(unique(colData(se.obj)[[x]])) ){
                         not.coverd <- unique(colData(se.obj)[[x]])[!unique(colData(se.obj)[[x]]) %in% keep.samples]
                         printColoredMessage(
@@ -507,11 +552,11 @@ findNcgAcrossSamples <- function(
                             verbose = verbose)
                     }
                     keep.samples <- colData(se.obj)[[x]] %in% keep.samples
-                    if(anova.method == 'aov'){
+                    if (anova.method == 'aov'){
                         anova.gene.batch <- as.data.frame(row_oneway_equalvar(
                             x = data.to.use[ , keep.samples],
                             g = se.obj@colData[, x][keep.samples]))
-                    } else if(anova.method == 'welch.correction'){
+                    } else if (anova.method == 'welch.correction'){
                         anova.gene.batch <- as.data.frame(row_oneway_welch(
                             x = data.to.use[ , keep.samples],
                             g = se.obj@colData[, x][keep.samples]))
@@ -526,13 +571,13 @@ findNcgAcrossSamples <- function(
             rm(data.to.use)
         } else anova.genes.uv <- NULL
         ### correlation between genes and categorical sources of unwanted variation ####
-        if(length(continuous.uv) > 0 ){
+        if (length(continuous.uv) > 0 ){
             if(!is.null(regress.out.bio.variables)){
                 data.to.use <- expr.data.reg.bio
             } else data.to.use <- expr.data
             printColoredMessage(
                 message = paste0(
-                    '- Perform ',
+                    '- Performing ',
                     corr.method,
                     ' correlation between individual gene-level ',
                     'expression and each continuous source of unwanted variations: ',
@@ -541,11 +586,12 @@ findNcgAcrossSamples <- function(
                 color = 'blue',
                 verbose = verbose
             )
-            if(ncol(se.obj) <= min.sample.for.correlation){
-                stop(paste0('There are not enough samples (min.sample.for.correlation:',
-                            min.sample.for.correlation,
-                            ') to perform correlation analysis.',
-                            ' A possible soultion in to lower min.sample.for.correlation.'))
+            if (ncol(se.obj) <= min.sample.for.correlation){
+                stop(paste0(
+                    'There are not enough samples (min.sample.for.correlation:',
+                    min.sample.for.correlation, ') to perform correlation analysis.',
+                    ' A possible soultion in to lower min.sample.for.correlation.')
+                    )
             }
             corr.genes.uv <- lapply(
                 continuous.uv,
@@ -555,7 +601,8 @@ findNcgAcrossSamples <- function(
                         x = t(data.to.use),
                         type = corr.method,
                         a = a ,
-                        rho = rho))
+                        rho = rho)
+                        )
                     corr.genes.var <- cbind(
                         round(x = corr.genes.var[, 1:4], digits = 3),
                         corr.genes.var[, 5, drop = FALSE])
@@ -571,28 +618,29 @@ findNcgAcrossSamples <- function(
 
         ## select genes that are not highly affected by biology ####
         printColoredMessage(
-            message = '-- Find genes that are not highly affected by sources of biological variation:',
+            message = '-- Finding genes that are highly affected by each specified source(s) of biological variation:',
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         bio.var.class <- unlist(lapply(
             bio.variables,
             function(x) class(colData(se.obj)[[x]]) ))
         continuous.bio <- bio.variables[bio.var.class %in% c('numeric', 'integer')]
         categorical.bio <- bio.variables[bio.var.class %in% c('factor', 'character')]
         ### anova between genes and categorical sources of biological variation ####
-        if(length(categorical.bio) > 0 ){
-            if(!is.null(normalization) & is.null(regress.out.uv.variables)){
+        if (length(categorical.bio) > 0 ){
+            if (!is.null(normalization) & is.null(regress.out.uv.variables)){
                 data.to.use <- expr.data.nor
-            } else if(!is.null(regress.out.uv.variables) & !is.null(normalization)){
+            } else if (!is.null(regress.out.uv.variables) & !is.null(normalization)){
                 data.to.use <- expr.data.reg.uv
-            } else if(!is.null(regress.out.uv.variables) & is.null(normalization)){
+            } else if (!is.null(regress.out.uv.variables) & is.null(normalization)){
                 data.to.use <- expr.data.reg.uv
             } else if (is.null(regress.out.uv.variables) & is.null(normalization)){
                 data.to.use <- expr.data
             }
             printColoredMessage(
                 message = paste0(
-                    '- Perform ANOVA between individual gene-level ',
+                    '- Performing ANOVA between individual gene-level ',
                     'expression and each categorical source of biological variation: ',
                     paste0(categorical.bio, collapse = ' & '),
                     '.'),
@@ -605,14 +653,14 @@ findNcgAcrossSamples <- function(
                     keep.samples <- findRepeatingPatterns(
                         vec = colData(se.obj)[[x]],
                         n.repeat = min.sample.for.aov)
-                    if(length(keep.samples) == 0){
+                    if( length(keep.samples) == 0){
                         stop(paste0(
                             'There are not enough samples to perfrom ANOVA between individual genes expression and the ',
                             x,
                             ' variable. Possible solutions is to lower min.sample.for.aov or remove',
                             x,
                             'from the bio.variables and re-run the function.'))
-                    } else if(length(keep.samples) == 1 ){
+                    } else if (length(keep.samples) == 1 ){
                         stop(paste0(
                             'There is only a single batch from ',
                             x,
@@ -621,7 +669,7 @@ findNcgAcrossSamples <- function(
                             '(min.sample.for.aov). Possible solutions is to lower min.sample.for.aov or remove',
                             x,
                             'from the bio.variables and re-run the function'))
-                    } else if(length(keep.samples) != length(unique(colData(se.obj)[[x]])) ){
+                    } else if (length(keep.samples) != length(unique(colData(se.obj)[[x]])) ){
                         not.coverd <- unique(colData(se.obj)[[x]])[!unique(colData(se.obj)[[x]]) %in% keep.samples]
                         printColoredMessage(
                             message = paste0(
@@ -649,7 +697,7 @@ findNcgAcrossSamples <- function(
             rm(data.to.use)
         } else anova.genes.bio <- NULL
         ### correlation between genes and continuous sources of biological variation ####
-        if(length(continuous.bio) > 0 ){
+        if (length(continuous.bio) > 0 ){
             if(!is.null(normalization) & is.null(regress.out.uv.variables)){
                 data.to.use <- expr.data.nor
             } else if(!is.null(regress.out.uv.variables) & !is.null(normalization)){
@@ -662,19 +710,22 @@ findNcgAcrossSamples <- function(
             ### gene-batch anova
             printColoredMessage(
                 message = paste0(
-                    '- Perform ',
+                    '- Performing ',
                     corr.method,
                     ' correlation between individual gene-level ',
                     'expression and each continuous sources of biological variation: ',
                     paste0(continuous.bio, collapse = '&'),
                     '.'),
                 color = 'blue',
-                verbose = verbose)
-            if(ncol(se.obj) <= min.sample.for.correlation){
-                stop(paste0('There are not enough samples (min.sample.for.correlation:',
-                            min.sample.for.correlation,
-                            ') to perform correlation analysis.',
-                            ' A possible soultion in to lower min.sample.for.correlation.'))
+                verbose = verbose
+                )
+            if (ncol(se.obj) <= min.sample.for.correlation){
+                stop(paste0(
+                    'There are not enough samples (min.sample.for.correlation:',
+                    min.sample.for.correlation,
+                    ') to perform correlation analysis.',
+                    ' A possible soultion in to lower min.sample.for.correlation.')
+                    )
             }
             corr.genes.bio <- lapply(
                 continuous.bio,
@@ -702,13 +753,14 @@ findNcgAcrossSamples <- function(
     # Read the intermediate file ####
     if (isTRUE(use.imf)){
         printColoredMessage(
-            message = paste0('- Retrieve the results of ANOVA and correlations from the the SummarizedExperiment object .'),
+            message = '- Retrieving the results of ANOVA and correlations from the the SummarizedExperiment object.',
             color = 'blue',
-            verbose = verbose)
-        if(is.null(imf.name)){
+            verbose = verbose
+            )
+        if (is.null(imf.name)){
             imf.name <- paste0(assay.name, '|AcrossSamples|', ncg.selection.method)
         }
-        if(is.null(se.obj@metadata$IMF$NCG[[imf.name]]))
+        if (is.null(se.obj@metadata$IMF$NCG[[imf.name]]))
             stop('The intermediate file cannot be found in the metadata of the SummarizedExperiment object.')
         all.tests <- se.obj@metadata$IMF$NCG[[imf.name]]
         anova.genes.bio <- all.tests$anova.genes.bio
@@ -717,7 +769,7 @@ findNcgAcrossSamples <- function(
         corr.genes.uv <- all.tests$corr.genes.uv
     }
     # Save the intermediate file ####
-    if(isTRUE(save.imf)){
+    if (isTRUE(save.imf)){
         printColoredMessage(
             message = '-- Save a intermediate file:',
             color = 'magenta',
@@ -725,7 +777,8 @@ findNcgAcrossSamples <- function(
         printColoredMessage(
             message = '- The results of ANOVA and correlations are saved in the SummarizedExperiment object.',
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         if(length(se.obj@metadata$IMF) == 0 ) {
             se.obj@metadata[['IMF']] <- list()
         }
@@ -747,11 +800,12 @@ findNcgAcrossSamples <- function(
 
     # Selection of NCG ####
     printColoredMessage(
-        message = '-- Selection of a set of genes as NCG:',
+        message = '-- Selecting a set of genes as NCG:',
         color = 'magenta',
-        verbose = verbose)
+        verbose = verbose
+        )
     ## prod, sum or average of ranks ####
-    if(ncg.selection.method %in% c('prod', 'sum', 'average')){
+    if (ncg.selection.method %in% c('prod', 'sum', 'average')){
         all.tests <- c(
             'anova.genes.bio',
             'corr.genes.bio',
@@ -772,21 +826,23 @@ findNcgAcrossSamples <- function(
         all.stats <- do.call(cbind, all.stats)
         row.names(all.stats) <- row.names(se.obj)
         ### product of ranks ####
-        if(ncg.selection.method == 'prod'){
+        if (ncg.selection.method == 'prod'){
             printColoredMessage(
                 message = '- A set of NCG will be selected based on the product of ranks.',
                 color = 'blue',
-                verbose = verbose)
+                verbose = verbose
+                )
             stat.summary <- rowProds(all.stats)
             if(sum(is.infinite(stat.summary)) > 0)
                 stop('The product of ranks results in infinity values.')
         }
         ## average of ranks ####
-        if(ncg.selection.method == 'sum'){
+        if (ncg.selection.method == 'sum'){
             printColoredMessage(
                 message = '- A set of NCG will be selected based on the sum of ranks.',
                 color = 'blue',
-                verbose = verbose)
+                verbose = verbose
+                )
             stat.summary <- rowSums(all.stats)
         }
         ## sum of ranks ####
@@ -794,7 +850,8 @@ findNcgAcrossSamples <- function(
             printColoredMessage(
                 message = '- A set of NCG will be selected based on the average of ranks.',
                 color = 'blue',
-                verbose = verbose)
+                verbose = verbose
+                )
             stat.summary <- rowMeans(all.stats)
         }
         ## select top genes as NCGS ####
@@ -813,7 +870,8 @@ findNcgAcrossSamples <- function(
         printColoredMessage(
             message = '- A set of genes will be selected as NCGs based on the "non.overlap" approach.',
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         printColoredMessage(
             message = paste0(
                 '- Select top ',
@@ -822,8 +880,8 @@ findNcgAcrossSamples <- function(
                 top.rank.bio.genes *100,
                 '% of highly affected genes by the bioloigcal variation.'),
             color = 'blue',
-            verbose = verbose)
-
+            verbose = verbose
+            )
         ### select genes affected by biological variation ####
         top.rank.bio.genes.nb <- round(c(1 - top.rank.bio.genes) * nrow(se.obj), digits = 0)
         all.bio.tests <- c('anova.genes.bio', 'corr.genes.bio')
@@ -857,7 +915,7 @@ findNcgAcrossSamples <- function(
             })))
         ## select of NCGS ####
         ncg.selected <- top.uv.genes[!top.uv.genes %in% top.bio.genes]
-        if(isTRUE(length(ncg.selected) == 0)) stop('NCGs cannot be found based on the current parameters.')
+        if (isTRUE(length(ncg.selected) == 0)) stop('NCGs cannot be found based on the current parameters.')
         ncg.selected <- row.names(se.obj) %in% ncg.selected
     }
 
@@ -915,16 +973,18 @@ findNcgAcrossSamples <- function(
         printColoredMessage(
             message = '- A set of genes will be selected as NCGs based on the "auto" approach.',
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         printColoredMessage(
             message = paste0(
-                '- Select top ',
+                '- Selecting top ',
                 top.rank.uv.genes * 100,
                 '% of highly affected genes by the unwanted variation, and then exclude any genes in top ',
                 top.rank.bio.genes * 100,
                 '% of highly affected genes by the bioloigcal variation.'),
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         ### select genes affected by biological variation ####
         top.rank.bio.genes.nb <- round(c(1 - top.rank.bio.genes) * nrow(se.obj), digits = 0)
         all.bio.tests <- c('anova.genes.bio', 'corr.genes.bio')
@@ -957,7 +1017,7 @@ findNcgAcrossSamples <- function(
             })))
         ## select NCG ####
         ncg.selected <- top.uv.genes[!top.uv.genes %in% top.bio.genes]
-        if(isTRUE(length(ncg.selected) == 0)) stop('NCGs cannot be found based on the current parameters.')
+        if (isTRUE(length(ncg.selected) == 0)) stop('NCGs cannot be found based on the current parameters.')
         printColoredMessage(
             message = paste0('- ', length(ncg.selected), ' genes are found.'),
             color = 'blue',
@@ -966,7 +1026,7 @@ findNcgAcrossSamples <- function(
         ## assess the need for grid search ####
         nb.ncg <- round(c(nb.ncg * nrow(se.obj)), digits = 0)
         ncg.ranges <- round(x = 0.01 *nb.ncg, digits = 0)
-        if(length(ncg.selected) > c(nb.ncg + ncg.ranges) | length(ncg.selected) < c(nb.ncg - ncg.ranges)) {
+        if (length(ncg.selected) > c(nb.ncg + ncg.ranges) | length(ncg.selected) < c(nb.ncg - ncg.ranges)) {
             if(isTRUE(nb.ncg > length(ncg.selected))){
                 con <- parse(text = paste0("nb.ncg", ">", "length(ncg.selected)"))
                 printColoredMessage(
@@ -977,7 +1037,7 @@ findNcgAcrossSamples <- function(
                     color = 'blue',
                     verbose = verbose)
             }
-            if(isTRUE(nb.ncg < length(ncg.selected))){
+            if (isTRUE(nb.ncg < length(ncg.selected))){
                 con <- parse(text = paste0("length(ncg.selected)", ">", "nb.ncg"))
                 printColoredMessage(
                     message = paste0(
@@ -1233,7 +1293,8 @@ findNcgAcrossSamples <- function(
                     printColoredMessage(
                         message = '- The grid search will decrease the value of "top.rank.uv.genes". ',
                         color = 'blue',
-                        verbose = verbose)
+                        verbose = verbose
+                        )
                     lo <- top.rank.uv.genes.nb
                     pro.bar <- progress_estimated(round(lo/grid.nb, digits = 0) + 2)
                     while(eval(con) & top.rank.uv.genes.nb > 1){
@@ -1268,7 +1329,7 @@ findNcgAcrossSamples <- function(
                 message(' ')
                 printColoredMessage(
                     message = paste0(
-                        '- Update the selection. Select top ',
+                        '- Updating the selection. Select top ',
                         top.rank.uv.genes,
                         '% of highly affected genes by the unwanted variation, and then exclude any genes in top ',
                         top.rank.bio.genes * 100,
@@ -1278,39 +1339,101 @@ findNcgAcrossSamples <- function(
                 }
             } else {
             printColoredMessage(
-                message = paste0('- ', length(ncg.selected), ' genes are selected as NCGs.'),
+                message = paste0(
+                    '- ',
+                    sum(ncg.selected),
+                    ' genes are selected as NCGs.'),
                 color = 'blue',
                 verbose = verbose)
-        }
+            }
     }
 
     printColoredMessage(
-        message = paste0('A set of ', sum(ncg.selected), ' genes are selected for NCG.'),
+        message = paste0(
+            'A set of ',
+            sum(ncg.selected),
+            ' genes are selected for NCG.'),
         color = 'blue',
-        verbose = verbose)
+        verbose = verbose
+        )
+    ## Plotting ####
+    printColoredMessage(
+        message = '- Generating a heatmap plot of all the ranks of all the NCGs across all the variables',
+        color = 'magenta',
+        verbose = verbose
+    )
+
+    all.uv.bio.tests <- lapply(
+        c(all.bio.tests, all.uv.tests),
+        function(x){
+            if (!is.null(x)){
+                temp.data <- get(x)
+                temp.data <- lapply(
+                    names(temp.data),
+                    function(y) {
+                        tm <- temp.data[[y]][ , c('statistic', 'ranked.genes')]
+                        tm$group <- rep(y, nrow(tm))
+                        tm
+                    })
+                temp.data <- do.call(cbind, temp.data)
+                temp.data
+            }
+        })
+    all.uv.bio.tests <- do.call(cbind, all.uv.bio.tests)
+    temp.data <- lapply(
+        seq(3, ncol(all.uv.bio.tests), 3),
+        function(x){
+            temp.data <- all.uv.bio.tests[ , x-1, drop = FALSE]
+            colnames(temp.data) <- all.uv.bio.tests[ , x][1]
+            temp.data
+        })
+    temp.data <- do.call(cbind, temp.data)
+    temp.data$ncg <- ncg.selected
+    ha <- ComplexHeatmap::rowAnnotation(
+        NCG = temp.data$ncg,
+        col = list(NCG = c('TRUE' = 'gray10', 'FALSE' = 'gray'))
+    )
+    ncg.plot <- ComplexHeatmap::Heatmap(
+        temp.data[ , seq_len(ncol(temp.data) - 1)],
+        cluster_rows = TRUE,
+        cluster_columns = FALSE,
+        show_row_names = FALSE,
+        right_annotation = ha,
+        column_names_rot = 45,
+        col = viridis::magma(n = 20),
+        heatmap_legend_param = list(
+            title = 'Ranks',
+            title_gp = grid::gpar(fontsize = 14),
+            by_row = TRUE,
+            ncol = 1)
+    )
+    if (isTRUE(plot.output)) print(ncg.plot)
 
     # Assessment of the selected set of NCG ####
     ### pca on the NCG ####
-    if(assess.ncg){
+    if (isTRUE(assess.ncg)){
         printColoredMessage(
-            message = '-- Assess the performance of the selected NCG set:',
+            message = '-- Assessing the performance of the selected NCG set:',
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         printColoredMessage(
-            message = paste0('- Perform PCA on only selected genes as NCG.'),
+            message = '- Performing PCA on only selected genes as NCG.',
             color = 'blue',
-            verbose = verbose)
-        if(is.null(variables.to.assess.ncg))
+            verbose = verbose
+            )
+        if (is.null(variables.to.assess.ncg))
             variables.to.assess.ncg <- c(bio.variables, uv.variables)
         printColoredMessage(
             message = paste0(
-                '- Explore the association of the first ',
+                '- Exploring the association of the first ',
                 nb.pcs,
                 '  PCs with the ',
                 paste0(variables.to.assess.ncg, collapse = ' & '),
                 ' variables.'),
             color = 'blue',
-            verbose = verbose)
+            verbose = verbose
+            )
         pca.data <- BiocSingular::runSVD(
             x = t(expr.data[ncg.selected, ]),
             k = nb.pcs,
@@ -1371,7 +1494,7 @@ findNcgAcrossSamples <- function(
         message = '-- Saving the selected NCG to the metadata of the SummarizedExperiment object.',
         color = 'magenta',
         verbose = verbose)
-    if(is.null(output.name)){
+    if (is.null(output.name)){
         output.name <- paste0(
             sum(ncg.selected),
             '|',
@@ -1383,30 +1506,30 @@ findNcgAcrossSamples <- function(
             '|',
             assay.name)
     }
-    if(is.null(ncg.group)){
+    if (is.null(ncg.group)){
         ncg.group <- paste0('ncg|unsupervised')
     }
     ### add results to the SummarizedExperiment object ####
-    if(isTRUE(save.se.obj)){
+    if (isTRUE(save.se.obj)){
         ## Check if metadata NCG already exists
-        if(length(se.obj@metadata$NCG) == 0 ) {
+        if (length(se.obj@metadata$NCG) == 0 ) {
             se.obj@metadata[['NCG']] <- list()
         }
-        if(!'supervised' %in% names(se.obj@metadata[['NCG']])){
+        if (!'supervised' %in% names(se.obj@metadata[['NCG']])){
             se.obj@metadata[['NCG']][['supervised']] <- list()
         }
-        if(!ncg.group %in% names(se.obj@metadata[['NCG']][['supervised']])){
+        if (!ncg.group %in% names(se.obj@metadata[['NCG']][['supervised']])){
             se.obj@metadata[['NCG']][['supervised']][[ncg.group]] <- list()
         }
-        if(!'ncg.set' %in% names(se.obj@metadata[['NCG']][['supervised']][[ncg.group]])){
+        if (!'ncg.set' %in% names(se.obj@metadata[['NCG']][['supervised']][[ncg.group]])){
             se.obj@metadata[['NCG']][['supervised']][[ncg.group]][['ncg.set']] <- list()
         }
-        if(!output.name %in% names(se.obj@metadata[['NCG']][['supervised']][[ncg.group]][['ncg.set']] )){
+        if (!output.name %in% names(se.obj@metadata[['NCG']][['supervised']][[ncg.group]][['ncg.set']] )){
             se.obj@metadata[['NCG']][['supervised']][[ncg.group]][['ncg.set']][[output.name]] <- list()
         }
         se.obj@metadata[['NCG']][['supervised']][[ncg.group]][['ncg.set']][[output.name]] <- ncg.selected
 
-        if(isTRUE(assess.ncg)){
+        if (isTRUE(assess.ncg)){
             if(!'assessment.plot' %in% names(se.obj@metadata[['NCG']][['supervised']][[ncg.group]])){
                 se.obj@metadata[['NCG']][['supervised']][[ncg.group]][['assessment.plot']] <- list()
             }
@@ -1427,7 +1550,7 @@ findNcgAcrossSamples <- function(
         return(se.obj)
     }
     ### export results as logical vector ####
-    if(isFALSE(save.se.obj)){
+    if (isFALSE(save.se.obj)){
         printColoredMessage(
             message = '-- The NCGs are outputed as a logical vector.',
             color = 'blue',
@@ -1439,3 +1562,7 @@ findNcgAcrossSamples <- function(
         return(ncg.selected)
     }
 }
+
+
+
+

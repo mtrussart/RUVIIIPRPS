@@ -54,30 +54,34 @@ plotARI <- function(
     printColoredMessage(message = '------------The plotARI function starts:',
                         color = 'white',
                         verbose = verbose)
-    # Check the inputs ####
+    # Checking the inputs ####
     if (is.null(assay.names)) {
         stop('The "assay.names" cannot be empty')
-    } else if (is.null(variables)) {
+    }
+    if (is.null(variables)) {
         stop('The "variables" cannot be empty')
-    } else if (!plot.type %in% c('single.plot', 'combined.plot')) {
+    }
+    if (!plot.type %in% c('single.plot', 'combined.plot')) {
         stop('The "plot.type" must be one of the "single.plot" or "combined.plot".')
-    } else if (plot.type == 'combined.plot') {
+    }
+    if (plot.type == 'combined.plot') {
         if (length(variables) == 1)
             stop('To plot combined ARI, two variables must be provided.')
-    } else if (plot.type == 'single.plot') {
+    }
+    if (plot.type == 'single.plot') {
         if (length(variables) > 1)
             stop('To plot "single.plot" ARI, only one variable must be provided.')
     }
 
-    # Check assays ####
+    # Checking the assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else  assay.names <- factor(x = assay.names , levels = assay.names)
-    if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
+    if (!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
-    # Plot the ARI values ####
+    # Plotting the ARI values ####
     ## single plot ####
     if (plot.type == 'single.plot') {
         ### obtain ari ####
@@ -178,7 +182,7 @@ plotARI <- function(
                 message = '- The individual assay ARI barplot are combined into one.',
                 color = 'blue',
                 verbose = verbose)
-            if(isTRUE(plot.output))
+            if (isTRUE(plot.output))
                 suppressMessages(print(overall.single.ari.plot))
         }
     }

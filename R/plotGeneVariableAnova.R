@@ -1,27 +1,29 @@
-#' plot F-statistics obtained from ANOVA.
+#' Plots F-statistics obtained from ANOVA.
 
 #' @author Ramyar Molania
 
 #' @description
-#' This functions computes the adjusted rand index for given a categorical variable using the first PCs of the assay(s)
-#' in a SummarizedExperiment object.
-
+#' This functions plots the results of the ANOVA analysis computed by the 'computeGenesVariableANOVA' function.
 
 #' @param se.obj A SummarizedExperiment object.
-#' @param assay.names Symbol. A symbol or list of symbols for the selection of the name(s) of the assay(s) in the
-#' SummarizedExperiment object to compute PCA. By default all the assays of the SummarizedExperiment object will be selected.
-#' @param variable Symbol. Indicates the column name in the SummarizedExperiment object that contains a categorical
-#' variable such as sample types or batches.
-#' @param anova.method Logical. Indicates whether to use the PCA calculated using a specific number of PCs instead of the
-#' full range to speed up the process, by default is set to 'TRUE'.
-#' @param plot.ncol Numeric. A numeric value indicates columns of rows in the plot grid. The default is set to 4.
-#' @param plot.nrow Numeric. A numeric value indicates rows of rows in the plot grid. The default is set to 1.
-#' @param plot.output Logical. Indicates whether to plot the ARI, by default it is set to FALSE.
-#' @param save.se.obj Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment class
-#' object 'se.obj' or to output the result. By default it is set to TRUE.
-#' @param verbose Logical. If TRUE, displaying process messages is enabled.
+#' @param assay.names Character or vector. A character string or a vector of strings for selecting the name(s) of the
+#' assay(s) in the SummarizedExperiment object. By default, all assays in the SummarizedExperiment object will be selected,
+#' If the specifed ANOVA has already been computed for them using 'computeGenesVariableANOVA' function.
+#' The ANOVA results for each specified assay will be plotted.
+#' @param variable Character. Indicates the column name in the SummarizedExperiment object that contains a categorical
+#' variable such as sample types or batches. The association between individual gene expression and the specified levels
+#' must have already been computed by the 'computeGenesVariableANOVA' function.
+#' @param anova.method Logical. Specifies which ANOVA method results should be used for plotting.
+#' @param plot.ncol Numeric. A numeric value specifying the number of columns in the plot grid. The default is set to 4.
+#' @param plot.nrow Numeric. A numeric value specifying the number of rows in the plot grid. The default is set to 1.
+#' @param plot.output Logical. Indicates whether to display the boxplot(s) of the ANOVA results. By default, this
+#' is set to FALSE.
+#' @param save.se.obj Logical. Indicates whether to save the plots in the metadata of the SummarizedExperiment object
+#' or to output the result as a list. By default, this is set to TRUE.
+#' @param verbose Logical. If TRUE, displays process messages during execution.
 
-#' @return A SummarizedExperiment object or a list that containing the computed ARI on the categorical variable.
+#' @return Either a SummarizedExperiment object or a list containing the plots of ANOVA results for the specified
+#' categorical variable for each assay.
 
 #' @importFrom SummarizedExperiment assays assay
 #' @import ggplot2
@@ -41,35 +43,36 @@ plotGenesVariableAnova <- function(
     printColoredMessage(message = '------------The plotGenesVariableAnova function finished.',
                         color = 'white',
                         verbose = verbose)
-    # Check the inputs ####
+    # Checking the inputs ####
     if (is.null(assay.names)) {
-        stop('Please provide at least an assay name.')
-    } else if (is.null(variable)) {
-        stop('Please provide a variable.')
-    } else if (length(unique(se.obj@colData[, variable])) < 2) {
-        stop(paste0('The ', variable, ', contains only one variable.'))
-    } else if (class(se.obj@colData[, variable]) %in% c('numeric', 'integer')) {
-        stop(paste0(
-            'The ',
-            variable,
-            ', is a numeric, but this should a categorical variable'
-        ))
+        stop('The "assay.names" cannot be empty.')
     }
-
-    # Check the assays ####
+    if (is.null(variable)) {
+        stop('The "variable" cannot be empty.')
+    }
+    if (length(unique(se.obj@colData[, variable])) < 2) {
+        stop(paste0('The ', variable, ', contains only one variable.'))
+    }
+    if (class(se.obj@colData[, variable]) %in% c('numeric', 'integer')) {
+        stop('The "variable", must be a categorical variable.')
+    }
+    # Checking the assays ####
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else  assay.names <- factor(x = assay.names , levels = assay.names)
-    if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
+    if (!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
     # Obtain ANOVA F-statistics and p-values  ####
     printColoredMessage(
-        message = paste0('-- Obtain the computed ANOVA F-statistics between genes and the "', variable, '" variable',
-                         ' from the SummarizedExperiment object:'),
+        message = paste0(
+            '-- Obtaining the computed ANOVA F-statistics between genes and the "',
+            variable,
+            ' variable from the SummarizedExperiment object:'),
         color = 'magenta',
-        verbose = verbose)
+        verbose = verbose
+        )
     all.aov.fvals.pvalues <- getMetricFromSeObj(
         se.obj = se.obj,
         slot = 'Metrics',
@@ -86,7 +89,7 @@ plotGenesVariableAnova <- function(
     # Generate different plots of F-statistic and p values of  ANOVA ####
     ## generate boxplots of the ANOVA F-statistics fo each assay ####
     printColoredMessage(
-        message = '-- Generate boxplots of the ANOVA F-statistics:',
+        message = '-- Generating boxplots of the lo2 of the ANOVA F-statistics:',
         color = 'magenta',
         verbose = verbose
     )
@@ -95,7 +98,10 @@ plotGenesVariableAnova <- function(
         levels(assay.names),
         function(x){
             printColoredMessage(
-                message = paste0('- Generate boxplot for the "', x, '" data.'),
+                message = paste0(
+                    '- Generating a boxplot for the "',
+                    x,
+                    '" data.'),
                 color = 'blue',
                 verbose = verbose
             )
@@ -119,9 +125,9 @@ plotGenesVariableAnova <- function(
 
     ## put all boxplots together ####
     everything <- datasets <- NULL
-    if(length(assay.names) > 1){
+    if (length(assay.names) > 1){
         printColoredMessage(
-            message = '-- Put all the boxplots of ANOVA F-statistics together.',
+            message = '-- Putting all the boxplots of ANOVA F-statistics together.',
             color = 'magenta',
             verbose = verbose
         )
@@ -158,7 +164,10 @@ plotGenesVariableAnova <- function(
                 size = 18),
             bottom = text_grob(
                 label = paste0(
-                    'Analysis: ', 'ANOA analysis between individaul gen expression an the  ', variable, ' variable.'),
+                    'Analysis: ',
+                    'ANOA analysis between individaul gen expression an the  ',
+                    variable,
+                    ' variable.'),
                 color = "black",
                 hjust = 1,
                 x = 1,
@@ -169,12 +178,12 @@ plotGenesVariableAnova <- function(
             color = 'blue',
             verbose = verbose
         )
-        if(isTRUE(plot.output)) suppressMessages(print(overall.aov.fvals.boxplots))
+        if (isTRUE(plot.output)) suppressMessages(print(overall.aov.fvals.boxplots))
     }
 
     # Generate p-value histograms of the ANOVA ####
     printColoredMessage(
-        message = '-- Generate p-value histograms of the ANOVA F-statistics:',
+        message = '-- Generating p-value histograms of the ANOVA F-statistics:',
         color = 'magenta',
         verbose = verbose
     )
@@ -197,7 +206,7 @@ plotGenesVariableAnova <- function(
         levels(assay.names),
         function(x){
             printColoredMessage(
-                message = paste0('- Generate boxplot for the "', x, '" data.'),
+                message = paste0('- Generating boxplot for the "', x, '" data.'),
                 color = 'blue',
                 verbose = verbose
             )
@@ -220,9 +229,9 @@ plotGenesVariableAnova <- function(
     names(all.aov.pvalues.histograms) <- levels(assay.names)
 
     ## put all histograms together ####
-    if(length(assay.names) > 1){
+    if (length(assay.names) > 1){
         printColoredMessage(
-            message = '-- Put all the p-values histograms of the ANOVA together.',
+            message = '-- Putting all the p-values histograms of the ANOVA together.',
             color = 'magenta',
             verbose = verbose
         )
@@ -231,7 +240,7 @@ plotGenesVariableAnova <- function(
             ncol = plot.ncol,
             nrow = plot.nrow
             )
-        if(class(overall.aov.pvalues.histograms)[[1]] == 'list'){
+        if (class(overall.aov.pvalues.histograms)[[1]] == 'list'){
             plot.list <- lapply(
                 seq(length(overall.aov.pvalues.histograms)),
                 function(x){
@@ -244,7 +253,10 @@ plotGenesVariableAnova <- function(
                             size = 18),
                         bottom = text_grob(
                             label = paste0(
-                                'Analysis: ', 'ANOVA analysis between individaul gen expression an the  ', variable, ' variable.'),
+                                'Analysis: ',
+                                'ANOVA analysis between individaul gen expression an the  ',
+                                variable,
+                                ' variable.'),
                             color = "black",
                             hjust = 1,
                             x = 1,
@@ -265,7 +277,10 @@ plotGenesVariableAnova <- function(
                     size = 18),
                 bottom = text_grob(
                     label = paste0(
-                        'Analysis: ', 'ANOA analysis between individaul gen expression an the  ', variable, ' variable.'),
+                        'Analysis: ',
+                        'ANOA analysis between individaul gen expression an the  ',
+                        variable,
+                        ' variable.'),
                     color = "black",
                     hjust = 1,
                     x = 1,
@@ -281,14 +296,14 @@ plotGenesVariableAnova <- function(
 
     # Save the results ####
     printColoredMessage(
-        message = '-- Save the all the boxplots of the ANOVA F-statistics:',
+        message = '-- Saving the all the boxplots of the ANOVA F-statistics:',
         color = 'magenta',
         verbose = verbose
         )
     ## add results to the SummarizedExperiment object ####
     if (isTRUE(save.se.obj)) {
         printColoredMessage(
-            message = '- Save all the boxplots of the ANOVA F-statistics of each assay(s) in the "metadata" in the SummarizedExperiment object.',
+            message = '- Saving all the boxplots of the ANOVA F-statistics of each assay(s) in the "metadata" in the SummarizedExperiment object.',
             color = 'blue',
             verbose = verbose
             )
@@ -315,8 +330,11 @@ plotGenesVariableAnova <- function(
             results.data = all.aov.pvalues.histograms
         )
         printColoredMessage(
-            message = paste0('- The boxplot of the ANOVA F-statistics for the indiviaul assay(s) is  saved to',
-                             '  "se.obj@metadata$metric$AssayName$ANOVA$', anova.method, ' in the SummarizedExperiment object.'),
+            message = paste0(
+                '- The boxplot of the ANOVA F-statistics for the indiviaul assay(s) is  saved to',
+                '  "se.obj@metadata$metric$AssayName$ANOVA$',
+                anova.method,
+                ' in the SummarizedExperiment object.'),
             color = 'blue',
             verbose = verbose)
 

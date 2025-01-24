@@ -28,69 +28,70 @@ plotPCA(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.names}{Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
-SummarizedExperiment object to PC. The default is "all, which indicates all the assays of the SummarizedExperiment
+\item{assay.names}{Character or vector. A character string or a vector of strings specifying the name(s) of the assay(s)
+in the SummarizedExperiment object for computing principal components (PCs). By default, all assays in the SummarizedExperiment
 object will be selected.}
 
-\item{variable}{Symbol. Indicates a name of the column in the sample annotation of the SummarizedExperiment object.
-The variable can be either a categorical or continuous. If a continuous variable is provided, the function creates
-a scatter plot of each PC against the variable. If a categorical variable is given, the function can generate pairwise
-scatter plots of the first principal components colored by a categorical variable or creates boxplots of each PC across
-the variable.}
+\item{variable}{Character. The name of the column in the sample annotation of the SummarizedExperiment object that
+contains either a categorical or continuous variable. If a continuous variable is provided, the function creates scatter
+plots of each PC against the variable. If a categorical variable is provided, the function can generate pairwise scatter
+plots of the first principal components, colored by the categorical variable, or create boxplots of each PC across the variable.}
 
-\item{fast.pca}{Logical. Indicates whether to use the computed fast PC ro not. The default is 'TRUE'. We refe to the
-computePCA function for more details.}
+\item{fast.pca}{Logical. Indicates whether to use the pre-computed fast PCA or not. The default is set to 'TRUE'. Refer
+to the computePCA' function for more details.}
 
-\item{nb.pcs}{Numeric. A numeric value indicating the number of first PCs to be used for plotting. The default is set to 3.It's important to note
-that the variation of PCs for a portion of all selected PCs will be based solely on those selected PCs.}
+\item{nb.pcs}{Numeric. A numeric value specifying the number of principal components to be used for plotting. The
+default is set to 3. It’s important to note that the variation in the PCs for the selected subset will be based solely
+on the chosen number of PCs.}
 
-\item{plot.type}{Symbol. A symbol specifying which plot type should be generated. Options are: 'scatter' and 'boxplot'.
-The default is set to 'scatter'. Please note, the 'plot.type' cannot be set to 'scatter' of a categorical variable is
-provided.}
+\item{plot.type}{Character. Specifies which type of plot should be generated. Options are: 'scatter' and 'boxplot'.
+The default is set to 'scatter'. Note that the 'plot.type' cannot be set to 'scatter' if a categorical variable is provided.}
 
-\item{variable.colors}{Symbol. A vector of color names in scatter plots of PCs when a categorical variable is specified.
-If is 'NULL', the function will use the default colors.}
+\item{variable.colors}{Character vector. Specifies the colors to be used in scatter plots of PCs when a categorical
+variable is provided. If 'NULL', the function will use the default color scheme.}
 
-\item{points.size}{Numeric. A numeric value specifying the size of points in the scatter PCA plots. The default is set
-to 1.}
+\item{points.size}{Numeric. A numeric value specifying the size of the points in the scatter PCA plots. The default
+is set to 1.}
 
-\item{stroke.color}{Symbol. A symbol specifying the color of the stroke of the points in the scatter PCA plots. The
-default is set to 'gray'.}
+\item{stroke.color}{Character. Specifies the color of the stroke around the points in the scatter PCA plots. The default
+is set to 'gray'.}
 
-\item{stroke.size}{Numeric. A numeric value indicating the size of the stroke of the points in the scatter PCA plots.
+\item{stroke.size}{Numeric. A numeric value indicating the thickness of the stroke around the points in the scatter PCA plots.
 The default is set to 0.1.}
 
 \item{points.alpha}{Numeric. A numeric value indicating the transparency of the points in the scatter PCA plots. The
 default is set to 0.5.}
 
-\item{densities.alpha}{Numeric.  A numeric value indicating the transparency of the densities in the scatter PCA plots.
+\item{densities.alpha}{Numeric. A numeric value indicating the transparency of the density plots in the scatter PCA plots.
 The default is set to 0.5.}
 
-\item{legend.position}{Symbol. A symbol indicating the location of the plot legend.  This setting will apply when a categorical
-variable is provided and the 'plot.type' is set to 'scatter'. Options are: 'top', 'right', 'bottom' and 'left'. The default
-is set to "bottom".}
+\item{legend.position}{Character. Specifies the position of the plot legend. This setting applies when a categorical
+variable is provided, and the 'plot.type' is set to 'scatter'. Options are: 'top', 'right', 'bottom', and 'left'. The
+default is set to "bottom".}
 
-\item{plot.ncol}{Numeric. A numeric value indicating the number of columns in the plot grid. When the number of selected
-assay is more than 1, the function puts all the PCA plots in one grid.}
+\item{plot.ncol}{Numeric. A numeric value indicating the number of columns in the plot grid. When more than one assay
+is selected,
+the function arranges all the PCA plots in one grid.}
 
-\item{plot.nrow}{Numeric. A numeric value indicating number of rows in the plot grid. When the number of selected assay is more than
-3, the function puts all the PCA plots in one grid.}
+\item{plot.nrow}{Numeric. A numeric value indicating the number of rows in the plot grid. When more than three assays
+are selected,
+the function arranges all the PCA plots in one grid.}
 
-\item{plot.output}{Logical. If 'TRUE', the individual PCA plot(s) will be printed while functions is running.}
+\item{plot.output}{Logical. If 'TRUE', the individual PCA plot(s) will be displayed as the function runs.}
 
 \item{save.se.obj}{Logical. Indicates whether to save the plots in the metadata of the SummarizedExperiment object
-or to output the results as list. By default it is set to 'TRUE'.}
+or to output the results as a list. By default, this is set to 'TRUE'.}
 
-\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
+\item{verbose}{Logical. If 'TRUE', process messages will be displayed during execution.}
 }
 \value{
-A SummarizedExperiment object that contains all the PCA plot(s) in the metadata or a list that contains all
-the PCA plot(s).
+A SummarizedExperiment object containing the PCA plot(s) in its metadata, or a list containing the PCA plot(s).
 }
 \description{
-This functions generates scatter and boxplot the first principal components of the assay(s) of a SummarizedExperiment
-object. The function can generate pairwise scatter plots of the first principal components colored by a categorical
-variable or creates boxplots of each PC across the variable. Boxplots of principal components become beneficial when
-the levels of a categorical variable are numerous, making visualization through colored scatter plots challenging. If
-a continuous variable is provided, the function creates a scatter plot of each PC against the variable.
+This function generates scatter and boxplots of the first principal components (PCs) of the assay(s) in a
+SummarizedExperiment object. The function can generate pairwise scatter plots of the first principal components,
+colored by a categorical variable, or create boxplots of each PC across the variable. Boxplots of principal components
+are especially useful when the levels of a categorical variable are numerous, making visualization through colored
+scatter plots challenging. If a continuous variable is provided, the function creates scatter plots of each PC against
+the variable.
 }

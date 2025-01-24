@@ -64,7 +64,7 @@ createHomogeneousBioGroups <- function(
     if (!clustering.method %in% c('kmeans', 'cut', 'quantile')){
         stop('The "clustering.method" must be one of: "kmeans", "cut" or "quantile".')
     }
-    if (!remove.na %in% c('sample.annotation', 'none.')){
+    if (!remove.na %in% c('sample.annotation', 'none')){
         stop('The "remove.na" mist be either "sample.annotation" or "none".')
     }
     if (!is.logical(save.se.obj)){

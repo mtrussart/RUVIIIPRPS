@@ -139,13 +139,13 @@ computePCA <- function(
         }
         # Data transformation ####
         printColoredMessage(
-            message = '-- Data log transformation:',
+            message = '-- Applying data log transformation:',
             color = 'magenta',
-            verbose = verbose)
+            verbose = verbose
+            )
         all.assays <- applyLog(
             se.obj = se.obj,
             assay.names = levels(assay.names),
-            apply.log = apply.log,
             pseudo.count = pseudo.count,
             assessment = 'computing "PCA"',
             verbose = verbose

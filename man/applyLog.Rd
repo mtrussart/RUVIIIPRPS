@@ -25,8 +25,6 @@ log transformation to avoid -Inf for measurements that are equal to 0. The defau
 \item{assessment}{Symbol. Indicates the downstream analyses impacted by not applying log transformation to the data.}
 
 \item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
-
-\item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data or not. The default is 'TRUE'.}
 }
 \value{
 logged data

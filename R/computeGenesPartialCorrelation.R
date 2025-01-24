@@ -161,7 +161,7 @@ computeGenesPartialCorrelation <- function(
         printColoredMessage(
             message ='-- Applying log transformation:',
             color = 'magenta',
-            verbose = verbose,
+            verbose = verbose
             )
         all.assays <- applyLog(
             se.obj = se.obj,

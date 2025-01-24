@@ -155,7 +155,7 @@ assessNormalization <- function(
     if (length(assay.names) == 1 && assay.names == 'all') {
         assay.names <- factor(x = names(assays(se.obj)), levels = names(assays(se.obj)))
     } else assay.names <- factor(x = assay.names, levels = assay.names)
-    if(!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
+    if (!sum(assay.names %in% names(assays(se.obj))) == length(assay.names)){
         stop('The "assay.names" cannot be found in the SummarizedExperiment object.')
     }
 
@@ -180,7 +180,7 @@ assessNormalization <- function(
         )
 
     # Filter assessment #####
-    if(!is.null(assessments.to.exclude)){
+    if (!is.null(assessments.to.exclude)){
         printColoredMessage(
             message = '-- Filter assessment metrics:',
             color = 'magenta',
@@ -205,7 +205,7 @@ assessNormalization <- function(
     cols.names <- c('data', 'variable', 'test', 'measurements')
     ## RLE general scores #####
     ### rle medians ####
-    if('General_rleMed' %in% paste(metrics.table$Variables, metrics.table$Assessments, sep = '_')){
+    if ('General_rleMed' %in% paste(metrics.table$Variables, metrics.table$Assessments, sep = '_')){
         printColoredMessage(
             message = '- Summarize the RLE medians of the general RLE plots:',
             color = 'orange',

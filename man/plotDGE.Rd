@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotDGE.R
 \name{plotDGE}
 \alias{plotDGE}
-\title{Plot p-values histograms of DGE analysis.}
+\title{Plots p-values histograms of DGE analysis.}
 \usage{
 plotDGE(
   se.obj,

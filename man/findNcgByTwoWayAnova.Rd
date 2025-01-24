@@ -2,7 +2,7 @@
 % Please edit documentation in R/findNcgByTwoWayAnova.R
 \name{findNcgByTwoWayAnova}
 \alias{findNcgByTwoWayAnova}
-\title{Find a set of negative control genes using two-way ANOVA.}
+\title{Finds a set of negative control genes using two-way ANOVA.}
 \usage{
 findNcgByTwoWayAnova(
   se.obj,
@@ -30,7 +30,6 @@ findNcgByTwoWayAnova(
   center = TRUE,
   scale = FALSE,
   assess.se.obj = TRUE,
-  assess.variables = FALSE,
   remove.na = "none",
   save.se.obj = TRUE,
   output.name = NULL,
@@ -45,133 +44,125 @@ findNcgByTwoWayAnova(
 \arguments{
 \item{se.obj}{A SummarizedExperiment object.}
 
-\item{assay.name}{Symbol. A symbol that indicates the name of the assay in the SummarizedExperiment object. This assay
-should be the one that will be used as an input data for the RUV-III-PRPS normalization. We recommend to use raw data,
+\item{assay.name}{Character. A string indicating the name of the assay in the SummarizedExperiment object. This assay
+should be the one that will be used as input data for the RUV-III normalization. We recommend using raw data,
 if available.}
 
-\item{bio.variables}{Symbols. Indicating the column names that contain known biological variable(s) in the
+\item{bio.variables}{Character. Indicating the column names that contain known biological variable(s) in the
 SummarizedExperiment object. These biological variables can be categorical or continuous. Continuous variables will be
 divided into 'nb.bio.clusters' groups based on a clustering method selected in the 'bio.clustering.method' argument.
 This argument cannot be empty.}
 
-\item{uv.variables}{Symbols. Indicating the column names that contain unwanted variable(s) in the SummarizedExperiment
+\item{uv.variables}{Character. Indicating the column names that contain unwanted variable(s) in the SummarizedExperiment
 object. These unwanted variables can be categorical or continuous. Continuous variables will be divided into
 'nb.uv.clusters' groups based on a clustering method selected in the 'uv.clustering.method' argument. This argument
 cannot be empty.}
 
-\item{ncg.selection.method}{Symbol. Indicating how to summarize F-statistics obtained from two-way ANOVA and select a
-set genes as negative control genes. The options are 'prod', 'average', 'sum', 'non.overlap', 'auto' and 'quantile'.
-The default is set to non.overlap'. For more information, refer to the details of the function.}
+\item{ncg.selection.method}{Character. Indicating how to summarize F-statistics obtained from two-way ANOVA and select a
+set of genes as negative control genes. The options are 'prod', 'average', 'sum', 'non.overlap', 'auto' and 'quantile'.
+The default is set to 'non.overlap'. For more information, refer to the details of the function.}
 
 \item{nb.ncg}{Numeric. Indicating how many genes should be selected as NCG. The value represents the proportion of the
 total genes in the SummarizedExperiment object. The default is set to 0.1.}
 
-\item{top.rank.bio.genes}{Numeric. Indicating the top ranked genes that are highly affected by the biological variation.
+\item{top.rank.bio.genes}{Numeric. Indicating the top-ranked genes that are highly affected by the biological variation.
 This is required to be specified when the 'ncg.selection.method' is set to either 'non.overlap' or 'auto'. The default
 is set to 0.5.}
 
-\item{top.rank.uv.genes}{Numeric. Indicating the top ranked genes that are highly affected by the unwanted variation.
-This is required to be specified when the 'ncg.selection.method' is set to either 'non.overlap' or 'auto'.The default
+\item{top.rank.uv.genes}{Numeric. Indicating the top-ranked genes that are highly affected by the unwanted variation.
+This is required to be specified when the 'ncg.selection.method' is set to either 'non.overlap' or 'auto'. The default
 is set to 0.5.}
 
 \item{bio.percentile}{Numeric. The percentile cut-off of F-statistics to select genes that are highly affected by
 the biological variation. The default is set to 0.8.}
 
-\item{uv.percentile}{Numeric. The percentile cut-off of F-statistics to select genes that are highly affected with
+\item{uv.percentile}{Numeric. The percentile cut-off of F-statistics to select genes that are highly affected by
 the unwanted variation. The default is set to 0.8.}
 
-\item{grid.group}{Symbol. Indicating whether the grid search should be performed on biological ('top.rank.bio.genes'),
-unwanted ('top.rank.uv.genes') or both factors, when the ncg.selection.method' is set to 'auto'.. The options are
-'bio', 'uv' or 'both'. If is set to 'both', the grid search will be performed on both biological and unwanted factors.
-If is set to 'bio' or 'uv', the grid search will be performed only on biological or unwanted factors. The default is
+\item{grid.group}{Character. Indicating whether the grid search should be performed on biological ('top.rank.bio.genes'),
+unwanted ('top.rank.uv.genes') or both factors when the 'ncg.selection.method' is set to 'auto'. The options are
+'bio', 'uv', or 'both'. If set to 'both', the grid search will be performed on both biological and unwanted factors.
+If set to 'bio' or 'uv', the grid search will be performed only on biological or unwanted factors. The default is
 set to 'uv'.}
 
-\item{grid.direction}{Symbol. Indicating the grid search should be performed in decreasing or increasing order. The
-option are 'increase' or 'decrease'. The default is set to 'decrease'.}
+\item{grid.direction}{Character. Indicating whether the grid search should be performed in decreasing or increasing
+order. The options are 'increase' or 'decrease'. The default is set to 'decrease'.}
 
 \item{grid.nb}{Numeric. Indicating the number of genes for grid search when the 'ncg.selection.method' is set to 'auto'.
 In the 'auto' approach, the grid search increases or decreases the initial values of 'top.rank.bio.genes' or
 'top.rank.uv.genes' or 'both' to find ~'nb.ncg' of genes as NCGs. The default is set to 20.}
 
-\item{bio.clustering.method}{Symbols. Indicating which clustering methods should be used to group continuous sources
+\item{bio.clustering.method}{Character. Indicating which clustering methods should be used to group continuous sources
 of biological variation. Refer to the 'createHomogeneousBioGroups' function for more details. The default is set to
-'kmeans' clustering .}
+'kmeans' clustering.}
 
-\item{nb.bio.clusters}{Numeric. Indicating the number of clusters for each continuous sources of biological variation.
-The by default it is set to 2. This means individual continuous sources of biological variation will be divided into two
+\item{nb.bio.clusters}{Numeric. Indicating the number of clusters for each continuous source of biological variation.
+By default, it is set to 2. This means individual continuous sources of biological variation will be divided into two
 groups.}
 
-\item{uv.clustering.method}{Symbols. Indicates which clustering methods should be used to group continuous sources
+\item{uv.clustering.method}{Character. Indicates which clustering methods should be used to group continuous sources
 of unwanted variation. Refer to the 'createHomogeneousUvGroups' function for more details. The default is set to
-'kmeans' cluster.}
+'kmeans' clustering.}
 
-\item{nb.uv.clusters}{Numeric. Indicates the number of clusters for each continuous sources of unwanted variation.
-The by default it is set to 2. This means individual continuous sources of biological variation will be divided into two
+\item{nb.uv.clusters}{Numeric. Indicates the number of clusters for each continuous source of unwanted variation.
+By default, it is set to 2. This means individual continuous sources of unwanted variation will be divided into two
 groups.}
 
 \item{apply.log}{Logical. Indicates whether to apply a log-transformation to the data before performing any statistical
-analysis. The default it is set to 'TRUE'.}
+analysis. The default is set to 'TRUE'.}
 
-\item{pseudo.count}{Numeric. A value as a pseudo count to be added to all measurements before log transformation. The
+\item{pseudo.count}{Numeric. A value to be added as a pseudo count to all measurements before log transformation. The
 default is 1.}
 
 \item{assess.ncg}{Logical. Indicates whether to assess the performance of selected NCG or not. This analysis involves
-principal component analysis on only the selected NCG and then explore the R^2 or vector correlation between the 'nb.pcs'
-first principal components and with the specified variables.}
+principal component analysis on only the selected NCG and then exploring the R² or vector correlation between the 'nb.pcs'
+first principal components and the specified variables.}
 
-\item{variables.to.assess.ncg}{Symbols. Indicates the column names of the SummarizedExperiment object that contain
+\item{variables.to.assess.ncg}{Character. Indicates the column names of the SummarizedExperiment object that contain
 variables whose association with the selected genes as NCG needs to be evaluated. The default is 'NULL'. This means all
 the variables specified in the 'bio.variables' and 'uv.variables' will be assessed.}
 
-\item{nb.pcs}{Numeric. Indicateing the number of the first principal components on selected NCG to be used to assess
+\item{nb.pcs}{Numeric. Indicating the number of the first principal components of selected NCG to be used to assess
 the performance of NCGs. The default is 5.}
 
-\item{center}{Logical. Indicates whether to center the data before applying principal component analysis or not.
-Refer to the 'computePCA' function for more details. The default is set to 'TRUE'.}
+\item{center}{Logical. Indicates whether to center the data before applying principal component analysis. Refer to the
+'computePCA' function for more details. The default is set to 'TRUE'.}
 
-\item{scale}{Logical. Indicates whether to scale the data before applying principal component analysis.
-Refer to the 'computePCA' function for more details. The default is 'FALSE'.}
+\item{scale}{Logical. Indicates whether to scale the data before applying principal component analysis. Refer to the
+'computePCA' function for more details. The default is 'FALSE'.}
 
 \item{assess.se.obj}{Logical. Indicates whether to assess the SummarizedExperiment object or not. If 'TRUE', the function
 'checkSeObj' will be applied. The default is set to 'TRUE'.}
 
-\item{assess.variables}{Logical. Indicates whether to assess the correlation between biological and unwanted variation
-variables separately when creating homogeneous sample groups. Refer to the function 'assessVariablesAssociation' for
-more details. The default is set to 'FLASE'.}
-
-\item{remove.na}{Symbol. Indicates whether to remove NA or missing values from either the 'assays', 'sample.annotation',
-'both' or 'none'. If 'assays' is selected, the genes that contains NA or missing values will be excluded. If
-'sample.annotation' is selected, the samples that contains NA or missing values for any 'bio.variables' and
+\item{remove.na}{Character. Indicates whether to remove NA or missing values from either the 'assays', 'sample.annotation',
+'both' or 'none'. If 'assays' is selected, the genes that contain NA or missing values will be excluded. If
+'sample.annotation' is selected, the samples that contain NA or missing values for any 'bio.variables' and
 'uv.variables' will be excluded. The default is set to 'none'.}
 
-\item{save.se.obj}{Logical. Indicating whether to save the result in the metadata of the SummarizedExperiment object or
-to output the result as a logical vector. The default it is set to 'TRUE'. The file will be saved in
+\item{save.se.obj}{Logical. Indicates whether to save the result in the metadata of the SummarizedExperiment object or
+to output the result as a logical vector. The default is set to 'TRUE'. The file will be saved in
 'se.obj@metadata$NCG$supervised$output.name".}
 
-\item{output.name}{Symbol. A representation for the output s name. If set to 'NULL', the function will choose a name
-automatically. In this case, the file name will be constructed as paste0(sum(ncg.selected),'|', paste0(bio.variables,
-collapse = '&'), '|', paste0(uv.variables, collapse = '&'),'|TWAnova:', ncg.selection.method, '|', assay.name).}
+\item{output.name}{Character. A string representing the output’s name. If set to 'NULL', the function will choose a name
+automatically. In this case, the file name will be constructed as paste0(sum(ncg.selected), '|', paste0(bio.variables,
+collapse = '&'), '|', paste0(uv.variables, collapse = '&'), '|TWAnova:', ncg.selection.method, '|', assay.name).}
 
-\item{ncg.group}{Symbol. A symbol indicating the name of the group of NCG.}
+\item{ncg.group}{Character. A string indicating the name of the group of NCG.}
 
-\item{plot.output}{TTT}
+\item{plot.output}{Logical. Indicates whether to plot the output or not.}
 
-\item{save.imf}{Logical. Indicating whether to save the intermediate file in the SummarizedExperiment object or not.
-If set to 'TRUE', the function saves the results of the two-way ANOVA. Subsequently, if users wish to adjust parameters
-such as 'nb.ncg', 'ncg.selection.method', 'top.rank.bio.genes', and 'top.rank.uv.genes', the two-way ANOVA will not
-be recalculated. This accelerates parameter tuning for NCG selection. The default value is 'FALSE'.}
+\item{save.imf}{Logical. Indicates whether to save the intermediate file in the SummarizedExperiment object. If set to 'TRUE',
+the function saves the results of the two-way ANOVA. Subsequently, if users wish to adjust parameters such as 'nb.ncg',
+'ncg.selection.method', 'top.rank.bio.genes', and 'top.rank.uv.genes', the two-way ANOVA will not be recalculated. This
+accelerates parameter tuning for NCG selection. The default value is 'FALSE'.}
 
-\item{imf.name}{Symbol. Indicating the name to use when saving the intermediate file. If set to 'NULL', the function
+\item{imf.name}{Character. Indicates the name to use when saving the intermediate file. If set to 'NULL', the function
 will create a name. In this case, the file name will be constructed as
-paste0(assay.name, '|TwoWayAnova|', ncg.selection.method).The default is 'NULL'.}
+paste0(assay.name, '|TwoWayAnova|', ncg.selection.method). The default is 'NULL'.}
 
-\item{use.imf}{Logical. Indicating whether to use the intermediate file or not. The default is set to 'FALSE'.}
+\item{use.imf}{Logical. Indicates whether to use the intermediate file}
 
-\item{verbose}{Logical. If 'TRUE', shows the messages of different steps of the function.}
-}
-\value{
-Either the SummarizedExperiment object containing the a set of negative control genes in the metadata  or a
-logical vector of the selected negative control genes.
+\item{verbose}{Logical. If 'TRUE', shows messages of different steps of the function.}
 }
 \description{
 This function utilizes two-way ANOVA to identify a set of genes suitable as negative control genes (NCG) for RUVIIIPRPS

@@ -6,7 +6,6 @@
 #' @param assay.names Symbol. A symbol or a vector of symbols for the selection of the name(s) of the assay(s) in the
 #' SummarizedExperiment object. Thses assays will be log2 + pseudo.count transformed. The default is set to "all, which
 #' indicates all the assays of the SummarizedExperiment object will be selected.
-#' @param apply.log Logical. Indicates whether to apply a log-transformation to the data or not. The default is 'TRUE'.
 #' @param pseudo.count Numeric. A value as a pseudo count to be added to all measurements of the assay(s) before applying
 #' log transformation to avoid -Inf for measurements that are equal to 0. The default is 1.
 #' @param assessment Symbol. Indicates the downstream analyses impacted by not applying log transformation to the data.
